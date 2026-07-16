@@ -9,22 +9,22 @@ definition of done are specified in `SCREEN_INVENTORY.md` and form part of this 
 
 ## Progress summary
 
-| Phase                       | Checklist complete | Status      | Backend readiness        | Design readiness | Testing/docs              |
-| --------------------------- | -----------------: | ----------- | ------------------------ | ---------------- | ------------------------- |
-| 0 Audit                     |                8/8 | COMPLETED   | Not available            | Audited          | Recorded                  |
-| 1 Foundation                |              16/20 | IN PROGRESS | Client only              | N/A              | Initial tests/docs        |
-| 2 Design system             |               2/18 | IN PROGRESS | N/A                      | Tokens ready     | Button/text tests partial |
-| 3 Shell/navigation          |               3/15 | IN PROGRESS | Session contract blocked | Reference mapped | Guard unit test           |
-| 4 Auth/onboarding           |       0/19 screens | BLOCKED     | Contracts missing        | 19/19 referenced | Not started               |
-| 5 Home                      |                0/1 | BLOCKED     | Dashboard missing        | Ready            | Not started               |
-| 6 Ajo                       |                0/3 | BLOCKED     | Contracts missing        | Ready            | Not started               |
-| 7 Food plans                |                0/3 | BLOCKED     | Contracts missing        | Ready            | Not started               |
-| 8 Akawo                     |                0/3 | BLOCKED     | Contracts missing        | Ready            | Not started               |
-| 9 Wallet/payments/activity  |              0/TBD | BLOCKED     | Not supplied             | Incomplete       | Not started               |
-| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied             | Partial          | Not started               |
-| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all           | Depends on all   | Not started               |
+| Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs           |
+| --------------------------- | -----------------: | ----------- | ----------------------- | ---------------- | ---------------------- |
+| 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded               |
+| 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs     |
+| 2 Design system             |               7/18 | IN PROGRESS | N/A                     | Tokens ready     | Auth primitives tested |
+| 3 Shell/navigation          |               4/15 | IN PROGRESS | Session contract exists | Tab shell ready  | Guard unit test        |
+| 4 Auth/onboarding           |       2/19 screens | IN REVIEW   | Verification APIs added | 19/19 referenced | 4 screens in review    |
+| 5 Home                      |                0/1 | BLOCKED     | Dashboard missing       | Ready            | Not started            |
+| 6 Ajo                       |                0/3 | BLOCKED     | Contracts missing       | Ready            | Not started            |
+| 7 Food plans                |                0/3 | BLOCKED     | Contracts missing       | Ready            | Not started            |
+| 8 Akawo                     |                0/3 | BLOCKED     | Contracts missing       | Ready            | Not started            |
+| 9 Wallet/payments/activity  |              0/TBD | BLOCKED     | Not supplied            | Incomplete       | Not started            |
+| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started            |
+| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started            |
 
-No product screen is completed. Foundation status reflects repository code only.
+Welcome and Introduction are completed. Four dynamic authentication screens are in review.
 
 ## Phase 0 — Repository audit (COMPLETED)
 
@@ -75,9 +75,9 @@ iOS/Android development and release builds remain explicitly unchecked.
 ## Phase 2 — Native design system (IN PROGRESS, P0)
 
 Build only as real screens demand each item: AppText [x], AppButton variants [x], IconButton [ ],
-Input/TextArea [ ], Password/OTP/PIN [ ], FormField [ ], Select [ ], Checkbox/Radio/Switch [ ],
+Input/TextArea [x], Password/OTP/PIN [x], FormField [x], Select [ ], Checkbox/Radio/Switch [x],
 Card/ListItem/Divider [ ], Badge/Avatar [ ], Amount/Currency/Date [ ], Progress [ ], Search [ ],
-Screen/Scroll/Keyboard/Refresh wrappers [ ], Skeleton/Loading [ ], Empty/Error [ ], Alert/Modal [ ],
+Screen/Scroll/Keyboard/Refresh wrappers [x], Skeleton/Loading [ ], Empty/Error [ ], Alert/Modal [x],
 Offline banner [ ], native header presets [ ], domain cards [ ]. Each requires both modes, dynamic
 type, 48dp targets, accessible states, behavior tests, and documentation. Bottom sheets/toasts are
 deferred until a concrete accessibility/product requirement justifies a dependency or internal build.
@@ -87,7 +87,7 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 - [x] Root native Stack and shared theme-aware options.
 - [x] Deterministic route-decision policy and initial unit test.
 - [x] Splash waits for fonts and configuration.
-- [ ] Create route groups only as first screens land: auth, onboarding, tabs, modals.
+- [x] Create route groups only as first screens land: auth, onboarding, and tabs; modals remain demand-driven.
 - [ ] Define final native tab information architecture after product review (reference proposes five).
 - [ ] Session restoration state machine and one-flight refresh.
 - [ ] Auth, verification, onboarding, organization, branch, role, and permission guards.
@@ -100,18 +100,39 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 - [ ] Navigation integration tests for every guard edge and redirect loop.
 - [ ] Platform/device verification.
 
-## Phase 4 — Authentication and onboarding (BLOCKED, P0)
+## Phase 4 — Authentication and onboarding (IN REVIEW, P0)
 
 Sequence: Welcome → Introduction → Register/Sign in; Register → Phone verification → Email
 verification → transaction PIN → optional biometrics → KYC intro → personal details → identity →
 bank → interests → setup complete. Recovery is Request reset → Verify reset → New password → Reset
 complete. Implement one `SCREEN_INVENTORY.md` record per PR/task.
 
-All 19 screens are `BLOCKED` on endpoint schemas, verification channels, password/PIN policy,
-refresh/session behavior, KYC and bank providers, consent copy, onboarding skip rules, and seed users.
-Static Welcome/Introduction/KYC copy can become `READY` after product/legal approval. Required tests
+Registration, phone OTP, email OTP, and Sign-in now have native forms plus real NestJS/Prisma APIs,
+hashed expiring challenges, cooldown/attempt limits, consent records, delivery/audit records, seeds,
+SecureStore session writes, and behavioral tests. They remain **IN REVIEW** pending physical-device
+verification, real production SMS/email adapters, full refresh/guard routing, referral policy, and the
+recovery destinations linked from Sign-in. Welcome and Introduction are **COMPLETED** now that all
+their declared account-entry destinations exist. Required tests
 include enumeration resistance, OTP expiry/resend/attempts, session storage/rotation, sensitive data
 redaction, upload permissions, bank-resolution races, biometric fallback, and every guard transition.
+
+Session 2026-07-16: Welcome + Introduction selected from `NOT STARTED`; implementation files are
+`src/app/(auth)`, `src/app/(onboarding)`, `src/features/onboarding`, and
+`src/services/onboarding-preferences.ts`. The screens now pass the expanded mobile validation suite.
+Backend review confirmed both
+screens are static/local and therefore intentionally have no API, database migration, authorization,
+notification, or seed dependency. Their Create account and Sign in destinations are now implemented.
+
+Session 2026-07-16 (four-task override): Registration, Phone verification, Email verification, and
+Sign-in moved from `NOT STARTED` to `IN REVIEW`. The preliminary `(tabs)` shell and authenticated
+account landing route were added without inventing unfinished product tabs. Backend migration
+`20260716180000_account_verification` adds HMAC-only challenges and versioned consent. Production
+verification delivery remains blocked on approved SMS/email provider credentials.
+
+Validation: mobile formatting, lint, strict typecheck, terminology, 10 suites/17 tests, and Expo
+Doctor 20/20 passed. Backend Prisma validation/generation, formatting, lint, strict typecheck,
+17 suites/53 unit tests, build, and 1 E2E test passed. Database migration/integration execution was
+unavailable because PostgreSQL and `DATABASE_URL` were not available in this environment.
 
 ## Phase 5 — Home dashboard (BLOCKED, P1)
 

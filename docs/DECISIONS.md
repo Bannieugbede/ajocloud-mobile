@@ -8,12 +8,28 @@
 - **Consequences:** native behavior/accessibility are first-class; product screens take deliberate translation; fewer dependency/theme constraints.
 - **Status:** Accepted.
 
+## 2026-07-16 — Static onboarding content stays release-managed
+
+- **Context:** Welcome and Introduction contain no mutable, user-specific, financial, role-specific, or administratively managed data.
+- **Options considered:** create a content API and seed tables; copy the browser implementation; keep typed native content in the release.
+- **Chosen approach:** native feature screens with semantic tokens and a local completion preference; no backend persistence or API.
+- **Consequences:** both screens work offline and avoid needless backend coupling; copy changes ship with an app release.
+- **Status:** Accepted.
+
 ## 2026-07-16 — Semantic theme with persisted preference
 
 - **Context:** Exact blue/teal/Poppins branding and System/Light/Dark modes are mandatory.
 - **Options considered:** hardcoded screen styles; web theme reuse; centralized tokens with runtime fonts.
 - **Chosen approach:** identical semantic token keys per mode, Zustand preference persisted in AsyncStorage, native header/status synchronization, Poppins runtime loading coordinated with splash.
 - **Consequences:** all screens consume semantics; native rebuild is not needed for fonts; splash is held briefly during font load.
+- **Status:** Accepted.
+
+## 2026-07-16 — Two-stage account verification
+
+- **Context:** Registration requires both Nigerian phone and email ownership without storing raw OTPs or issuing sessions to partially verified accounts.
+- **Options considered:** issue a session immediately; use one combined challenge; require phone then email before activation.
+- **Chosen approach:** create a pending account, record versioned consent, verify phone then email with separate challenge-bound HMAC digests, and issue a session only after email completes.
+- **Consequences:** challenge expiry, attempts, resend cooldown, notification delivery, and account activation are backend-authoritative; production delivery still requires approved providers.
 - **Status:** Accepted.
 
 ## 2026-07-16 — Server/client/secret state separation

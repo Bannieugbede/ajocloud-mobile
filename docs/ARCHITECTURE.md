@@ -27,6 +27,11 @@ src/utils            pure cross-cutting functions
 
 Folders are created when they have implementation, not to mirror an aspirational tree.
 
+The first product routes now use `(auth)` and `(onboarding)` nested native Stacks. Their route files
+only compose feature screens and navigation callbacks. Static introduction completion crosses the
+device boundary through `src/services/onboarding-preferences.ts`; it remains separate from server
+state and sensitive session storage.
+
 ## Navigation
 
 The root `_layout.tsx` loads fonts, holds the splash, mounts error/Query providers, synchronizes
@@ -89,3 +94,8 @@ components tested through accessible behavior, and critical flows eventually exe
 development/release builds. Large lists use pagination and FlashList when scale warrants; remote
 media uses Expo Image; obsolete fetches are cancelled; expensive work stays out of render; and
 reduced-motion preferences disable nonessential animation.
+
+The `(tabs)` route group owns the native tab shell. Only the authenticated Account landing route is
+registered today; Home/Ajo/Food/Akawo/Profile tabs will be added with their real data contracts rather
+than placeholders. Auth routes use React Hook Form/Zod locally, TanStack Query mutations for server
+state, typed endpoint adapters, and SecureStore for returned token pairs.

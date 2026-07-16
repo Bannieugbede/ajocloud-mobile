@@ -20,3 +20,11 @@ and ambiguous-result tests. Notifications/deep links require malicious and stale
 Run `bun run test` locally and `bun run validate` before completion. A failed test must be fixed or
 documented as a genuine external blocker; never weaken an assertion merely to pass CI. Coverage
 thresholds will be introduced after the first real features establish a meaningful baseline.
+
+Welcome tests cover all three accessible entry actions. Introduction tests cover forward paging,
+completion, skip/error handling, and the AsyncStorage preference boundary. These tests use behavior
+and accessible labels rather than snapshots.
+
+Auth coverage now exercises required registration fields/consent, complete registration submission,
+OTP paste and phone/email verification, Sign-in submission, nested backend error normalization,
+backend DTO validation, HMAC challenge binding, and destination masking.

@@ -30,3 +30,7 @@ Release review covers dependency advisories, secret scanning, deep links, permis
 backup/storage behavior, production logging, API environment selection, session expiry/rotation,
 and compromised/blocked-account behavior. Report suspected exposure immediately, revoke affected
 credentials server-side, and publish a forced update only when proportionate.
+
+Account verification codes are six digits, valid for ten minutes, limited to five attempts, and
+subject to a one-minute resend cooldown plus route throttling. The backend stores only challenge-bound
+HMAC digests and code-free notification payloads. Mobile OTP input is transient and never persisted.

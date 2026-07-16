@@ -41,3 +41,24 @@ client generates a unique key per user intent and retains it through safe retrie
 type/size before transfer, use Document/Image Picker URIs, expose progress/cancellation where
 supported, and never trust extensions. Analytics records screen/action outcomes with opaque IDs,
 not financial details or PII. Endpoint readiness is tracked in `BACKEND_REQUIREMENTS.md`.
+
+## Welcome and Introduction
+
+`/(auth)/welcome` and `/(onboarding)/introduction` are release-managed, static/local screens. They
+make no network request, require no authentication, and remain fully available offline. Introduction
+completion is a non-sensitive boolean in AsyncStorage. No API, cache, retry, idempotency, audit,
+notification, pagination, database model, or seed record is appropriate for these screens.
+
+## Authentication contracts implemented 2026-07-16
+
+| Screen        | Method and path                         | Request                                                                                    | Response and behavior                                                                                                                 |
+| ------------- | --------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Register      | `POST /api/v1/auth/register`            | first/last name, normalized email, `+234` phone, password, required terms/privacy booleans | Opaque user ID, `PHONE` challenge metadata, masked destination, expiry/cooldown, delivery status; public, rate-limited, conflict-safe |
+| Verify phone  | `POST /api/v1/auth/verify-phone`        | user ID and six-digit code                                                                 | Consumes phone challenge and returns the created `EMAIL` challenge; public pending-account scope, attempt/expiry limited              |
+| Verify email  | `POST /api/v1/auth/verify-email`        | user ID and six-digit code                                                                 | Activates account and returns access/refresh tokens plus access expiry; public pending-account scope, attempt/expiry limited          |
+| Resend        | `POST /api/v1/auth/resend-verification` | user ID and `PHONE`/`EMAIL` channel                                                        | Invalidates the prior challenge and returns new masked metadata; cooldown and endpoint throttling apply                               |
+| Sign in       | `POST /api/v1/auth/login`               | email and password                                                                         | Generic credential failure; active accounts receive rotating-session token pair                                                       |
+| Account shell | `GET /api/v1/users/me`                  | bearer access token                                                                        | Safe current-user/profile projection for the authenticated tab landing screen                                                         |
+
+OTP values never enter Query caches, Zustand, AsyncStorage, logs, route parameters, notification
+payloads, or analytics. Access and refresh tokens are written to SecureStore before navigation.

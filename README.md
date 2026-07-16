@@ -2,8 +2,10 @@
 
 Ajo Cloud Mobile is the native Expo client for community Ajo groups, food savings packages,
 personal Akawo goals, wallets, payments, and account management. This repository currently
-contains the validated application foundation and the implementation roadmap; product screens are
-intentionally not yet reproduced from the reference.
+contains the validated application foundation and the implementation roadmap. Native Welcome and
+Introduction, Registration, Phone verification, Email verification, and Sign-in screens are
+implemented with real backend contracts. The native tab shell currently exposes an authenticated
+account landing route; product tabs continue incrementally from the documented delivery contracts.
 
 ## Requirements and installation
 

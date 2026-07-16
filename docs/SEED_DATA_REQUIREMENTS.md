@@ -23,3 +23,12 @@ not-found, validation, conflict, and server-failure fixtures. Financial fixtures
 ledger balances and exercise duplicate idempotency keys. Provide safe upload fixtures at valid,
 oversized, unsupported, and corrupted boundaries. Publish reset commands and stable persona IDs for
 component/integration/E2E automation.
+
+Welcome and Introduction have no seed requirements because they contain no user-specific or mutable
+server data. Their complete states are exercised with local component tests and an isolated
+AsyncStorage mock. Auth personas become required when registration/sign-in is implemented.
+
+The backend seed now includes an active verified admin, phone-pending user (`111111` in isolated
+development/test data), and phone-verified/email-pending user (`222222`). Challenge IDs are stable,
+codes are stored only as peppered HMAC digests, expiry is deterministic, and the seed remains gated
+by `ALLOW_SEED=true` outside production.

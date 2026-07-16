@@ -1,5 +1,6 @@
 import { environment } from '@/config/environment';
 import type { AppError } from '@/types/errors';
+import { restoreSession } from '@/services/session-storage';
 
 import { normalizeHttpError, normalizeUnknownError } from './normalize-error';
 
@@ -59,5 +60,8 @@ function isAppError(value: unknown): value is AppError {
 }
 
 export const apiClient = environment.EXPO_PUBLIC_API_BASE_URL
-  ? new ApiClient(environment.EXPO_PUBLIC_API_BASE_URL)
+  ? new ApiClient(
+      environment.EXPO_PUBLIC_API_BASE_URL,
+      async () => (await restoreSession())?.accessToken ?? null,
+    )
   : null;

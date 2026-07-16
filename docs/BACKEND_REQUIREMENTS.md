@@ -1,8 +1,17 @@
 # Backend Requirements
 
-No backend, OpenAPI document, sibling repository, or API contract was available during audit. The
-mobile client must not invent one. The endpoint names below are capability placeholders for backend
-planning, not approved URLs or payloads.
+The sibling `ajocloud-backend` NestJS/Fastify/Prisma service was inspected on 2026-07-16. It exposes
+versioned registration, login, rotating refresh, logout, and logout-all endpoints, but verification,
+password recovery, device management, and full onboarding endpoints remain absent. Mobile contracts
+must be synchronized with its explicit DTOs and `/api/v1` conventions rather than inferred.
+
+Registration, phone/email code verification, resend, consent persistence, challenge delivery records,
+and access-token expiry metadata were added in migration `20260716180000_account_verification`.
+Production SMS and email delivery remain external deployment blockers; development uses providers
+that accept delivery without logging or persisting raw codes.
+
+Welcome and Introduction require no backend capability: both are static release-managed content.
+Adding endpoints, tables, audit events, or seed records for them would create needless dynamic state.
 
 ## Contract required for every dynamic capability
 

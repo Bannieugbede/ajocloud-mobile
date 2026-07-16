@@ -70,3 +70,17 @@ Detailed states and delivery criteria are in `SCREEN_INVENTORY.md` and `ROADMAP.
   contribution cadence rules, missed-payment rules, payout disputes, refunds, and ledger semantics?
 - Is the final main navigation five tabs, or should wallet/activity be promoted and profile nested?
 - Which notifications, analytics provider/events, support channel, legal URLs, and deep links exist?
+
+## 2026-07-16 native entry-screen translation
+
+Welcome retains the reference hierarchy—brand visual, value statement, education action, and account
+entry actions—but uses the official blue/teal semantics and a native responsive illustration rather
+than copied browser cards. Introduction uses the inventory-approved three product topics (Ajo, food,
+and Akawo), a horizontal native `FlatList`, text progress, and non-color progress indicators. The
+reference security slide was not presented as a separate page because the approved inventory calls
+for three slides; security language remains concise and does not claim an unapproved certification.
+
+Registration and Sign-in retain the reference field hierarchy but use native keyboard-aware scrolling,
+accessible inputs/switches, backend errors, and explicit loading states. Phone and email verification
+share one native OTP composition with channel-specific copy, masked destinations, expiry, resend, and
+delivery-failure states. No browser form, modal, icon, color, or fixed device frame was copied.
