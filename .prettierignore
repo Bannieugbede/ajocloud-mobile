@@ -1,0 +1,6 @@
+.expo
+node_modules
+coverage
+web-design
+bun.lock
+assets/expo.icon/icon.json
