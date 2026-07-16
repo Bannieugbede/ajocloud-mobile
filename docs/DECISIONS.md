@@ -1,5 +1,20 @@
 # Architectural Decision Log
 
+## 2026-07-16 — Launch validates but does not invent context
+
+Keep the native splash until fonts, persisted theme, SecureStore session, initial network state,
+optional update availability, and routing resolve. Validate an online unexpired session through
+`/users/me`; preserve it on offline/transient failure, and clear expired/inactive sessions.
+Organization, branch, and refresh routing are not inferred without contracts. Public legal routes
+show an explicit unavailable state rather than unapproved legal language.
+
+## 2026-07-16 — Product tabs and truthful Home states
+
+The authenticated primary order is Home, Ajo, Food, Akawo, Profile, implemented as native tabs with
+a nested Stack per tab. Home preserves the web-design information hierarchy but consumes only live
+profile, wallet-account, and Ajo-group APIs. Prototype balances and activity are never copied. Missing
+financial/product contracts render explicit unavailable states and disabled informational actions.
+
 ## 2026-07-16 — Expo SDK 57 universal native foundation
 
 - **Context:** A new mobile repository and browser-only visual reference were supplied.

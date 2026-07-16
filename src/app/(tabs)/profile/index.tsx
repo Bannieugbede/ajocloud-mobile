@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-
 import { logout } from '@/api/endpoints/auth';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { AppButton } from '@/components/ui/app-button';
@@ -10,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { clearSession } from '@/services/session-storage';
 import { fontSizes, radius, spacing } from '@/theme';
 
-export default function AccountTab() {
+export default function ProfileRoute() {
   const { colors } = useTheme();
   const queryClient = useQueryClient();
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser, retry: 1 });
@@ -27,20 +26,13 @@ export default function AccountTab() {
       router.replace('/(auth)/sign-in');
     },
   });
-
   return (
     <ScrollView
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
       {user.isPending ? (
-        <ActivityIndicator accessibilityLabel="Loading account" color={colors.primary} />
-      ) : null}
-      {user.isError ? (
-        <View style={[styles.card, { backgroundColor: colors.errorSoft }]}>
-          <AppText style={{ color: colors.error }}>We could not load your account.</AppText>
-          <AppButton label="Try again" variant="outline" onPress={() => void user.refetch()} />
-        </View>
+        <ActivityIndicator accessibilityLabel="Loading profile" color={colors.primary} />
       ) : null}
       {user.data ? (
         <View
@@ -50,7 +42,7 @@ export default function AccountTab() {
           ]}
         >
           <AppText accessibilityRole="header" weight="bold" style={styles.title}>
-            Welcome, {user.data.profile.firstName}
+            {user.data.profile.firstName} {user.data.profile.lastName}
           </AppText>
           <AppText style={{ color: colors.textMuted }}>{user.data.email}</AppText>
           <AppText>Status: {user.data.status}</AppText>
@@ -62,10 +54,15 @@ export default function AccountTab() {
           />
         </View>
       ) : null}
+      {user.isError ? (
+        <View style={[styles.card, { backgroundColor: colors.errorSoft }]}>
+          <AppText style={{ color: colors.error }}>We could not load your profile.</AppText>
+          <AppButton label="Try again" variant="outline" onPress={() => void user.refetch()} />
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   card: { borderRadius: radius.lg, borderWidth: 1, gap: spacing.md, padding: spacing.lg },

@@ -8,10 +8,10 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { useTheme } from '@/hooks/use-theme';
+import { AppBootstrap } from '@/providers/app-bootstrap';
 import { AppProviders } from '@/providers/app-providers';
 import { fontFamilies } from '@/theme';
 
@@ -25,17 +25,15 @@ export default function RootLayout() {
     Poppins_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) void SplashScreen.hideAsync();
-  }, [fontError, fontsLoaded]);
-
   if (!fontsLoaded && !fontError) return null;
 
   return (
     <AppErrorBoundary>
-      <AppProviders>
-        <ThemedNavigation />
-      </AppProviders>
+      <AppBootstrap>
+        <AppProviders>
+          <ThemedNavigation />
+        </AppProviders>
+      </AppBootstrap>
     </AppErrorBoundary>
   );
 }
@@ -57,6 +55,7 @@ function ThemedNavigation() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(public)" options={{ headerShown: false }} />
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>

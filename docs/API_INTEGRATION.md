@@ -1,5 +1,26 @@
 # API Integration
 
+## Launch initialization
+
+`GET /api/v1/users/me` validates an unexpired restored access token when online. It requires Bearer
+authentication and returns current user/profile/status. `ACTIVE` enters the authenticated shell;
+inactive status clears credentials. Transient failure preserves the still-unexpired local session so
+protected queries can re-evaluate it. Expired sessions are cleared.
+
+Welcome, Terms, and Privacy use no API. Missing approved legal content is explicit, never invented.
+Missing contracts: startup refresh rotation, onboarding status, and organization/branch context.
+
+## Authenticated shell and Home
+
+- `GET /api/v1/users/me`: greeting/profile identity.
+- `GET /api/v1/wallets`: wallet account count and status only. It does not expose an authoritative
+  balance, so Home deliberately shows “Balance unavailable”.
+- `GET /api/v1/ajo-groups`: member Ajo preview.
+
+Missing Home contracts: derived wallet balance summary, upcoming contribution/payout activity,
+Akawo summaries, unread notification count, dashboard partial-error semantics, and all wallet
+fund/send/withdraw mutations.
+
 ## Configuration and client
 
 `EXPO_PUBLIC_API_BASE_URL` is parsed at startup and must be an absolute URL; it is intentionally

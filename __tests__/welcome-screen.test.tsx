@@ -6,8 +6,16 @@ it('renders accessible account entry actions and invokes each destination', asyn
   const onCreateAccount = jest.fn();
   const onSignIn = jest.fn();
   const onLearn = jest.fn();
+  const onPrivacy = jest.fn();
+  const onTerms = jest.fn();
   const view = await render(
-    <WelcomeScreen onCreateAccount={onCreateAccount} onLearn={onLearn} onSignIn={onSignIn} />,
+    <WelcomeScreen
+      onCreateAccount={onCreateAccount}
+      onLearn={onLearn}
+      onPrivacy={onPrivacy}
+      onSignIn={onSignIn}
+      onTerms={onTerms}
+    />,
   );
 
   expect(view.getByText('Your savings community, now in the cloud.')).toBeTruthy();
@@ -24,4 +32,13 @@ it('renders accessible account entry actions and invokes each destination', asyn
   expect(onCreateAccount).toHaveBeenCalledTimes(1);
   expect(onSignIn).toHaveBeenCalledTimes(1);
   expect(onLearn).toHaveBeenCalledTimes(1);
+  expect(view.getByText('Community savings')).toBeTruthy();
+  await act(async () => {
+    fireEvent.press(view.getByRole('button', { name: 'Terms of Service' }));
+  });
+  await act(async () => {
+    fireEvent.press(view.getByRole('button', { name: 'Privacy Policy' }));
+  });
+  expect(onTerms).toHaveBeenCalledTimes(1);
+  expect(onPrivacy).toHaveBeenCalledTimes(1);
 });

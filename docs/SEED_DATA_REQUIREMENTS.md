@@ -1,5 +1,16 @@
 # Development Seed Data Requirements
 
+## Initialization scenarios
+
+Retain safe accounts for `ACTIVE`, `PENDING_VERIFICATION`, `SUSPENDED`, and `DEACTIVATED` routing
+tests, plus users with/without organization and branch assignments when that contract exists. Tokens
+are never seeded or committed. Welcome/legal screens require no seed records.
+
+Home requires an active user with zero and multiple wallets, no groups and multiple group
+memberships, and eventually populated/empty/upcoming/overdue activity and Akawo scenarios. Amounts
+must be realistic integer minor units and ledger-backed; seed data must never substitute for missing
+production APIs.
+
 Seed data belongs in the backend repository once identified. It must be deterministic, resettable,
 clearly synthetic, safe to share, and aligned to approved contracts. Never use real PII, tokens,
 bank credentials, identity documents, or payment instruments.

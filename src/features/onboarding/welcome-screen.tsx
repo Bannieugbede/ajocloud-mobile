@@ -9,9 +9,17 @@ type WelcomeScreenProps = {
   onCreateAccount: () => void;
   onSignIn: () => void;
   onLearn: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
 };
 
-export function WelcomeScreen({ onCreateAccount, onSignIn, onLearn }: WelcomeScreenProps) {
+export function WelcomeScreen({
+  onCreateAccount,
+  onSignIn,
+  onLearn,
+  onPrivacy,
+  onTerms,
+}: WelcomeScreenProps) {
   const { colors } = useTheme();
 
   return (
@@ -49,15 +57,25 @@ export function WelcomeScreen({ onCreateAccount, onSignIn, onLearn }: WelcomeScr
             Join Ajo contribution groups, save towards food packages, and build personal Akawo goals
             in one secure, community-driven app.
           </AppText>
+          <View accessibilityLabel="Ajo Cloud benefits" style={styles.benefits}>
+            {['Community savings', 'Food plans', 'Personal Akawo goals'].map((benefit) => (
+              <View key={benefit} style={[styles.benefit, { backgroundColor: colors.primarySoft }]}>
+                <AppText weight="medium" style={{ color: colors.primary }}>
+                  {benefit}
+                </AppText>
+              </View>
+            ))}
+          </View>
           <AppButton label="Learn how it works" variant="ghost" onPress={onLearn} />
         </View>
 
         <View style={styles.actions}>
           <AppButton label="Create an account" onPress={onCreateAccount} />
           <AppButton label="Sign in" variant="outline" onPress={onSignIn} />
-          <AppText style={[styles.legal, { color: colors.textSubtle }]}>
-            Terms and privacy acceptance is collected during account creation.
-          </AppText>
+          <View style={styles.legalLinks}>
+            <AppButton label="Terms of Service" variant="ghost" onPress={onTerms} />
+            <AppButton label="Privacy Policy" variant="ghost" onPress={onPrivacy} />
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -115,6 +133,12 @@ const styles = StyleSheet.create({
   copy: { gap: spacing.md },
   heading: { fontSize: fontSizes.heading, lineHeight: 38 },
   body: { fontSize: fontSizes.body, lineHeight: 25 },
+  benefits: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  benefit: {
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   actions: { gap: spacing.md, marginTop: 'auto' },
-  legal: { fontSize: fontSizes.caption, lineHeight: 18, textAlign: 'center' },
+  legalLinks: { flexDirection: 'row', justifyContent: 'center' },
 });

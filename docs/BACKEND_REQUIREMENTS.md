@@ -1,5 +1,26 @@
 # Backend Requirements
 
+## Public entry and initialization gaps
+
+- Existing and used: authenticated `GET /api/v1/users/me` with status and profile.
+- Required: single-flight refresh-token rotation contract with reuse detection and definitive invalid
+  session errors.
+- Required for organization-aware routing: selected organization, branch, roles, permissions, and a
+  fallback when previous context is removed.
+- Required for later guards: authoritative onboarding and verification-step status.
+- Not required: APIs/tables for fixed Welcome or legal presentation. Legal acceptance continues to
+  use existing versioned registration consent records.
+
+## Home dashboard gaps
+
+- Authoritative wallet summary with available/reserved/savings/reward balances serialized as
+  minor-unit strings with currency.
+- Upcoming contribution, payout, food distribution, and Akawo schedule feed.
+- Akawo goal summary/list service backed by the existing schema and ledger.
+- Unread notification count and guarded notification destinations.
+- Idempotent, authorized wallet funding, transfer, withdrawal, and history contracts before Home
+  quick actions can be enabled.
+
 The sibling `ajocloud-backend` NestJS/Fastify/Prisma service was inspected on 2026-07-16. It exposes
 versioned registration, login, rotating refresh, logout, and logout-all endpoints, but verification,
 password recovery, device management, and full onboarding endpoints remain absent. Mobile contracts

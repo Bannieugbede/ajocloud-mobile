@@ -1,5 +1,23 @@
 # Design Reference Audit
 
+## Launch and public-entry mapping (2026-07-16)
+
+- `web-design/src/app/components/AuthFlow.tsx` `SplashScreen` supplies centered brand hierarchy and
+  immediate transition intent. Native implementation uses the Expo splash and real initialization.
+- Its `WelcomeScreen` supplies brand visual → headline/copy → actions. Mobile retains that order,
+  adds requested benefit indicators and Terms/Privacy destinations, and translates green/gold to
+  semantic blue/teal tokens.
+- The prototype has no legal views. Native legal routes inherit its card, spacing, hierarchy, and
+  status conventions. Approved copy is not invented; an unavailable state is shown until supplied.
+
+## Authenticated tabs and Home mapping (2026-07-16)
+
+- `web-design/src/app/App.tsx` `NAV_ITEMS` maps to native tabs in the corrected order: Home, Ajo,
+  Food, Akawo, Profile. The reference's custom bottom bar and incorrect terminology are not copied.
+- `App.tsx` `HomeScreen` establishes greeting → wallet → upcoming activity → Ajo groups → savings
+  goals. Native Home retains that order, uses official theme tokens, native scrolling and controls,
+  and replaces prototype financial values with live data or explicit unavailable states.
+
 ## Purpose and constraints
 
 `/web-design` is a Figmake browser prototype used only to discover content hierarchy, flows,

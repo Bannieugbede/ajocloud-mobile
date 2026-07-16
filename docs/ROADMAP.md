@@ -7,6 +7,12 @@ dependency, sections/components/forms/validation, states, offline/pagination/ref
 analytics, notification/deep-link behavior, security, accessibility, tests, dependencies, status, and
 definition of done are specified in `SCREEN_INVENTORY.md` and form part of this roadmap.
 
+## Roadmap structure
+
+Every delivery entry is organized as **phase → feature group → flow → screen**, with supporting
+backend work, dependencies, status, and definition of done recorded here and in
+`SCREEN_INVENTORY.md`. A visual prototype never satisfies a screen definition of done.
+
 ## Progress summary
 
 | Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs           |
@@ -14,7 +20,7 @@ definition of done are specified in `SCREEN_INVENTORY.md` and form part of this 
 | 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded               |
 | 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs     |
 | 2 Design system             |               7/18 | IN PROGRESS | N/A                     | Tokens ready     | Auth primitives tested |
-| 3 Shell/navigation          |               4/15 | IN PROGRESS | Session contract exists | Tab shell ready  | Guard unit test        |
+| 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests        |
 | 4 Auth/onboarding           |       2/19 screens | IN REVIEW   | Verification APIs added | 19/19 referenced | 4 screens in review    |
 | 5 Home                      |                0/1 | BLOCKED     | Dashboard missing       | Ready            | Not started            |
 | 6 Ajo                       |                0/3 | BLOCKED     | Contracts missing       | Ready            | Not started            |
@@ -24,7 +30,8 @@ definition of done are specified in `SCREEN_INVENTORY.md` and form part of this 
 | 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started            |
 | 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started            |
 
-Welcome and Introduction are completed. Four dynamic authentication screens are in review.
+Introduction is completed. Launch, Welcome/public legal, and four dynamic authentication screens are
+in review.
 
 ## Phase 0 — Repository audit (COMPLETED)
 
@@ -86,10 +93,13 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 
 - [x] Root native Stack and shared theme-aware options.
 - [x] Deterministic route-decision policy and initial unit test.
-- [x] Splash waits for fonts and configuration.
+- [x] Splash waits for fonts, theme hydration, SecureStore session inspection, initial network state,
+      optional update availability check, and route resolution without an arbitrary delay.
 - [x] Create route groups only as first screens land: auth, onboarding, and tabs; modals remain demand-driven.
-- [ ] Define final native tab information architecture after product review (reference proposes five).
-- [ ] Session restoration state machine and one-flight refresh.
+- [x] Native tabs confirmed in product order: Home, Ajo, Food, Akawo, Profile; each owns a nested Stack.
+- [x] Restore unexpired SecureStore sessions, validate online sessions through `/users/me`, preserve
+      a valid session during transient/offline startup, and clear expired/inactive sessions.
+- [ ] One-flight refresh-token rotation before an expired access token is cleared.
 - [ ] Auth, verification, onboarding, organization, branch, role, and permission guards.
 - [ ] Native modal presentation and Android back behavior.
 - [ ] Allowlisted deep-link parser and deferred navigation intent.
@@ -101,6 +111,24 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 - [ ] Platform/device verification.
 
 ## Phase 4 — Authentication and onboarding (IN REVIEW, P0)
+
+### Feature group: public entry
+
+Flow: Launch → Welcome → Introduction or account entry; Welcome → Terms/Privacy.
+
+- **Launch gate `/` — IN REVIEW.** Dependencies: fonts, theme persistence, SecureStore, Network,
+  Updates, `/users/me`. Missing refresh and organization/branch context contracts are tracked in
+  `BACKEND_REQUIREMENTS.md`. Definition of done includes every routing state, refresh, context
+  restoration, release-build splash, and offline/device verification.
+- **Welcome `/(auth)/welcome` — IN REVIEW.** Dependencies: Introduction, Register, Sign in, public
+  legal routes. Definition of done includes mapped hierarchy, every destination, approved legal
+  content/fallback, themes, accessibility, and tests. Structure/routes are implemented; legal copy
+  remains blocked.
+- **Terms and Privacy `/(public)/legal/*` — BLOCKED.** Native unavailable states exist;
+  release-approved documents and content ownership/version policy are missing.
+
+Session 2026-07-16: Launch initialization + Welcome/public legal selected. Final status: `IN REVIEW`;
+legal documents remain `BLOCKED`.
 
 Sequence: Welcome → Introduction → Register/Sign in; Register → Phone verification → Email
 verification → transaction PIN → optional biometrics → KYC intro → personal details → identity →
@@ -135,6 +163,13 @@ Doctor 20/20 passed. Backend Prisma validation/generation, formatting, lint, str
 unavailable because PostgreSQL and `DATABASE_URL` were not available in this environment.
 
 ## Phase 5 — Home dashboard (BLOCKED, P1)
+
+Session 2026-07-16: authenticated tab shell and Home dashboard foundation selected as two related
+tasks. The shell moved to `IN REVIEW`; Home moved from `BLOCKED` to `IN PROGRESS`. Home follows the
+reference order: greeting, wallet, upcoming activity, Ajo preview, Akawo preview. Profile, wallet
+accounts, and Ajo groups use live existing APIs. Balance aggregation, upcoming activity, Akawo,
+notifications, and financial mutations remain backend-blocked and are shown as explicit unavailable
+states rather than prototype data.
 
 Deliver Home only after authenticated shell and dashboard aggregation/caching strategy exist. Sections:
 wallet with privacy toggle and fund/send/withdraw/history intents; upcoming due/payout activity; Ajo,

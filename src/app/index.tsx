@@ -1,5 +1,8 @@
 import { Redirect } from 'expo-router';
 
+import { useAppBootstrap } from '@/providers/app-bootstrap';
+
 export default function Index() {
-  return <Redirect href="/(auth)/welcome" />;
+  const { initialRoute } = useAppBootstrap();
+  return <Redirect href={initialRoute} />;
 }
