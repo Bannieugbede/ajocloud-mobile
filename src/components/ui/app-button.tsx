@@ -40,14 +40,14 @@ export function AppButton({
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       disabled={disabled || loading}
       {...props}
-      style={({ pressed }) => [
+      style={(state) => [
         styles.button,
         {
           backgroundColor: background,
           borderColor: variant === 'outline' ? colors.borderStrong : background,
-          opacity: disabled ? 0.55 : pressed ? 0.82 : 1,
+          opacity: disabled ? 0.55 : state.pressed ? 0.82 : 1,
         },
-        typeof style === 'function' ? style({ pressed }) : style,
+        typeof style === 'function' ? style(state) : style,
       ]}
     >
       {loading ? (

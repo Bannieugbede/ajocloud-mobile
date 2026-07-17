@@ -36,7 +36,7 @@ it('restores an active authenticated session', async () => {
     status: 'ACTIVE',
     profile: { firstName: 'Ayo', lastName: 'Cloud', avatarUrl: null },
   });
-  await expect(initializeApp()).resolves.toMatchObject({ initialRoute: '/(tabs)' });
+  await expect(initializeApp()).resolves.toMatchObject({ initialRoute: '/(tabs)/home' });
 });
 
 it('clears an expired session', async () => {

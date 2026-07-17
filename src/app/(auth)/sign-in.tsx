@@ -8,7 +8,7 @@ export default function SignInRoute() {
     <SignInScreen
       onRegister={() => router.replace('/(auth)/register')}
       onSignedIn={(tokens) => {
-        void saveTokenPair(tokens).then(() => router.replace('/(tabs)'));
+        void saveTokenPair(tokens).then(() => router.replace('/(tabs)/home'));
       }}
     />
   );

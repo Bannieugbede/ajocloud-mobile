@@ -6,7 +6,7 @@ import { clearSession, restoreSession } from '@/services/session-storage';
 import { useThemeStore } from '@/store/theme-store';
 import type { AppError } from '@/types/errors';
 
-export type InitialRoute = '/(auth)/welcome' | '/(tabs)';
+export type InitialRoute = '/(auth)/welcome' | '/(tabs)/home';
 
 export type AppInitialization = {
   initialRoute: InitialRoute;
@@ -25,11 +25,11 @@ export async function initializeApp(): Promise<AppInitialization> {
 
   if (session && Date.parse(session.expiresAt) > Date.now()) {
     if (!isOnline) {
-      initialRoute = '/(tabs)';
+      initialRoute = '/(tabs)/home';
     } else {
       try {
         const user = await getCurrentUser();
-        if (user.status === 'ACTIVE') initialRoute = '/(tabs)';
+        if (user.status === 'ACTIVE') initialRoute = '/(tabs)/home';
         else await clearSession();
       } catch (error) {
         if (isAuthorizationFailure(error)) {
@@ -38,7 +38,7 @@ export async function initializeApp(): Promise<AppInitialization> {
         }
         // Preserve an unexpired session on transient startup failures. Protected
         // queries still enforce authorization once the app opens.
-        initialRoute = '/(tabs)';
+        initialRoute = '/(tabs)/home';
       }
     }
   } else if (session) {

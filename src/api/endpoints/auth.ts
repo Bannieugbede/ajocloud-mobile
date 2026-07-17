@@ -1,15 +1,12 @@
 import { apiClient } from '@/api/client/api-client';
 
-export type VerificationChannel = 'PHONE' | 'EMAIL';
-
 export type VerificationChallenge = {
   userId: string;
-  channel: VerificationChannel;
+  channel: 'EMAIL';
   destinationMasked: string;
   expiresAt: string;
   resendAvailableAt: string;
   deliveryStatus: 'SENT' | 'FAILED';
-  nextStep?: 'VERIFY_EMAIL';
 };
 
 export type TokenPair = {
@@ -23,7 +20,6 @@ export type RegisterRequest = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
   password: string;
   acceptedTerms: true;
   acceptedPrivacy: true;
@@ -38,13 +34,6 @@ export function registerAccount(input: RegisterRequest): Promise<VerificationCha
   return client().request('/api/v1/auth/register', { method: 'POST', body: input });
 }
 
-export function verifyPhone(userId: string, code: string): Promise<VerificationChallenge> {
-  return client().request('/api/v1/auth/verify-phone', {
-    method: 'POST',
-    body: { userId, code },
-  });
-}
-
 export function verifyEmail(userId: string, code: string): Promise<TokenPair> {
   return client().request('/api/v1/auth/verify-email', {
     method: 'POST',
@@ -52,13 +41,10 @@ export function verifyEmail(userId: string, code: string): Promise<TokenPair> {
   });
 }
 
-export function resendVerification(
-  userId: string,
-  channel: VerificationChannel,
-): Promise<VerificationChallenge> {
+export function resendVerification(userId: string): Promise<VerificationChallenge> {
   return client().request('/api/v1/auth/resend-verification', {
     method: 'POST',
-    body: { userId, channel },
+    body: { userId },
   });
 }
 

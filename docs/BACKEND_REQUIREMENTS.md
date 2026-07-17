@@ -13,23 +13,23 @@
 
 ## Home dashboard gaps
 
-- Authoritative wallet summary with available/reserved/savings/reward balances serialized as
-  minor-unit strings with currency.
+- Available/reserved wallet summary is implemented as posted-ledger minor-unit strings. Dedicated
+  savings/reward account summaries remain required if those balances become separate products.
 - Upcoming contribution, payout, food distribution, and Akawo schedule feed.
-- Akawo goal summary/list service backed by the existing schema and ledger.
+- Akawo goal summary/list/detail is implemented; contribution money movement is still absent.
 - Unread notification count and guarded notification destinations.
-- Idempotent, authorized wallet funding, transfer, withdrawal, and history contracts before Home
-  quick actions can be enabled.
+- Owner-scoped recent wallet history is implemented. Idempotent funding, transfer, and withdrawal
+  contracts remain required before Home quick actions can be enabled.
 
 The sibling `ajocloud-backend` NestJS/Fastify/Prisma service was inspected on 2026-07-16. It exposes
 versioned registration, login, rotating refresh, logout, and logout-all endpoints, but verification,
 password recovery, device management, and full onboarding endpoints remain absent. Mobile contracts
 must be synchronized with its explicit DTOs and `/api/v1` conventions rather than inferred.
 
-Registration, phone/email code verification, resend, consent persistence, challenge delivery records,
-and access-token expiry metadata were added in migration `20260716180000_account_verification`.
-Production SMS and email delivery remain external deployment blockers; development uses providers
-that accept delivery without logging or persisting raw codes.
+Registration, email code verification, resend, consent persistence, challenge delivery records, and
+access-token expiry metadata are implemented. Phone verification and its public endpoint have been
+retired. Production email delivery remains an external deployment dependency; development providers
+accept delivery without logging or persisting raw codes.
 
 Welcome and Introduction require no backend capability: both are static release-managed content.
 Adding endpoints, tables, audit events, or seed records for them would create needless dynamic state.
@@ -47,15 +47,15 @@ success, empty, validation, forbidden, conflict, rate-limit, server, and mainten
 | Capability            | Operations required                                                  | Critical contract questions                                           |
 | --------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Session/auth          | register, login, refresh/rotate, logout, logout-all, blocked status  | token TTL/storage, device sessions, one-flight retry, revocation      |
-| Verification/recovery | send/resend/verify phone/email/reset tokens                          | expiry, attempts, cooldown, enumeration protection, link scheme       |
+| Verification/recovery | send/resend/verify email/reset tokens                                | expiry, attempts, cooldown, enumeration protection, link scheme       |
 | Onboarding/KYC        | profile, status, document upload, submit/remediate                   | provider, levels, required fields/files, retention, review statuses   |
 | Banks                 | bank list, resolve name, link/unlink, list                           | provider, ownership match, cache, limits, payout eligibility          |
 | Dashboard             | balances, upcoming activity, previews                                | composed vs parallel, freshness and partial failure                   |
 | Ajo                   | list/detail/create/update/join/invite/members/rotation/contributions | roles, cadence, slot/rotation, capacity, missed payment, payout/audit |
 | Food plans            | list/detail/enroll/progress/contributions/distribution               | product/legal model, capacity, substitutions, refund/fulfillment      |
 | Akawo goals           | list/detail/create/update/contribute/withdraw/history/mandate        | locked rules, automation, edits, completion, ledger                   |
-| Wallet/ledger         | balances, fund/send/withdraw, status, fees/limits                    | rails, beneficiary, PIN/OTP, authoritative ledger, reconciliation     |
-| Transactions          | cursor list/detail/receipt                                           | state machine, reversals, filters, immutable audit fields             |
+| Wallet/ledger         | summary/history ready; fund/send/withdraw still required             | rails, beneficiary, PIN/OTP, authoritative ledger, reconciliation     |
+| Transactions          | recent list ready; cursor list/detail/receipt still required         | state machine, reversals, filters, immutable audit fields             |
 | Notifications         | device register/unregister, list/read/preferences                    | payload schema, categories/channels, security, expiry/deep link       |
 | Profile/support       | profile/referral/fees/support/security preferences                   | editable fields, referral rules, provider/SLA, account deletion       |
 

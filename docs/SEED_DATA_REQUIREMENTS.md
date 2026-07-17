@@ -15,7 +15,7 @@ Seed data belongs in the backend repository once identified. It must be determin
 clearly synthetic, safe to share, and aligned to approved contracts. Never use real PII, tokens,
 bank credentials, identity documents, or payment instruments.
 
-Provide named test personas for: verified standard member; unverified phone/email; partial onboarding
+Provide named test personas for: verified standard member; unverified email; partial onboarding
 at each guard; active/inactive/blocked account; empty new user; user with full history; Ajo admin;
 ordinary member; invited/non-member; permission-restricted user; and, only if confirmed, organization
 and branch roles with one/multiple/no selections.
@@ -39,7 +39,9 @@ Welcome and Introduction have no seed requirements because they contain no user-
 server data. Their complete states are exercised with local component tests and an isolated
 AsyncStorage mock. Auth personas become required when registration/sign-in is implemented.
 
-The backend seed now includes an active verified admin, phone-pending user (`111111` in isolated
-development/test data), and phone-verified/email-pending user (`222222`). Challenge IDs are stable,
-codes are stored only as peppered HMAC digests, expiry is deterministic, and the seed remains gated
-by `ALLOW_SEED=true` outside production.
+The backend seed now includes an active verified admin and email-pending user (`222222` in isolated
+development/test data). The challenge ID is stable, codes are stored only as peppered HMAC digests,
+expiry is deterministic, and the seed remains gated
+by `ALLOW_SEED=true` outside production. It also includes a balanced posted NGN wallet opening
+transaction, an active target Akawo goal, and a pending future savings schedule for the verified
+admin. Database execution still requires an available configured PostgreSQL service.

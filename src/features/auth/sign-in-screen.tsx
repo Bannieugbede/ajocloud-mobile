@@ -33,7 +33,7 @@ export function SignInScreen({
   return (
     <AuthFormScreen
       title="Welcome back"
-      description="Sign in with your verified Ajo Cloud account."
+      description="Use your verified email address and password to continue."
       error={(mutation.error as AppError | null)?.message}
       footer={<AppButton label="Create a new account" variant="ghost" onPress={onRegister} />}
     >

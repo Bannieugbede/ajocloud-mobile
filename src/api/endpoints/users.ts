@@ -3,7 +3,7 @@ import { apiClient } from '@/api/client/api-client';
 export type CurrentUser = {
   id: string;
   email: string;
-  phone: string;
+  phone: string | null;
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED' | 'DEACTIVATED';
   profile: { firstName: string; lastName: string; avatarUrl: string | null };
 };

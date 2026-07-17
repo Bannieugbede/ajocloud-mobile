@@ -20,7 +20,6 @@ const schema = z
     firstName: z.string().trim().min(1, 'Enter your first name').max(100),
     lastName: z.string().trim().min(1, 'Enter your last name').max(100),
     email: z.string().trim().email('Enter a valid email address'),
-    phone: z.string().regex(/^\+234[789]\d{9}$/, 'Use a Nigerian number in +234 format'),
     password: z.string().min(12, 'Use at least 12 characters').max(128),
     confirmPassword: z.string(),
     acceptedTerms: z.literal(true, { error: 'Accept the Terms of Service' }),
@@ -47,7 +46,6 @@ export function RegisterScreen({
       firstName: '',
       lastName: '',
       email: '',
-      phone: '+234',
       password: '',
       confirmPassword: '',
       acceptedTerms: false as never,
@@ -63,7 +61,6 @@ export function RegisterScreen({
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
       email: values.email.trim().toLowerCase(),
-      phone: values.phone,
       password: values.password,
       acceptedTerms: true,
       acceptedPrivacy: true,
@@ -73,14 +70,14 @@ export function RegisterScreen({
   return (
     <AuthFormScreen
       title="Create your account"
-      description="Enter your details to begin secure phone and email verification."
+      description="Create your account, then verify it with the code sent to your email."
       error={(mutation.error as AppError | null)?.message}
       footer={
         <AppButton label="Already have an account? Sign in" variant="ghost" onPress={onSignIn} />
       }
     >
       <View style={styles.form}>
-        {(['firstName', 'lastName', 'email', 'phone'] as const).map((name) => (
+        {(['firstName', 'lastName', 'email'] as const).map((name) => (
           <Controller
             key={name}
             control={form.control}
@@ -92,7 +89,6 @@ export function RegisterScreen({
                     firstName: 'First name',
                     lastName: 'Last name',
                     email: 'Email address',
-                    phone: 'Phone number',
                   }[name]
                 }
                 value={field.value}
@@ -100,10 +96,8 @@ export function RegisterScreen({
                 onChangeText={field.onChange}
                 error={fieldState.error?.message}
                 autoCapitalize={name === 'firstName' || name === 'lastName' ? 'words' : 'none'}
-                autoComplete={name === 'email' ? 'email' : name === 'phone' ? 'tel' : 'name'}
-                keyboardType={
-                  name === 'email' ? 'email-address' : name === 'phone' ? 'phone-pad' : 'default'
-                }
+                autoComplete={name === 'email' ? 'email' : 'name'}
+                keyboardType={name === 'email' ? 'email-address' : 'default'}
                 editable={!mutation.isPending}
               />
             )}

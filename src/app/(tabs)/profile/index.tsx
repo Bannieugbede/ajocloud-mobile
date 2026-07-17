@@ -47,6 +47,10 @@ export default function ProfileRoute() {
           <AppText style={{ color: colors.textMuted }}>{user.data.email}</AppText>
           <AppText>Status: {user.data.status}</AppText>
           <AppButton
+            label="Wallets and activity"
+            onPress={() => router.push('/(tabs)/profile/wallets')}
+          />
+          <AppButton
             label="Sign out"
             variant="outline"
             loading={signOut.isPending}

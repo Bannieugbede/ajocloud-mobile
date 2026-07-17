@@ -1,5 +1,33 @@
 # Architectural Decision Log
 
+## 2026-07-17 — Email-only account verification
+
+- **Context:** SMS delivery was operationally rejected and product direction changed to email-based
+  verification for account creation.
+- **Options considered:** retain the two-stage flow; make phone optional but still challenge it; use
+  one email challenge before session issuance.
+- **Chosen approach:** registration collects no phone number, creates one email challenge, and routes
+  directly to email verification. Resend is email-only and login remains email/password.
+- **Consequences:** the phone route and API contract are removed; challenge security and SecureStore
+  session handling remain unchanged; phone can be collected later only under a separate approved need.
+- **Status:** Accepted; supersedes the 2026-07-16 two-stage decision below.
+
+## 2026-07-17 — Local mobile development uses the backend LAN origin
+
+The ignored `.env.local` contains the current workstation LAN origin for physical-device testing.
+`localhost` is not used because it resolves to the phone or emulator itself. The value is public,
+contains no credentials, and can be replaced when the workstation changes network.
+
+## 2026-07-17 — Native navigation surfaces share screen theme
+
+All root and nested native Stacks consume one theme-aware option set for scene, header, and text
+styling. Status-bar icon appearance stays in the root Expo `StatusBar`; it is deliberately not set
+through native Stack screen options because that requires per-view-controller iOS configuration.
+The Expo native root view background follows the resolved app theme so safe-area edges and navigation
+transitions cannot reveal the platform's default white background. Welcome and product introduction
+remain headerless because their own full-screen hierarchy provides the entry context; account forms
+and ordinary application routes retain native headers.
+
 ## 2026-07-16 — Launch validates but does not invent context
 
 Keep the native splash until fonts, persisted theme, SecureStore session, initial network state,
@@ -39,13 +67,13 @@ financial/product contracts render explicit unavailable states and disabled info
 - **Consequences:** all screens consume semantics; native rebuild is not needed for fonts; splash is held briefly during font load.
 - **Status:** Accepted.
 
-## 2026-07-16 — Two-stage account verification
+## 2026-07-16 — Two-stage account verification (superseded)
 
 - **Context:** Registration requires both Nigerian phone and email ownership without storing raw OTPs or issuing sessions to partially verified accounts.
 - **Options considered:** issue a session immediately; use one combined challenge; require phone then email before activation.
 - **Chosen approach:** create a pending account, record versioned consent, verify phone then email with separate challenge-bound HMAC digests, and issue a session only after email completes.
 - **Consequences:** challenge expiry, attempts, resend cooldown, notification delivery, and account activation are backend-authoritative; production delivery still requires approved providers.
-- **Status:** Accepted.
+- **Status:** Superseded by the 2026-07-17 email-only decision.
 
 ## 2026-07-16 — Server/client/secret state separation
 

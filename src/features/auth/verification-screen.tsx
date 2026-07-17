@@ -10,7 +10,6 @@ import {
   type TokenPair,
   type VerificationChallenge,
   verifyEmail,
-  verifyPhone,
 } from '@/api/endpoints/auth';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
@@ -24,11 +23,9 @@ const schema = z.object({ code: z.string().regex(/^\d{6}$/, 'Enter the six-digit
 
 export function VerificationScreen({
   initialChallenge,
-  onPhoneVerified,
   onEmailVerified,
 }: {
   initialChallenge: VerificationChallenge;
-  onPhoneVerified?: (challenge: VerificationChallenge) => void;
   onEmailVerified?: (tokens: TokenPair) => void;
 }) {
   const { colors } = useTheme();
@@ -42,20 +39,12 @@ export function VerificationScreen({
     const timer = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(timer);
   }, []);
-  const verifyMutation = useMutation<VerificationChallenge | TokenPair, AppError, { code: string }>(
-    {
-      mutationFn: ({ code }: { code: string }) =>
-        challenge.channel === 'PHONE'
-          ? verifyPhone(challenge.userId, code)
-          : verifyEmail(challenge.userId, code),
-      onSuccess: (result) => {
-        if ('accessToken' in result) onEmailVerified?.(result);
-        else onPhoneVerified?.(result);
-      },
-    },
-  );
+  const verifyMutation = useMutation<TokenPair, AppError, { code: string }>({
+    mutationFn: ({ code }: { code: string }) => verifyEmail(challenge.userId, code),
+    onSuccess: (tokens) => onEmailVerified?.(tokens),
+  });
   const resendMutation = useMutation({
-    mutationFn: () => resendVerification(challenge.userId, challenge.channel),
+    mutationFn: () => resendVerification(challenge.userId),
     onSuccess: (nextChallenge) => {
       setChallenge(nextChallenge);
       form.reset();
@@ -68,7 +57,7 @@ export function VerificationScreen({
 
   return (
     <AuthFormScreen
-      title={challenge.channel === 'PHONE' ? 'Verify your phone' : 'Verify your email'}
+      title="Check your email"
       description={`Enter the six-digit code sent to ${challenge.destinationMasked}.`}
       error={error?.message}
     >

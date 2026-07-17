@@ -35,7 +35,11 @@ state and sensitive session storage.
 ## Navigation
 
 The root `_layout.tsx` loads fonts, holds the splash, mounts error/Query providers, synchronizes
-native status/header colors, and declares a native Stack. Planned route groups are `(auth)`,
+the native root/status surfaces, and declares a native Stack. Every nested Stack consumes the same
+theme-aware content and header options so dark screens never expose a default white scene during
+safe-area rendering or navigation transitions. Status-bar appearance remains centralized in the
+root Expo `StatusBar`, avoiding per-screen native controller requirements. Welcome and product
+introduction are intentional full-screen, headerless entry experiences. Planned route groups are `(auth)`,
 `(onboarding)`, `(tabs)`, and `(modals)`, with nested stacks for Ajo, food plans, Akawo, wallet, and
 profile. Route files remain thin and use shared header presets. Guards resolve authentication,
 verification, onboarding, organization/branch selection, role, and permission in that order.

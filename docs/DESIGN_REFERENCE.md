@@ -45,37 +45,37 @@ decision.
 
 ## Mapping
 
-| Web file/state          | Mobile screen             | Proposed Expo route              | Native pattern / reusable components | Data               | Backend         | Phase |
-| ----------------------- | ------------------------- | -------------------------------- | ------------------------------------ | ------------------ | --------------- | ----- |
-| `AuthFlow:splash`       | Launch gate               | `/`                              | native splash + route resolver       | local              | session refresh | 3     |
-| `welcome`               | Welcome                   | `/(auth)/welcome`                | Stack, AppButton                     | static             | none            | 4     |
-| `onboarding` (3 slides) | Product introduction      | `/(onboarding)/introduction`     | paged FlatList, progress             | local              | none            | 4     |
-| `signup`                | Register                  | `/(auth)/register`               | keyboard screen, form fields         | dynamic            | auth create     | 4     |
-| `otp-phone`             | Phone verification        | `/(auth)/verify-phone`           | OTP form, resend timer               | user-specific      | OTP             | 4     |
-| `email-verify`          | Email verification        | `/(auth)/verify-email`           | OTP/link state                       | user-specific      | verification    | 4     |
-| `signin`                | Sign in                   | `/(auth)/sign-in`                | password form                        | dynamic            | auth            | 4     |
-| `forgot`                | Request reset             | `/(auth)/forgot-password`        | identifier form                      | dynamic            | recovery        | 4     |
-| `forgot-otp`            | Verify reset code         | `/(auth)/verify-reset`           | OTP form                             | dynamic            | recovery        | 4     |
-| `new-password`          | Set new password          | `/(auth)/reset-password`         | password form                        | dynamic            | recovery        | 4     |
-| `pwd-done`              | Reset complete            | `/(auth)/reset-complete`         | success state                        | static transition  | none            | 4     |
-| `pin-create`            | Create transaction PIN    | `/(onboarding)/transaction-pin`  | secure PIN form                      | user-specific      | PIN setup       | 4     |
-| `biometrics`            | Biometric preference      | `/(onboarding)/biometrics`       | LocalAuthentication prompt           | local/user         | optional policy | 4     |
-| `kyc-intro`             | Verification introduction | `/(onboarding)/kyc`              | static explanation                   | static             | none            | 4     |
-| `personal`              | Personal details          | `/(onboarding)/personal-details` | validated form                       | user-specific      | KYC profile     | 4     |
-| `identity`              | Identity document         | `/(onboarding)/identity`         | picker/camera upload                 | user-specific      | KYC/upload      | 4     |
-| `bank` + picker         | Bank account              | `/(onboarding)/bank-account`     | form + native modal picker           | user-specific      | bank verify     | 4     |
-| `interests`             | Interests                 | `/(onboarding)/interests`        | selectable cards                     | local then dynamic | preference save | 4     |
-| `done`                  | Setup complete            | `/(onboarding)/complete`         | success summary                      | user-specific      | profile read    | 4     |
-| `HomeScreen`            | Home dashboard            | `/(tabs)/home`                   | native tab/Stack, summary cards      | user-specific      | dashboard       | 5     |
-| `AjoScreen`             | Ajo groups                | `/(tabs)/ajo`                    | paginated list, search/filter        | dynamic            | groups list     | 6     |
-| `AjoGroupDetail`        | Ajo group detail          | `/ajo/[groupId]`                 | Stack detail, member rotation list   | dynamic            | group/detail    | 6     |
-| Ajo join overlay        | Join Ajo group            | `/(modals)/join-ajo`             | native modal confirmation/form       | dynamic            | join mutation   | 6     |
-| `FoodScreen`            | Food packages             | `/(tabs)/food`                   | paginated list/filter                | dynamic            | packages list   | 7     |
-| `FoodPackageDetail`     | Food package detail       | `/food/[packageId]`              | Stack detail                         | dynamic            | package/detail  | 7     |
-| Food join overlay       | Join food package         | `/(modals)/join-food`            | native modal confirmation            | dynamic            | join mutation   | 7     |
-| `AkawaScreen`           | Akawo goals               | `/(tabs)/akawo`                  | list + goal cards                    | user-specific      | goals list      | 8     |
-| Akawo create overlay    | Create Akawo goal         | `/(modals)/create-akawo`         | validated keyboard modal             | user-specific      | goal create     | 8     |
-| `ProfileScreen`         | Profile hub               | `/(tabs)/profile`                | profile summary + native list rows   | user-specific      | profile/wallet  | 10    |
+| Web file/state          | Mobile screen             | Proposed Expo route              | Native pattern / reusable components     | Data               | Backend         | Phase |
+| ----------------------- | ------------------------- | -------------------------------- | ---------------------------------------- | ------------------ | --------------- | ----- |
+| `AuthFlow:splash`       | Launch gate               | `/`                              | native splash + route resolver           | local              | session refresh | 3     |
+| `welcome`               | Welcome                   | `/(auth)/welcome`                | Stack, AppButton                         | static             | none            | 4     |
+| `onboarding` (3 slides) | Product introduction      | `/(onboarding)/introduction`     | paged FlatList, progress                 | local              | none            | 4     |
+| `signup`                | Register                  | `/(auth)/register`               | keyboard screen, form fields             | dynamic            | auth create     | 4     |
+| `otp-phone`             | Retired reference state   | —                                | Not shipped; email verification owns OTP | none               | none            | 4     |
+| `email-verify`          | Email verification        | `/(auth)/verify-email`           | OTP/link state                           | user-specific      | verification    | 4     |
+| `signin`                | Sign in                   | `/(auth)/sign-in`                | password form                            | dynamic            | auth            | 4     |
+| `forgot`                | Request reset             | `/(auth)/forgot-password`        | identifier form                          | dynamic            | recovery        | 4     |
+| `forgot-otp`            | Verify reset code         | `/(auth)/verify-reset`           | OTP form                                 | dynamic            | recovery        | 4     |
+| `new-password`          | Set new password          | `/(auth)/reset-password`         | password form                            | dynamic            | recovery        | 4     |
+| `pwd-done`              | Reset complete            | `/(auth)/reset-complete`         | success state                            | static transition  | none            | 4     |
+| `pin-create`            | Create transaction PIN    | `/(onboarding)/transaction-pin`  | secure PIN form                          | user-specific      | PIN setup       | 4     |
+| `biometrics`            | Biometric preference      | `/(onboarding)/biometrics`       | LocalAuthentication prompt               | local/user         | optional policy | 4     |
+| `kyc-intro`             | Verification introduction | `/(onboarding)/kyc`              | static explanation                       | static             | none            | 4     |
+| `personal`              | Personal details          | `/(onboarding)/personal-details` | validated form                           | user-specific      | KYC profile     | 4     |
+| `identity`              | Identity document         | `/(onboarding)/identity`         | picker/camera upload                     | user-specific      | KYC/upload      | 4     |
+| `bank` + picker         | Bank account              | `/(onboarding)/bank-account`     | form + native modal picker               | user-specific      | bank verify     | 4     |
+| `interests`             | Interests                 | `/(onboarding)/interests`        | selectable cards                         | local then dynamic | preference save | 4     |
+| `done`                  | Setup complete            | `/(onboarding)/complete`         | success summary                          | user-specific      | profile read    | 4     |
+| `HomeScreen`            | Home dashboard            | `/(tabs)/home`                   | native tab/Stack, summary cards          | user-specific      | dashboard       | 5     |
+| `AjoScreen`             | Ajo groups                | `/(tabs)/ajo`                    | paginated list, search/filter            | dynamic            | groups list     | 6     |
+| `AjoGroupDetail`        | Ajo group detail          | `/ajo/[groupId]`                 | Stack detail, member rotation list       | dynamic            | group/detail    | 6     |
+| Ajo join overlay        | Join Ajo group            | `/(modals)/join-ajo`             | native modal confirmation/form           | dynamic            | join mutation   | 6     |
+| `FoodScreen`            | Food packages             | `/(tabs)/food`                   | paginated list/filter                    | dynamic            | packages list   | 7     |
+| `FoodPackageDetail`     | Food package detail       | `/food/[packageId]`              | Stack detail                             | dynamic            | package/detail  | 7     |
+| Food join overlay       | Join food package         | `/(modals)/join-food`            | native modal confirmation                | dynamic            | join mutation   | 7     |
+| `AkawaScreen`           | Akawo goals               | `/(tabs)/akawo`                  | list + goal cards                        | user-specific      | goals list      | 8     |
+| Akawo create overlay    | Create Akawo goal         | `/(modals)/create-akawo`         | validated keyboard modal                 | user-specific      | goal create     | 8     |
+| `ProfileScreen`         | Profile hub               | `/(tabs)/profile`                | profile summary + native list rows       | user-specific      | profile/wallet  | 10    |
 
 Detailed states and delivery criteria are in `SCREEN_INVENTORY.md` and `ROADMAP.md`.
 

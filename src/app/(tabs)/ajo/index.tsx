@@ -1,11 +1,16 @@
-import { ProductTabPlaceholder } from '@/components/product-tab-placeholder';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import { listAjoGroups } from '@/api/endpoints/ajo-groups';
+import { AjoListScreen } from '@/features/ajo/ajo-list-screen';
 export default function AjoRoute() {
+  const query = useQuery({ queryKey: ['ajo-groups'], queryFn: listAjoGroups });
   return (
-    <ProductTabPlaceholder
-      title="My Ajo Groups"
-      description="Create, join, and follow your contribution circles."
-      sections={['Join via referral code', 'My groups', 'Group analytics']}
-      icon="people-outline"
+    <AjoListScreen
+      groups={query.data}
+      loading={query.isPending}
+      error={query.isError}
+      onRetry={() => void query.refetch()}
+      onOpen={(id) => router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: id } })}
     />
   );
 }

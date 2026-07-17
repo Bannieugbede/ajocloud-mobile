@@ -13,21 +13,41 @@ Missing contracts: startup refresh rotation, onboarding status, and organization
 ## Authenticated shell and Home
 
 - `GET /api/v1/users/me`: greeting/profile identity.
-- `GET /api/v1/wallets`: wallet account count and status only. It does not expose an authoritative
-  balance, so Home deliberately shows “Balance unavailable”.
+- `GET /api/v1/wallets`: owner wallet list.
+- `GET /api/v1/wallets/:walletId/summary`: posted-ledger available and reserved balances.
+- `GET /api/v1/wallets/:walletId/transactions`: the latest 50 owner-scoped ledger entries.
 - `GET /api/v1/ajo-groups`: member Ajo preview.
 
-Missing Home contracts: derived wallet balance summary, upcoming contribution/payout activity,
+Missing Home contracts: wiring the new wallet summary into Home, upcoming contribution/payout activity,
 Akawo summaries, unread notification count, dashboard partial-error semantics, and all wallet
 fund/send/withdraw mutations.
+
+## Ajo and Food product reads
+
+- `GET /api/v1/ajo-groups` and `GET /api/v1/ajo-groups/:groupId` power member listing/detail.
+- `GET /api/v1/food-ajo/programmes?limit=25` and
+  `GET /api/v1/food-ajo/programmes/:programmeId` power Food listing/detail.
+- Amounts remain minor-unit strings. No join, payment, or contribution action is enabled without its
+  complete server contract.
+
+## Akawo and wallet reads
+
+- `GET /api/v1/akawo/goals` and `GET /api/v1/akawo/goals/:goalId` power Akawo list/detail and
+  return minor-unit strings plus server-derived progress.
+- `POST /api/v1/akawo/goals/:goalId/schedules` creates a future savings schedule for an active goal;
+  schedule execution and manual deposit money movement remain unavailable.
+- Wallet summary and transaction history power `/(tabs)/profile/wallets`. Fund, send, withdraw,
+  transaction receipt, and pagination contracts are still missing and therefore have no enabled UI.
 
 ## Configuration and client
 
 `EXPO_PUBLIC_API_BASE_URL` is parsed at startup and must be an absolute URL; it is intentionally
-optional until the backend contract is supplied. Public values are not secrets. Components consume
-feature hooks, not the base URL or `fetch` directly. `ApiClient` applies JSON headers, a 15-second
-default timeout, cancellation, optional bearer token and idempotency key, and captures backend
-request IDs. Multipart upload will use a dedicated method so JSON headers are not forced.
+optional until the backend contract is supplied. The local physical-device configuration uses the
+backend workstation's LAN origin rather than `localhost`; endpoint paths continue to include
+`/api/v1`. Public values are not secrets. Components consume feature hooks, not the base URL or
+`fetch` directly. `ApiClient` applies JSON headers, a 15-second default timeout, cancellation,
+optional bearer token and idempotency key, and captures backend request IDs. Multipart upload will
+use a dedicated method so JSON headers are not forced.
 
 ## Authentication and refresh
 
@@ -72,14 +92,13 @@ notification, pagination, database model, or seed record is appropriate for thes
 
 ## Authentication contracts implemented 2026-07-16
 
-| Screen        | Method and path                         | Request                                                                                    | Response and behavior                                                                                                                 |
-| ------------- | --------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Register      | `POST /api/v1/auth/register`            | first/last name, normalized email, `+234` phone, password, required terms/privacy booleans | Opaque user ID, `PHONE` challenge metadata, masked destination, expiry/cooldown, delivery status; public, rate-limited, conflict-safe |
-| Verify phone  | `POST /api/v1/auth/verify-phone`        | user ID and six-digit code                                                                 | Consumes phone challenge and returns the created `EMAIL` challenge; public pending-account scope, attempt/expiry limited              |
-| Verify email  | `POST /api/v1/auth/verify-email`        | user ID and six-digit code                                                                 | Activates account and returns access/refresh tokens plus access expiry; public pending-account scope, attempt/expiry limited          |
-| Resend        | `POST /api/v1/auth/resend-verification` | user ID and `PHONE`/`EMAIL` channel                                                        | Invalidates the prior challenge and returns new masked metadata; cooldown and endpoint throttling apply                               |
-| Sign in       | `POST /api/v1/auth/login`               | email and password                                                                         | Generic credential failure; active accounts receive rotating-session token pair                                                       |
-| Account shell | `GET /api/v1/users/me`                  | bearer access token                                                                        | Safe current-user/profile projection for the authenticated tab landing screen                                                         |
+| Screen        | Method and path                         | Request                                                                      | Response and behavior                                                                                                           |
+| ------------- | --------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Register      | `POST /api/v1/auth/register`            | first/last name, normalized email, password, required terms/privacy booleans | Opaque user ID, `EMAIL` challenge metadata, masked email, expiry/cooldown, delivery status; public, rate-limited, conflict-safe |
+| Verify email  | `POST /api/v1/auth/verify-email`        | user ID and six-digit code                                                   | Activates account and returns access/refresh tokens plus access expiry; public pending-account scope, attempt/expiry limited    |
+| Resend        | `POST /api/v1/auth/resend-verification` | user ID                                                                      | Invalidates the prior email challenge and returns new masked metadata; cooldown and endpoint throttling apply                   |
+| Sign in       | `POST /api/v1/auth/login`               | normalized email and password                                                | Generic credential failure; active email-verified accounts receive a rotating-session token pair                                |
+| Account shell | `GET /api/v1/users/me`                  | bearer access token                                                          | Safe current-user/profile projection for the authenticated tab landing screen                                                   |
 
 OTP values never enter Query caches, Zustand, AsyncStorage, logs, route parameters, notification
 payloads, or analytics. Access and refresh tokens are written to SecureStore before navigation.

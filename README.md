@@ -3,7 +3,7 @@
 Ajo Cloud Mobile is the native Expo client for community Ajo groups, food savings packages,
 personal Akawo goals, wallets, payments, and account management. This repository currently
 contains the validated application foundation and the implementation roadmap. Native Welcome and
-Introduction, Registration, Phone verification, Email verification, and Sign-in screens are
+Introduction, Registration, Email verification, and Sign-in screens are
 implemented with real backend contracts. The native tab shell currently exposes an authenticated
 account landing route; product tabs continue incrementally from the documented delivery contracts.
 
@@ -35,6 +35,8 @@ Set only non-secret compiled values in `.env.local`:
 
 Every `EXPO_PUBLIC_` value is readable from the compiled application. Tokens and credentials belong
 in SecureStore or backend infrastructure, never environment variables committed to this repository.
+For physical-device development, set `EXPO_PUBLIC_API_BASE_URL` to the backend computer's LAN URL
+(for example, `http://192.168.1.20:3000`), not `localhost`, and keep both devices on the same network.
 
 ## Commands
 

@@ -15,7 +15,9 @@ tabBarBackground, disabled, placeholder, link, and focus. Both modes expose the 
 
 Light mode uses near-white/slate surfaces with dark text. Dark mode uses navy surfaces rather than
 pure black, light text, stronger borders, and dark semantic soft fills. Native headers and status
-bars use resolved tokens. Do not use a raw palette value from a screen when a semantic token exists.
+bars use resolved tokens. Nested stacks also set their scene background explicitly, while the root
+native view follows `background`, preventing white system-edge or transition gaps around dark
+screens. Do not use a raw palette value from a screen when a semantic token exists.
 
 ## Typography and geometry
 

@@ -7,7 +7,7 @@ export default function RegisterRoute() {
     <RegisterScreen
       onRegistered={(challenge) =>
         router.replace({
-          pathname: '/(auth)/verify-phone',
+          pathname: '/(auth)/verify-email',
           params: challenge,
         })
       }

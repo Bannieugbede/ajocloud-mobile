@@ -26,5 +26,5 @@ completion, skip/error handling, and the AsyncStorage preference boundary. These
 and accessible labels rather than snapshots.
 
 Auth coverage now exercises required registration fields/consent, complete registration submission,
-OTP paste and phone/email verification, Sign-in submission, nested backend error normalization,
+OTP paste and email verification, Sign-in submission, nested backend error normalization,
 backend DTO validation, HMAC challenge binding, and destination masking.
