@@ -27,10 +27,9 @@ src/utils            pure cross-cutting functions
 
 Folders are created when they have implementation, not to mirror an aspirational tree.
 
-The first product routes now use `(auth)` and `(onboarding)` nested native Stacks. Their route files
-only compose feature screens and navigation callbacks. Static introduction completion crosses the
-device boundary through `src/services/onboarding-preferences.ts`; it remains separate from server
-state and sensitive session storage.
+The first product routes use `(auth)` and `(tabs)` nested native Stacks. Their route files only
+compose feature screens and navigation callbacks. The signed-out Welcome screen routes directly to
+Register or Sign in; no first-run introduction state is persisted on the device.
 
 ## Navigation
 
@@ -38,11 +37,11 @@ The root `_layout.tsx` loads fonts, holds the splash, mounts error/Query provide
 the native root/status surfaces, and declares a native Stack. Every nested Stack consumes the same
 theme-aware content and header options so dark screens never expose a default white scene during
 safe-area rendering or navigation transitions. Status-bar appearance remains centralized in the
-root Expo `StatusBar`, avoiding per-screen native controller requirements. Welcome and product
-introduction are intentional full-screen, headerless entry experiences. Planned route groups are `(auth)`,
-`(onboarding)`, `(tabs)`, and `(modals)`, with nested stacks for Ajo, food plans, Akawo, wallet, and
-profile. Route files remain thin and use shared header presets. Guards resolve authentication,
-verification, onboarding, organization/branch selection, role, and permission in that order.
+root Expo `StatusBar`, avoiding per-screen native controller requirements. Welcome is an intentional
+full-screen, headerless entry experience. Current route groups are `(auth)`, `(public)`, and `(tabs)`;
+additional setup or modal groups should be introduced only when an implemented flow requires them.
+Route files remain thin and use shared header presets. Guards resolve authentication, verification,
+organization/branch selection, role, and permission in that order.
 Authorization is still enforced by the backend. Deep links and notifications first parse an
 allowlisted route intent, restore session state, apply guards, then navigate—avoiding redirect loops.
 

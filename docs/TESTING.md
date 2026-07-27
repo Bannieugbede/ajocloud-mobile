@@ -21,9 +21,9 @@ Run `bun run test` locally and `bun run validate` before completion. A failed te
 documented as a genuine external blocker; never weaken an assertion merely to pass CI. Coverage
 thresholds will be introduced after the first real features establish a meaningful baseline.
 
-Welcome tests cover all three accessible entry actions. Introduction tests cover forward paging,
-completion, skip/error handling, and the AsyncStorage preference boundary. These tests use behavior
-and accessible labels rather than snapshots.
+Welcome tests cover the two accessible account-entry actions and both legal destinations. They also
+assert that the retired introduction action is absent, using behavior and accessible labels rather
+than snapshots.
 
 Auth coverage now exercises required registration fields/consent, complete registration submission,
 OTP paste and email verification, Sign-in submission, nested backend error normalization,

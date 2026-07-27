@@ -31,8 +31,8 @@ access-token expiry metadata are implemented. Phone verification and its public 
 retired. Production email delivery remains an external deployment dependency; development providers
 accept delivery without logging or persisting raw codes.
 
-Welcome and Introduction require no backend capability: both are static release-managed content.
-Adding endpoints, tables, audit events, or seed records for them would create needless dynamic state.
+Welcome requires no backend capability because it is static release-managed content. Adding an
+endpoint, table, audit event, or seed record for it would create needless dynamic state.
 
 ## Contract required for every dynamic capability
 

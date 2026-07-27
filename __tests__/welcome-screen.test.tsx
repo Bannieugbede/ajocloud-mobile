@@ -1,17 +1,15 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 
-import { WelcomeScreen } from '@/features/onboarding/welcome-screen';
+import { WelcomeScreen } from '@/features/auth/welcome-screen';
 
 it('renders accessible account entry actions and invokes each destination', async () => {
   const onCreateAccount = jest.fn();
   const onSignIn = jest.fn();
-  const onLearn = jest.fn();
   const onPrivacy = jest.fn();
   const onTerms = jest.fn();
   const view = await render(
     <WelcomeScreen
       onCreateAccount={onCreateAccount}
-      onLearn={onLearn}
       onPrivacy={onPrivacy}
       onSignIn={onSignIn}
       onTerms={onTerms}
@@ -25,13 +23,9 @@ it('renders accessible account entry actions and invokes each destination', asyn
   await act(async () => {
     fireEvent.press(view.getByRole('button', { name: 'Sign in' }));
   });
-  await act(async () => {
-    fireEvent.press(view.getByRole('button', { name: 'Learn how it works' }));
-  });
-
   expect(onCreateAccount).toHaveBeenCalledTimes(1);
   expect(onSignIn).toHaveBeenCalledTimes(1);
-  expect(onLearn).toHaveBeenCalledTimes(1);
+  expect(view.queryByRole('button', { name: 'Learn how it works' })).toBeNull();
   expect(view.getByText('Community savings')).toBeTruthy();
   await act(async () => {
     fireEvent.press(view.getByRole('button', { name: 'Terms of Service' }));

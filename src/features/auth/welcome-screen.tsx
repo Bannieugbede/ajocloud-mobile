@@ -8,7 +8,6 @@ import { fontSizes, radius, sizes, spacing } from '@/theme';
 type WelcomeScreenProps = {
   onCreateAccount: () => void;
   onSignIn: () => void;
-  onLearn: () => void;
   onPrivacy: () => void;
   onTerms: () => void;
 };
@@ -16,7 +15,6 @@ type WelcomeScreenProps = {
 export function WelcomeScreen({
   onCreateAccount,
   onSignIn,
-  onLearn,
   onPrivacy,
   onTerms,
 }: WelcomeScreenProps) {
@@ -66,7 +64,6 @@ export function WelcomeScreen({
               </View>
             ))}
           </View>
-          <AppButton label="Learn how it works" variant="ghost" onPress={onLearn} />
         </View>
 
         <View style={styles.actions}>

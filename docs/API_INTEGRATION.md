@@ -83,12 +83,12 @@ type/size before transfer, use Document/Image Picker URIs, expose progress/cance
 supported, and never trust extensions. Analytics records screen/action outcomes with opaque IDs,
 not financial details or PII. Endpoint readiness is tracked in `BACKEND_REQUIREMENTS.md`.
 
-## Welcome and Introduction
+## Welcome
 
-`/(auth)/welcome` and `/(onboarding)/introduction` are release-managed, static/local screens. They
-make no network request, require no authentication, and remain fully available offline. Introduction
-completion is a non-sensitive boolean in AsyncStorage. No API, cache, retry, idempotency, audit,
-notification, pagination, database model, or seed record is appropriate for these screens.
+`/(auth)/welcome` is a release-managed, static/local screen. It makes no network request, requires no
+authentication, remains fully available offline, and routes directly to Register or Sign in. No API,
+cache, retry, idempotency, audit, notification, pagination, database model, seed record, or local
+completion preference is appropriate for this screen.
 
 ## Authentication contracts implemented 2026-07-16
 

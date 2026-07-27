@@ -1,5 +1,16 @@
 # Architectural Decision Log
 
+## 2026-07-18 — Welcome routes directly to account entry
+
+- **Context:** Product direction removed the pre-auth introduction carousel and its first-run local
+  completion state.
+- **Chosen approach:** Create account and Sign in navigate directly from Welcome to their auth
+  routes. The introduction route group, feature screen, AsyncStorage preference, and education
+  action are removed.
+- **Consequences:** signed-out entry has fewer steps and no onboarding preference boundary. Future
+  authenticated setup screens must introduce only the routes and state required by confirmed flows.
+- **Status:** Accepted; supersedes the static introduction portion of the 2026-07-16 decision below.
+
 ## 2026-07-17 — Email-only account verification
 
 - **Context:** SMS delivery was operationally rejected and product direction changed to email-based
@@ -24,8 +35,8 @@ All root and nested native Stacks consume one theme-aware option set for scene, 
 styling. Status-bar icon appearance stays in the root Expo `StatusBar`; it is deliberately not set
 through native Stack screen options because that requires per-view-controller iOS configuration.
 The Expo native root view background follows the resolved app theme so safe-area edges and navigation
-transitions cannot reveal the platform's default white background. Welcome and product introduction
-remain headerless because their own full-screen hierarchy provides the entry context; account forms
+transitions cannot reveal the platform's default white background. Welcome remains headerless because
+its own full-screen hierarchy provides the entry context; account forms
 and ordinary application routes retain native headers.
 
 ## 2026-07-16 — Launch validates but does not invent context
@@ -51,13 +62,13 @@ financial/product contracts render explicit unavailable states and disabled info
 - **Consequences:** native behavior/accessibility are first-class; product screens take deliberate translation; fewer dependency/theme constraints.
 - **Status:** Accepted.
 
-## 2026-07-16 — Static onboarding content stays release-managed
+## 2026-07-16 — Static onboarding content stays release-managed (partially superseded)
 
 - **Context:** Welcome and Introduction contain no mutable, user-specific, financial, role-specific, or administratively managed data.
 - **Options considered:** create a content API and seed tables; copy the browser implementation; keep typed native content in the release.
 - **Chosen approach:** native feature screens with semantic tokens and a local completion preference; no backend persistence or API.
 - **Consequences:** both screens work offline and avoid needless backend coupling; copy changes ship with an app release.
-- **Status:** Accepted.
+- **Status:** Welcome remains accepted; Introduction is superseded by the 2026-07-18 decision.
 
 ## 2026-07-16 — Semantic theme with persisted preference
 

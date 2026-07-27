@@ -21,7 +21,7 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs     |
 | 2 Design system             |               7/18 | IN PROGRESS | N/A                     | Tokens ready     | Auth primitives tested |
 | 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests        |
-| 4 Auth/onboarding           |       2/19 screens | IN REVIEW   | Verification APIs added | 19/19 referenced | 4 screens in review    |
+| 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review    |
 | 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested          |
 | 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested            |
 | 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested            |
@@ -30,8 +30,8 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started            |
 | 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started            |
 
-Introduction is completed. Launch, Welcome/public legal, and four dynamic authentication screens are
-in review.
+The pre-auth Introduction is retired. Launch, Welcome/public legal, and four dynamic authentication
+screens are in review.
 
 ## Phase 0 — Repository audit (COMPLETED)
 
@@ -97,7 +97,7 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 - [x] Deterministic route-decision policy and initial unit test.
 - [x] Splash waits for fonts, theme hydration, SecureStore session inspection, initial network state,
       optional update availability check, and route resolution without an arbitrary delay.
-- [x] Create route groups only as first screens land: auth, onboarding, and tabs; modals remain demand-driven.
+- [x] Create route groups only as first screens land: auth and tabs; modals remain demand-driven.
 - [x] Native tabs confirmed in product order: Home, Ajo, Food, Akawo, Profile; each owns a nested Stack.
 - [x] Restore unexpired SecureStore sessions, validate online sessions through `/users/me`, preserve
       a valid session during transient/offline startup, and clear expired/inactive sessions.
@@ -116,13 +116,13 @@ deferred until a concrete accessibility/product requirement justifies a dependen
 
 ### Feature group: public entry
 
-Flow: Launch → Welcome → Introduction or account entry; Welcome → Terms/Privacy.
+Flow: Launch → Welcome → Register or Sign in; Welcome → Terms/Privacy.
 
 - **Launch gate `/` — IN REVIEW.** Dependencies: fonts, theme persistence, SecureStore, Network,
   Updates, `/users/me`. Missing refresh and organization/branch context contracts are tracked in
   `BACKEND_REQUIREMENTS.md`. Definition of done includes every routing state, refresh, context
   restoration, release-build splash, and offline/device verification.
-- **Welcome `/(auth)/welcome` — IN REVIEW.** Dependencies: Introduction, Register, Sign in, public
+- **Welcome `/(auth)/welcome` — IN REVIEW.** Dependencies: Register, Sign in, public
   legal routes. Definition of done includes mapped hierarchy, every destination, approved legal
   content/fallback, themes, accessibility, and tests. Structure/routes are implemented; legal copy
   remains blocked.
@@ -132,7 +132,7 @@ Flow: Launch → Welcome → Introduction or account entry; Welcome → Terms/Pr
 Session 2026-07-16: Launch initialization + Welcome/public legal selected. Final status: `IN REVIEW`;
 legal documents remain `BLOCKED`.
 
-Sequence: Welcome → Introduction → Register/Sign in; Register → Email verification → transaction
+Sequence: Welcome → Register/Sign in; Register → Email verification → transaction
 PIN → optional biometrics → KYC intro → personal details → identity →
 bank → interests → setup complete. Recovery is Request reset → Verify reset → New password → Reset
 complete. Implement one `SCREEN_INVENTORY.md` record per PR/task.
@@ -141,21 +141,22 @@ Registration, email OTP, and Sign-in now have native forms plus real NestJS/Pris
 expiring challenges, cooldown/attempt limits, consent records, delivery/audit records, seeds,
 SecureStore session writes, and behavioral tests. They remain **IN REVIEW** pending physical-device
 verification, production email delivery, full refresh/guard routing, referral policy, and the
-recovery destinations linked from Sign-in. Welcome and Introduction are **COMPLETED** now that all
-their declared account-entry destinations exist. Required tests
+recovery destinations linked from Sign-in. Welcome remains **IN REVIEW** now that both direct
+account-entry destinations exist. Required tests
 include enumeration resistance, OTP expiry/resend/attempts, session storage/rotation, sensitive data
 redaction, upload permissions, bank-resolution races, biometric fallback, and every guard transition.
 
-Session 2026-07-16: Welcome + Introduction selected from `NOT STARTED`; implementation files are
-`src/app/(auth)`, `src/app/(onboarding)`, `src/features/onboarding`, and
-`src/services/onboarding-preferences.ts`. The screens now pass the expanded mobile validation suite.
-Backend review confirmed both
-screens are static/local and therefore intentionally have no API, database migration, authorization,
-notification, or seed dependency. Their Create account and Sign in destinations are now implemented.
+Session 2026-07-16: Welcome + Introduction selected from `NOT STARTED` and implemented as static/local
+screens without API, database migration, authorization, notification, or seed dependencies. This
+session is superseded for Introduction by the 2026-07-18 product-direction change below.
 
 Session 2026-07-17: Welcome and Introduction were made intentionally headerless. Shared themed Stack
-options now cover every nested navigation scene, and the native root background follows the resolved
+options cover every nested navigation scene, and the native root background follows the resolved
 theme so status/home-indicator edges and transitions do not expose a white fallback in dark mode.
+
+Session 2026-07-18: The pre-auth Introduction was retired. Its route group, feature folder, local
+completion preference, and tests were removed. Welcome now routes Create account and Sign in
+directly to their auth screens, and the education action was removed.
 
 Session 2026-07-16 (four-task override, superseded 2026-07-17): Registration, Phone verification,
 Email verification, and Sign-in moved from `NOT STARTED` to `IN REVIEW`. The phone stage has since

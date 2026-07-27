@@ -35,9 +35,9 @@ ledger balances and exercise duplicate idempotency keys. Provide safe upload fix
 oversized, unsupported, and corrupted boundaries. Publish reset commands and stable persona IDs for
 component/integration/E2E automation.
 
-Welcome and Introduction have no seed requirements because they contain no user-specific or mutable
-server data. Their complete states are exercised with local component tests and an isolated
-AsyncStorage mock. Auth personas become required when registration/sign-in is implemented.
+Welcome has no seed requirements because it contains no user-specific or mutable server data. Its
+direct Register and Sign-in actions are exercised with local component and route tests. Auth
+personas become required when registration/sign-in is implemented.
 
 The backend seed now includes an active verified admin and email-pending user (`222222` in isolated
 development/test data). The challenge ID is stable, codes are stored only as peppered HMAC digests,
