@@ -19,9 +19,11 @@ export type TokenPair = {
 export type RegisterRequest = {
   firstName: string;
   lastName: string;
+  /** E.164, e.g. +2348012345678. */
+  phone: string;
   email: string;
   password: string;
-  acceptedTerms: true;
+  referralCode?: string;
   acceptedPrivacy: true;
 };
 
@@ -52,6 +54,59 @@ export function login(input: { email: string; password: string }): Promise<Token
   return client().request('/api/v1/auth/login', { method: 'POST', body: input });
 }
 
+export type PasswordResetChallenge = {
+  challengeId: string;
+  destinationMasked: string;
+  expiresAt: string;
+  resendAvailableAt: string;
+};
+
+/** Starts a password reset. Always succeeds, so it cannot reveal whether an account exists. */
+export function requestPasswordReset(email: string): Promise<PasswordResetChallenge> {
+  return client().request('/api/v1/auth/password-reset/request', {
+    method: 'POST',
+    body: { email },
+  });
+}
+
+/** Verifies the emailed code and sets the new password. */
+export function completePasswordReset(input: {
+  challengeId: string;
+  code: string;
+  password: string;
+}): Promise<void> {
+  return client().request('/api/v1/auth/password-reset/complete', {
+    method: 'POST',
+    body: input,
+  });
+}
+
+/** Exchanges the one-time code from the Google deep link for a session. */
+export function exchangeGoogleCode(code: string): Promise<TokenPair> {
+  return client().request('/api/v1/auth/google/exchange', {
+    method: 'POST',
+    body: { code },
+  });
+}
+
 export function logout(): Promise<void> {
   return client().request('/api/v1/auth/logout', { method: 'POST' });
+}
+
+export type TransactionPinStatus = {
+  isSet: boolean;
+  /** ISO timestamp while the PIN is locked after too many wrong attempts. */
+  lockedUntil: string | null;
+};
+
+export function transactionPinStatus(): Promise<TransactionPinStatus> {
+  return client().request('/api/v1/auth/transaction-pin', { method: 'GET' });
+}
+
+/** Sets or replaces the transaction PIN. `currentPin` is required to replace one. */
+export function setTransactionPin(input: {
+  pin: string;
+  currentPin?: string;
+}): Promise<TransactionPinStatus> {
+  return client().request('/api/v1/auth/transaction-pin', { method: 'POST', body: input });
 }

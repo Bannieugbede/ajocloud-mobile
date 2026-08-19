@@ -158,6 +158,60 @@ Session 2026-07-18: The pre-auth Introduction was retired. Its route group, feat
 completion preference, and tests were removed. Welcome now routes Create account and Sign in
 directly to their auth screens, and the education action was removed.
 
+Session 2026-08-19: The Introduction was reinstated as a three-slide swipeable carousel at
+`/(auth)/onboarding`, and the Welcome screen was deleted. The carousel is the signed-out entry point
+on first install and after every sign-out; once completed or skipped it is replaced by Sign in.
+Completion persists in the `ajo-cloud-onboarding` AsyncStorage flag, which sign-out resets. Slide
+artwork is `react-native-svg` drawn from theme tokens, so no binary assets were added and both themes
+work. Mobile now targets the production API via `EXPO_PUBLIC_API_BASE_URL=https://api.mirumversal.com`.
+Status: Introduction `IN REVIEW`; device verification and end-to-end auth against production are
+still outstanding because the production database is unreachable (`/health/ready` returns 503, so
+every DB-backed auth endpoint returns 500). Validation: formatting, lint, and strict typecheck
+passed; 34/35 tests passed, the single failure being the pre-existing terminology suite, which fails
+identically on a clean tree because `rg` is absent from the Jest PATH.
+
+Follow-ups requested 2026-08-19 (all `NOT STARTED`, Phase 4):
+
+- [x] Google sign-in — IN REVIEW (2026-08-19). Implemented as the backend-owned browser redirect
+      flow shared with web, using the existing `expo-web-browser` and `expo-linking` dependencies,
+      so no new package was required. Needs device verification and real Google credentials.
+- [x] Leading icons in every auth input — IN REVIEW (2026-08-19). `AppInput` gained `icon` and
+      `action` slots; `FieldIcon` centralises the glyph choice. Icons are hidden from assistive
+      technology because the field label already names the input.
+- [x] Password reveal is an eye icon — IN REVIEW (2026-08-19). `PasswordInput` renders the toggle
+      in the field's trailing slot with a 48dp target and a state-carrying label
+      ("Show password"/"Hide password"), since the icon alone conveys state visually.
+- [x] Forgotten-password flow — IN REVIEW (2026-08-19). `/(auth)/forgot-password` requests a code
+      and `/(auth)/reset-password` verifies it and sets the new password, linked from Sign in.
+      Backed by new `POST /auth/password-reset/{request,complete}` endpoints. Completing a reset
+      revokes all sessions, so the flow ends at Sign in.
+- [x] Auth stack headers — IN REVIEW (2026-08-19). Every auth screen shows the Ajo Cloud logo as
+      its centred header title and an explicit back control, which hides itself on a root screen
+      (`router.canGoBack()`); the introduction stays headerless.
+
+Follow-ups requested 2026-08-19 (second batch):
+
+- [x] Auth header back control did not work — IN REVIEW (2026-08-19). `BackButton` read
+      `router.canGoBack()` once during render, in a component nothing re-renders on navigation, so
+      the header kept whichever answer was true when the first screen mounted. It now subscribes to
+      the navigation `state` event via `useNavigation()` and recomputes on every change.
+- [x] "Forgot password?" moved inline with the password label — IN REVIEW (2026-08-19). `AppInput`
+      gained a `labelAccessory` slot, so the link sits on the label row rather than in the footer.
+- [x] Sign-up collects only the Privacy Policy, as a checkbox — IN REVIEW (2026-08-19). The Terms
+      switch was removed from both the screen and the backend `RegisterDto`; the remaining consent
+      uses the new `AppCheckbox` (role `checkbox`, 48dp row) rather than a `Switch`.
+- [x] Account creation is a step form — IN REVIEW (2026-08-19). Steps a-e and k are complete:
+      details (now with phone in international format and an optional referral code), email
+      verification with resend, create PIN, confirm PIN, optional biometrics, and the closing
+      "what would you like to do" picker. Progress is shown over the five core steps only.
+      Step f ships as an introduction listing what identity verification needs, with a skip.
+- [ ] Identity verification steps (g-i) — BLOCKED (2026-08-19) on a backend KYC ADR covering
+      provider choice, required Tier 2 fields, the Nigerian bank list source, and account-name
+      inquiry. Contracts are tracked in `docs/BACKEND_REQUIREMENTS.md`. Agreed constraint: the raw
+      BVN/NIN is never persisted — only a masked value plus the result — per the backend KYC doc.
+- [ ] Congratulations screen (step j) — NOT STARTED (2026-08-19). It is shown only when identity
+      verification was completed, so it follows steps g-i.
+
 Session 2026-07-16 (four-task override, superseded 2026-07-17): Registration, Phone verification,
 Email verification, and Sign-in moved from `NOT STARTED` to `IN REVIEW`. The phone stage has since
 been retired in favor of the email-only flow documented above.

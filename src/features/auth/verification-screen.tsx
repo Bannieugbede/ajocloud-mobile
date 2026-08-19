@@ -13,6 +13,7 @@ import {
 } from '@/api/endpoints/auth';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
+import { FieldIcon } from './field-icon';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import type { AppError } from '@/types/errors';
@@ -73,6 +74,7 @@ export function VerificationScreen({
           render={({ field, fieldState }) => (
             <AppInput
               label="Verification code"
+              icon={<FieldIcon name="code" />}
               value={field.value}
               onBlur={field.onBlur}
               onChangeText={(value) => field.onChange(value.replace(/\D/g, '').slice(0, 6))}

@@ -1,16 +1,17 @@
 import { router } from 'expo-router';
 
-import { RegisterScreen } from '@/features/auth/register-screen';
+import { DetailsStep } from '@/features/registration/details-step';
+import { useRegistrationStore } from '@/store/registration-store';
 
 export default function RegisterRoute() {
+  const start = useRegistrationStore((state) => state.start);
+
   return (
-    <RegisterScreen
-      onRegistered={(challenge) =>
-        router.replace({
-          pathname: '/(auth)/verify-email',
-          params: challenge,
-        })
-      }
+    <DetailsStep
+      onRegistered={(challenge) => {
+        start(challenge.userId);
+        router.replace({ pathname: '/(auth)/verify-email', params: challenge });
+      }}
       onSignIn={() => router.replace('/(auth)/sign-in')}
     />
   );

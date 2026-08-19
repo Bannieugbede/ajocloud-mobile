@@ -3,14 +3,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import type { VerificationChallenge } from '@/api/endpoints/auth';
 import { VerificationScreen } from '@/features/auth/verification-screen';
 import { saveTokenPair } from '@/features/auth/session';
+import { useRegistrationStore } from '@/store/registration-store';
 
 export default function VerifyEmailRoute() {
   const params = useLocalSearchParams<Record<string, string>>();
+  const markEmailVerified = useRegistrationStore((state) => state.markEmailVerified);
+
   return (
     <VerificationScreen
       initialChallenge={challengeFromParams(params)}
       onEmailVerified={(tokens) => {
-        void saveTokenPair(tokens).then(() => router.replace('/(tabs)/home'));
+        // The session must exist before the PIN step: setting a PIN is an
+        // authenticated call.
+        void saveTokenPair(tokens).then(() => {
+          markEmailVerified();
+          router.replace('/(auth)/create-pin');
+        });
       }}
     />
   );

@@ -7,6 +7,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { clearSession } from '@/services/session-storage';
+import { useOnboardingStore } from '@/store/onboarding-store';
 import { fontSizes, radius, spacing } from '@/theme';
 
 export default function ProfileRoute() {
@@ -23,7 +24,9 @@ export default function ProfileRoute() {
     },
     onSuccess: () => {
       queryClient.clear();
-      router.replace('/(auth)/sign-in');
+      // Signing out returns the app to the introduction, per product direction.
+      useOnboardingStore.getState().reset();
+      router.replace('/(auth)/onboarding');
     },
   });
   return (
