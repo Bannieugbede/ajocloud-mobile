@@ -251,6 +251,12 @@ when product/legal confirms release-managed content.
 
 ## Phase 11 — Hardening and release (NOT STARTED, P0 before production)
 
+Session 2026-08-19: replaced Expo starter branding with the supplied Ajo Cloud mark for the iOS
+launcher icon, Android legacy/adaptive/themed icons, native splash, web favicon, and Welcome screen.
+The release icon checklist remains open until preview/release builds are inspected on physical iOS
+and Android devices, including Android mask shapes and themed icons. Validation passed formatting,
+lint, strict type checking, 14 suites/24 tests, and terminology checks.
+
 - [ ] Full validation and meaningful coverage baseline; critical E2E on iOS/Android.
 - [ ] Accessibility audit with screen reader, large text, contrast, reduced motion, keyboard/switch.
 - [ ] Performance profiling: startup, bundle, lists, images, low-memory/slow network.

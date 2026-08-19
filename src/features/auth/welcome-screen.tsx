@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
@@ -35,9 +35,12 @@ export function WelcomeScreen({
           <View style={[styles.orbitLarge, { borderColor: colors.secondary }]} />
           <View style={[styles.orbitSmall, { borderColor: colors.textInverse }]} />
           <View style={[styles.logo, { backgroundColor: colors.surface }]}>
-            <AppText weight="bold" style={[styles.logoText, { color: colors.primary }]}>
-              A
-            </AppText>
+            <Image
+              source={require('../../../assets/images/splash-icon.png')}
+              resizeMode="contain"
+              style={styles.logoImage}
+              testID="brand-logo"
+            />
           </View>
           <AppText weight="bold" style={[styles.brand, { color: colors.textInverse }]}>
             Ajo Cloud
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     width: 68,
   },
-  logoText: { fontSize: 32 },
+  logoImage: { height: 68, width: 68 },
   brand: { fontSize: fontSizes.heading },
   heroCaption: { marginTop: spacing.xs, opacity: 0.9 },
   copy: { gap: spacing.md },

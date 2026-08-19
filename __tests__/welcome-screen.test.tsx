@@ -16,6 +16,7 @@ it('renders accessible account entry actions and invokes each destination', asyn
     />,
   );
 
+  expect(view.getByTestId('brand-logo')).toBeTruthy();
   expect(view.getByText('Your savings community, now in the cloud.')).toBeTruthy();
   await act(async () => {
     fireEvent.press(view.getByRole('button', { name: 'Create an account' }));
