@@ -85,19 +85,22 @@ Delivered alongside the mobile step form. Already available:
 | `POST /api/v1/auth/transaction-pin`        | Sets or replaces the 4-digit PIN. Replacing requires `currentPin`.                                                                   |
 | `POST /api/v1/auth/transaction-pin/verify` | Checks a PIN; locks after 5 consecutive failures for 15 minutes.                                                                     |
 
-Identity verification (steps g-i) is now implemented. Provider and data policy
-are settled in `ajocloud-backend/docs/adr/ADR-004-identity-verification-provider-and-data-policy.md`:
-**Dojah** supplies BVN/NIN verification, the bank list, and account name inquiry.
+Identity verification (steps g-i) is now implemented. The data policy is settled in
+`ajocloud-backend/docs/adr/ADR-004-identity-verification-provider-and-data-policy.md`.
+**Monnify** is the single provider for payments, verification, and payouts
+(`ADR-005-monnify-as-single-financial-and-identity-provider.md`); it supplies BVN/NIN
+verification, the bank list, and account name inquiry. vNIN is not supported and is
+refused rather than misrouted.
 
-| Endpoint                              | Purpose                                                                       |
-| ------------------------------------- | ----------------------------------------------------------------------------- |
-| `GET   /api/v1/kyc/status`            | What the user still owes, backing the step f introduction.                    |
-| `PATCH /api/v1/kyc/personal-details`  | Step g: dob, gender, address, city, state, occupation. Rejects under-18.      |
-| `POST  /api/v1/kyc/identity`          | Step h: BVN/NIN plus explicit consent. Returns pass/fail and the masked value. |
-| `GET   /api/v1/kyc/banks`             | Step i: provider bank list with NIP codes, cached 24h.                        |
-| `POST  /api/v1/kyc/banks/inquire`     | Step i: resolves the account name. Stores nothing.                            |
-| `POST  /api/v1/kyc/bank-accounts`     | Step i: links the account after the name is confirmed.                        |
-| `GET   /api/v1/kyc/bank-accounts`     | Lists linked accounts, masked.                                                |
+| Endpoint                             | Purpose                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------ |
+| `GET   /api/v1/kyc/status`           | What the user still owes, backing the step f introduction.                     |
+| `PATCH /api/v1/kyc/personal-details` | Step g: dob, gender, address, city, state, occupation. Rejects under-18.       |
+| `POST  /api/v1/kyc/identity`         | Step h: BVN/NIN plus explicit consent. Returns pass/fail and the masked value. |
+| `GET   /api/v1/kyc/banks`            | Step i: provider bank list with NIP codes, cached 24h.                         |
+| `POST  /api/v1/kyc/banks/inquire`    | Step i: resolves the account name. Stores nothing.                             |
+| `POST  /api/v1/kyc/bank-accounts`    | Step i: links the account after the name is confirmed.                         |
+| `GET   /api/v1/kyc/bank-accounts`    | Lists linked accounts, masked.                                                 |
 
 Agreed constraint, now enforced and tested: the raw BVN/NIN is **never
 persisted**. It is sent over TLS, verified with the provider, and only the
@@ -108,7 +111,7 @@ resolves; it is never written to the persisted registration store, to
 SecureStore, to a route param, or to a log.
 
 Note on terminology: true end-to-end encryption is not achievable for this
-operation, because the server must send the plaintext identifier to Dojah — the
+operation, because the server must send the plaintext identifier to Monnify — the
 provider is the party performing the match. What is implemented is TLS in
 transit plus strict non-persistence, which is the meaningful protection.
 
@@ -120,10 +123,10 @@ Rules that apply, from ADR-004:
   compliance review.
 - Tier 2 needs all three of personal details, a passed identity check, and a
   verified bank account.
-- Tier 3 (face match, liveness) is still unimplemented and needs a further ADR.
+- Tier 3 (face match, liveness) is still unimplemented and needs a further ADR,
+  which must also establish whether Monnify can serve biometric checks at all.
 
 Still deferred:
 
 - Tier 3 biometric checks (face match, liveness).
 - Compliance review tooling for profiles held at `REQUIRES_REVIEW`.
-

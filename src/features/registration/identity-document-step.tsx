@@ -85,10 +85,7 @@ export function IdentityDocumentStep({
                   setIdentityNumber('');
                   setValidationError(undefined);
                 }}
-                style={[
-                  styles.tab,
-                  selected && { backgroundColor: colors.primary },
-                ]}
+                style={[styles.tab, selected && { backgroundColor: colors.primary }]}
               >
                 <AppText
                   weight="semibold"
