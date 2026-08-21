@@ -163,7 +163,7 @@ Session 2026-08-19: The Introduction was reinstated as a three-slide swipeable c
 on first install and after every sign-out; once completed or skipped it is replaced by Sign in.
 Completion persists in the `ajo-cloud-onboarding` AsyncStorage flag, which sign-out resets. Slide
 artwork is `react-native-svg` drawn from theme tokens, so no binary assets were added and both themes
-work. Mobile now targets the production API via `EXPO_PUBLIC_API_BASE_URL=https://api.mirumversal.com`.
+work. Mobile now targets the production API via `EXPO_PUBLIC_API_BASE_URL=https://api.ajocloud.com`.
 Status: Introduction `IN REVIEW`; device verification and end-to-end auth against production are
 still outstanding because the production database is unreachable (`/health/ready` returns 503, so
 every DB-backed auth endpoint returns 500). Validation: formatting, lint, and strict typecheck
