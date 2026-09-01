@@ -42,6 +42,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "111d2ee2-d535-4c80-8ff5-418eb9acbdad"
+      }
+    },
+    "owner": "mirumversal"
   }
 }
