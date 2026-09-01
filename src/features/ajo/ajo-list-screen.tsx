@@ -1,11 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
-import { AppButton } from '@/components/ui/app-button';
+import { AppAmount } from '@/components/ui/app-amount';
+import { AppBadge, statusLabel, statusTone } from '@/components/ui/app-badge';
+import { AppCard } from '@/components/ui/app-card';
+import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
+import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
-import { formatMinorAmount } from '@/utils/money';
 
 export function AjoListScreen({
   groups,
@@ -34,8 +38,15 @@ export function AjoListScreen({
           Track contributions, membership, and group schedules.
         </AppText>
       </View>
+
       <View style={[styles.joinCard, { backgroundColor: colors.primarySoft }]}>
-        <Ionicons name="key-outline" size={22} color={colors.primary} />
+        <Ionicons
+          name="key-outline"
+          size={22}
+          color={colors.primary}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
         <View style={styles.flex}>
           <AppText weight="semibold">Join via referral code</AppText>
           <AppText style={{ color: colors.textMuted }}>
@@ -43,61 +54,57 @@ export function AjoListScreen({
           </AppText>
         </View>
       </View>
+
       {loading ? (
-        <ActivityIndicator accessibilityLabel="Loading Ajo groups" color={colors.primary} />
+        <>
+          <AppSkeletonCard testID="ajo-skeleton" />
+          <AppSkeletonCard />
+        </>
       ) : null}
+
       {error ? (
-        <View style={[styles.card, { backgroundColor: colors.errorSoft }]}>
-          <AppText style={{ color: colors.error }}>Could not load your groups.</AppText>
-          <AppButton label="Try again" variant="outline" onPress={onRetry} />
-        </View>
+        <AppErrorState
+          title="Could not load your groups"
+          description="Your Ajo groups could not be refreshed. Check your connection and try again."
+          onRetry={onRetry}
+        />
       ) : null}
+
       {!loading && !error && !groups?.length ? (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.cardBackground, borderColor: colors.border },
-          ]}
-        >
-          <AppText weight="semibold">No Ajo groups yet</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            Groups you create or join will appear here.
-          </AppText>
-        </View>
+        <AppEmptyState
+          icon="people-outline"
+          title="No Ajo groups yet"
+          description="Groups you create or join will appear here."
+        />
       ) : null}
+
       {groups?.map((group) => (
-        <Pressable
+        <AppCard
           key={group.id}
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${group.name}`}
           onPress={() => onOpen(group.id)}
-          style={[
-            styles.card,
-            { backgroundColor: colors.cardBackground, borderColor: colors.border },
-          ]}
+          accessibilityLabel={`Open ${group.name}`}
         >
           <View style={styles.row}>
             <AppText weight="semibold" style={styles.name}>
               {group.name}
             </AppText>
-            <AppText weight="semibold" style={{ color: colors.primary }}>
-              {group.status}
-            </AppText>
+            <AppBadge label={statusLabel(group.status)} tone={statusTone(group.status)} />
           </View>
           <AppText style={{ color: colors.textMuted }}>
             {group._count.members} members · {group._count.slots}/{group.maxSlots} slots
           </AppText>
           <View style={styles.row}>
-            <AppText>{formatMinorAmount(group.baseContributionMinor, group.currency)}</AppText>
+            <AppAmount amountMinor={group.baseContributionMinor} currency={group.currency} />
             <AppText style={{ color: colors.textMuted }}>
               {group.contributionFrequency.toLowerCase()}
             </AppText>
           </View>
-        </Pressable>
+        </AppCard>
       ))}
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
   title: { fontSize: fontSizes.heading },
@@ -109,7 +116,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   flex: { flex: 1, gap: spacing.xs },
-  card: { borderRadius: radius.lg, borderWidth: 1, gap: spacing.md, padding: spacing.md },
-  row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
   name: { flex: 1, fontSize: fontSizes.body },
 });

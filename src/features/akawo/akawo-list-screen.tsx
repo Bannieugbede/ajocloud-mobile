@@ -1,9 +1,16 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+
 import type { AkawoGoal } from '@/api/endpoints/akawo';
+import { AppAmount } from '@/components/ui/app-amount';
+import { AppCard } from '@/components/ui/app-card';
+import { AppProgress } from '@/components/ui/app-progress';
+import { AppSkeletonCard } from '@/components/ui/app-skeleton';
+import { AppEmptyState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
-import { formatMinorAmount } from '@/utils/money';
+import { sumMinorAmounts } from '@/utils/money';
+
 export function AkawoListScreen({
   goals,
   loading,
@@ -14,62 +21,81 @@ export function AkawoListScreen({
   onOpen: (id: string) => void;
 }) {
   const { colors } = useTheme();
-  const total = goals?.reduce((sum, goal) => sum + BigInt(goal.savedMinor), 0n) ?? 0n;
+  const total = sumMinorAmounts(goals?.map((goal) => goal.savedMinor) ?? []);
+
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.hero, { backgroundColor: colors.primary }]}>
-        <AppText style={{ color: colors.textInverse }}>TOTAL SAVED</AppText>
-        <AppText weight="bold" style={[styles.title, { color: colors.textInverse }]}>
-          {formatMinorAmount(total.toString())}
+        <AppText style={styles.heroLabel}>TOTAL SAVED</AppText>
+        <AppAmount amountMinor={total} size="heading" onInverse />
+        <AppText style={styles.heroLabel}>
+          {goals?.length ?? 0} {goals?.length === 1 ? 'goal' : 'goals'}
         </AppText>
-        <AppText style={{ color: colors.textInverse }}>{goals?.length ?? 0} goals</AppText>
       </View>
+
       {loading ? (
-        <ActivityIndicator accessibilityLabel="Loading Akawo goals" color={colors.primary} />
+        <>
+          <AppSkeletonCard testID="akawo-skeleton" />
+          <AppSkeletonCard />
+        </>
       ) : null}
+
       {!loading && !goals?.length ? (
-        <View style={[styles.card, { borderColor: colors.border }]}>
-          <AppText weight="semibold">No Akawo goals yet</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            Create-goal form is the next step in this phase.
-          </AppText>
-        </View>
+        <AppEmptyState
+          icon="wallet-outline"
+          title="No Akawo goals yet"
+          description="Create-goal form is the next step in this phase."
+        />
       ) : null}
+
       {goals?.map((goal) => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${goal.name}`}
-          onPress={() => onOpen(goal.id)}
+        <AppCard
           key={goal.id}
-          style={[
-            styles.card,
-            { backgroundColor: colors.cardBackground, borderColor: colors.border },
-          ]}
+          onPress={() => onOpen(goal.id)}
+          accessibilityLabel={`Open ${goal.name}`}
         >
           <View style={styles.row}>
-            <AppText weight="semibold">{goal.name}</AppText>
+            <AppText weight="semibold" style={styles.name}>
+              {goal.name}
+            </AppText>
             <AppText style={{ color: colors.primary }}>
               {goal.progressBps === null ? 'Flexible' : `${Math.round(goal.progressBps / 100)}%`}
             </AppText>
           </View>
-          <AppText>
-            {formatMinorAmount(goal.savedMinor, goal.currency)} of{' '}
-            {goal.targetMinor === '0'
-              ? 'flexible target'
-              : formatMinorAmount(goal.targetMinor, goal.currency)}
-          </AppText>
+          {goal.progressBps === null ? null : (
+            <AppProgress progressBps={goal.progressBps} label={goal.name} showValue={false} />
+          )}
+          <View style={styles.row}>
+            <AppAmount amountMinor={goal.savedMinor} currency={goal.currency} />
+            {goal.targetMinor === '0' ? (
+              <AppText style={{ color: colors.textMuted }}>Flexible target</AppText>
+            ) : (
+              <AppAmount
+                amountMinor={goal.targetMinor}
+                currency={goal.currency}
+                size="caption"
+                style={{ color: colors.textMuted }}
+              />
+            )}
+          </View>
           <AppText style={{ color: colors.textMuted }}>
             {goal.type.toLowerCase()} · {goal.status.toLowerCase()}
           </AppText>
-        </Pressable>
+        </AppCard>
       ))}
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { gap: spacing.md, padding: spacing.lg },
+  container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
   hero: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.lg },
-  title: { fontSize: fontSizes.heading },
-  card: { borderRadius: radius.lg, borderWidth: 1, gap: spacing.sm, padding: spacing.md },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  heroLabel: { color: 'rgba(255,255,255,0.78)', fontSize: fontSizes.caption, letterSpacing: 1.1 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  name: { flex: 1, fontSize: fontSizes.body },
 });
