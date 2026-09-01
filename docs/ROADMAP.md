@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-Last audited: 2026-07-16. Status vocabulary: `NOT STARTED`, `READY`, `IN PROGRESS`, `BLOCKED`,
+Last audited: 2026-09-01. Status vocabulary: `NOT STARTED`, `READY`, `IN PROGRESS`, `BLOCKED`,
 `IN REVIEW`, `COMPLETED`, `DEFERRED`. Percentages are checklist counts, not estimates of effort.
 The screen-level purpose, route, roles, access, header/actions, classification, backend/database/seed
 dependency, sections/components/forms/validation, states, offline/pagination/refresh, permissions,
@@ -15,20 +15,20 @@ backend work, dependencies, status, and definition of done recorded here and in
 
 ## Progress summary
 
-| Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs           |
-| --------------------------- | -----------------: | ----------- | ----------------------- | ---------------- | ---------------------- |
-| 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded               |
-| 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs     |
-| 2 Design system             |               7/18 | IN PROGRESS | N/A                     | Tokens ready     | Auth primitives tested |
-| 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests        |
-| 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review    |
-| 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested          |
-| 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested            |
-| 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested            |
-| 8 Akawo                     |                2/3 | IN PROGRESS | Goals/progress ready    | Ready            | List behavior tested   |
-| 9 Wallet/payments/activity  |              2/TBD | IN PROGRESS | Summary/history ready   | Partial          | Validation passed      |
-| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started            |
-| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started            |
+| Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs         |
+| --------------------------- | -----------------: | ----------- | ----------------------- | ---------------- | -------------------- |
+| 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded             |
+| 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs   |
+| 2 Design system             |              16/19 | IN REVIEW   | N/A                     | Tokens ready     | 21 tests added       |
+| 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests      |
+| 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review  |
+| 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested        |
+| 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested          |
+| 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested          |
+| 8 Akawo                     |                2/3 | IN PROGRESS | Goals/progress ready    | Ready            | List behavior tested |
+| 9 Wallet/payments/activity  |              2/TBD | IN PROGRESS | Summary/history ready   | Partial          | Validation passed    |
+| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started          |
+| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started          |
 
 The pre-auth Introduction is retired. Launch, Welcome/public legal, and four dynamic authentication
 screens are in review.
@@ -81,15 +81,33 @@ Validation on 2026-07-16: combined validation passed; 7 suites/8 tests passed; E
 was clean; Expo Doctor passed 20/20; production static web export generated all routes. Physical
 iOS/Android development and release builds remain explicitly unchecked.
 
-## Phase 2 — Native design system (IN PROGRESS, P0)
+## Phase 2 — Native design system (IN REVIEW, P0)
 
-Build only as real screens demand each item: AppText [x], AppButton variants [x], IconButton [ ],
-Input/TextArea [x], Password/OTP/PIN [x], FormField [x], Select [ ], Checkbox/Radio/Switch [x],
-Card/ListItem/Divider [ ], Badge/Avatar [ ], Amount/Currency/Date [ ], Progress [ ], Search [ ],
-Screen/Scroll/Keyboard/Refresh wrappers [x], Skeleton/Loading [ ], Empty/Error [ ], Alert/Modal [x],
-Offline banner [ ], native header presets [ ], domain cards [ ]. Each requires both modes, dynamic
+Build only as real screens demand each item: AppText [x], AppButton variants [x], IconButton [x],
+Input/TextArea [x], Password/OTP/PIN [x], FormField [x], Select [x], Checkbox/Radio/Switch [x],
+Card/ListItem/Divider [x], Badge/Avatar [x], Amount/Currency [x], Date [ ], Progress [x], Search [x],
+Screen/Scroll/Keyboard/Refresh wrappers [x], Skeleton/Loading [x], Empty/Error [x], Alert/Modal [x],
+Offline banner [x], native header presets [ ], domain cards [ ]. Each requires both modes, dynamic
 type, 48dp targets, accessible states, behavior tests, and documentation. Bottom sheets/toasts are
 deferred until a concrete accessibility/product requirement justifies a dependency or internal build.
+
+Completed 2026-09-01. Summary: the card, status, empty, loading, error/retry and row patterns that
+the product screens had each re-declared are now shared primitives, and the Ajo and Akawo list
+screens consume them. Files: `src/components/ui/app-{amount,avatar,badge,card,divider,icon-button,
+list-item,offline-banner,progress,search,skeleton,state}.tsx`, `src/hooks/use-online-status.ts`,
+`src/utils/money.ts`, `src/features/ajo/ajo-list-screen.tsx`,
+`src/features/akawo/akawo-list-screen.tsx`. Tests: `__tests__/ui-primitives.test.tsx` (15),
+`__tests__/money.test.ts` (6). Validation on 2026-09-01: `bun run validate` passed — format, lint,
+strict typecheck, 21 suites/90 tests, terminology.
+
+Behavioural change worth noting: `formatMinorAmount` previously parsed minor units through
+`Number()`, which rounds silently above 2^53 — reachable for a 1,000-member group pool, and the
+Akawo screen already summed with `BigInt` to work around it. Formatting now stays in `BigInt` and
+string space end to end. `sumMinorAmounts` was added for list and wallet totals.
+
+Remaining in this phase: a Date/relative-time primitive (deferred until a screen shows real
+schedule dates), native header presets, and domain cards. Both outstanding items depend on
+Phase 3 header centralization and on the contribution/payout APIs that are still backend-blocked.
 
 ## Phase 3 — Navigation and app shell (IN PROGRESS, P0)
 
