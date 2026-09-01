@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.joshhumphrey02.ajocloud"
+      "bundleIdentifier": "com.mirumversal.ajocloud"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.joshhumphrey02.ajocloud"
+      "package": "com.mirumversal.ajocloud"
     },
     "web": {
       "output": "static",
