@@ -1,5 +1,7 @@
 export type AppErrorKind =
   | 'network'
+  /** The request was aborted because the server did not answer in time. */
+  | 'timeout'
   | 'authentication'
   | 'authorization'
   | 'validation'

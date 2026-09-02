@@ -6,6 +6,14 @@ import { normalizeHttpError, normalizeUnknownError } from './normalize-error';
 
 export type AccessTokenProvider = () => Promise<string | null>;
 
+/**
+ * Requests are given 30 seconds. The backend's authentication endpoints have
+ * been observed taking 6-12 seconds under load, so the previous 15 seconds
+ * aborted responses that were still on their way and surfaced as a failure the
+ * user could do nothing about.
+ */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
   timeoutMs?: number;
@@ -20,7 +28,12 @@ export class ApiClient {
 
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 15_000);
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    // A caller-supplied signal used to replace ours, which silently disabled the
+    // timeout for that request. Both are honoured now: either aborts the fetch.
+    const callerSignal = options.signal;
+    const onCallerAbort = () => controller.abort();
+    callerSignal?.addEventListener('abort', onCallerAbort);
 
     try {
       const token = await this.getAccessToken();
@@ -34,7 +47,7 @@ export class ApiClient {
         ...options,
         headers,
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
-        signal: options.signal ?? controller.signal,
+        signal: controller.signal,
       });
       const payload: unknown =
         response.status === 204 ? undefined : await response.json().catch(() => undefined);
@@ -51,6 +64,7 @@ export class ApiClient {
       throw normalizeUnknownError(error);
     } finally {
       clearTimeout(timeout);
+      callerSignal?.removeEventListener('abort', onCallerAbort);
     }
   }
 }

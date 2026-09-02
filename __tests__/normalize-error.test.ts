@@ -19,3 +19,17 @@ it('normalizes backend and network errors', () => {
     traceId: 'request-1',
   });
 });
+
+it('reports an aborted request as a timeout rather than an unknown failure', () => {
+  // React Native aborts with a DOMException named AbortError, which is not a
+  // TypeError; treating it as one left the user with "something unexpected".
+  const abort = Object.assign(new Error('Aborted'), { name: 'AbortError' });
+  const normalized = normalizeUnknownError(abort);
+
+  expect(normalized.kind).toBe('timeout');
+  expect(normalized.message).toMatch(/took too long/i);
+});
+
+it('still reports a genuinely unknown failure as unknown', () => {
+  expect(normalizeUnknownError(new Error('boom')).kind).toBe('unknown');
+});

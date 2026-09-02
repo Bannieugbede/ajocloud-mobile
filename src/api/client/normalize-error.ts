@@ -36,10 +36,29 @@ export function normalizeHttpError(status: number, payload?: unknown, traceId?: 
 }
 
 export function normalizeUnknownError(error: unknown): AppError {
+  // An aborted fetch arrives as an AbortError DOMException, not a TypeError, so
+  // it previously fell through to "something unexpected" and told the user
+  // nothing about what had actually happened.
+  if (isAbortError(error)) {
+    return {
+      kind: 'timeout',
+      message: 'The server took too long to respond. Please try again.',
+      cause: error,
+    };
+  }
   if (error instanceof TypeError) {
     return { kind: 'network', message: 'Check your connection and try again.', cause: error };
   }
   return { kind: 'unknown', message: 'Something unexpected happened.', cause: error };
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'AbortError'
+  );
 }
 
 function isFieldErrors(value: unknown): value is Record<string, string[]> {
