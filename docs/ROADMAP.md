@@ -15,20 +15,20 @@ backend work, dependencies, status, and definition of done recorded here and in
 
 ## Progress summary
 
-| Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs         |
-| --------------------------- | -----------------: | ----------- | ----------------------- | ---------------- | -------------------- |
-| 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded             |
-| 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs   |
-| 2 Design system             |              16/19 | IN REVIEW   | N/A                     | Tokens ready     | 21 tests added       |
-| 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests      |
-| 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review  |
-| 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested        |
-| 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested          |
-| 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested          |
-| 8 Akawo                     |                2/3 | IN PROGRESS | Goals/progress ready    | Ready            | List behavior tested |
-| 9 Wallet/payments/activity  |              2/TBD | IN PROGRESS | Summary/history ready   | Partial          | Validation passed    |
-| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started          |
-| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started          |
+| Phase                       | Checklist complete | Status      | Backend readiness       | Design readiness | Testing/docs        |
+| --------------------------- | -----------------: | ----------- | ----------------------- | ---------------- | ------------------- |
+| 0 Audit                     |                8/8 | COMPLETED   | Not available           | Audited          | Recorded            |
+| 1 Foundation                |              16/20 | IN PROGRESS | Client only             | N/A              | Initial tests/docs  |
+| 2 Design system             |              16/19 | IN REVIEW   | N/A                     | Tokens ready     | 21 tests added      |
+| 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests     |
+| 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review |
+| 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested       |
+| 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
+| 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
+| 8 Akawo                     |              12/13 | IN PROGRESS | Pools live; goals ready | Ready            | 20 tests added      |
+| 9 Wallet/payments/activity  |              5/TBD | IN PROGRESS | Payment APIs missing    | Screens ready    | 8 tests added       |
+| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started         |
+| 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started         |
 
 The pre-auth Introduction is retired. Launch, Welcome/public legal, and four dynamic authentication
 screens are in review.
@@ -349,3 +349,33 @@ lint, strict type checking, 14 suites/24 tests, and terminology checks.
 Record completion date, implementation summary, main files, tests, exact validation results,
 remaining limitations, follow-up work, backend/design/testing/documentation status. Change a screen to
 `COMPLETED` only after its entire inventory contract is satisfied; otherwise keep it `IN PROGRESS`.
+
+## Phase 8b — Akawo group pools (IN PROGRESS, P1)
+
+Completed 2026-09-02. Ten screens covering both sides of a collection pool,
+against the backend's `ADR-007` models.
+
+Organiser: pools list, create, code-shown-once, manage (members, waive, remove,
+open/close/cancel), and PDF export of the record.
+Member: pools list, join by code with preview-before-commit, and the member view
+with their own due.
+Shared payment: method selection, PIN confirmation, and result — consumed by a
+feature through `src/store/payment-store.ts`.
+
+Files: `src/features/akawo/*`, `src/features/payments/*`,
+`src/api/endpoints/{akawo-pools,payments}.ts`, `src/app/(tabs)/akawo/pools/*`,
+`src/app/(tabs)/akawo/pay/*`. Tests: `__tests__/akawo-pools.test.tsx` (12),
+`__tests__/payment-screens.test.tsx` (8). Validation on 2026-09-02:
+`bun run validate` passed — 24 suites, 116 tests; `expo export --platform web`
+resolved every route.
+
+Navigation: push for reversible steps (opening a pool, starting a payment,
+choosing a method); replace after creating a pool, joining one, and completing a
+payment, so a back gesture cannot resubmit a form or re-authorise a payment.
+
+Limitations: **the three payment endpoints do not exist** — the flow is typed
+against the contract in `BACKEND_REQUIREMENTS.md` and cannot complete a payment
+until they land. `feeMinor` is additionally blocked on the fee model. Sharing
+from the manage screen omits the join code, because the backend stores only a
+digest and cannot return the plaintext again. Not exercised against a device;
+the deployed API was unreachable during this work.
