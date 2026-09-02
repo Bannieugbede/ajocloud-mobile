@@ -131,37 +131,40 @@ Still deferred:
 - Tier 3 biometric checks (face match, liveness).
 - Compliance review tooling for profiles held at `REQUIRES_REVIEW`.
 
-## Payments — required contract
+## Payments — delivered 2026-09-02
 
-Nothing on the backend moves money: wallets are read-only and no deposit,
-withdrawal, or funding route exists. The payment screens are built against the
-contract below, typed in `src/api/endpoints/payments.ts`, so they work the moment
-these land. Every product pays through this one contract rather than growing its
-own payment route.
+Implemented on the backend. See `docs/payments.md` and
+`docs/adr/ADR-008-shared-payment-intents.md` in the backend repo. Every product
+pays through this one contract rather than growing its own payment route.
 
-- **Required** `POST /api/v1/payments/intents` — creates an intent for a target
-  (`AKAWO_POOL_DUE`, `AJO_CONTRIBUTION`, `FOOD_SUBSCRIPTION`, `WALLET_TOPUP`).
-  The **amount must be resolved server-side from the target**, never accepted
-  from the client, or a tampered request underpays. Requires `Idempotency-Key`:
-  a retried tap must not create a second payment. Returns `amountMinor`,
-  `feeMinor` and `totalMinor` separately so the screen can show what is charged.
-- **Required** `POST /api/v1/payments/intents/:id/confirm` — takes a method
-  (`WALLET`, `TRANSFER`, `CARD`) and the transaction PIN, which the existing
-  `POST /auth/transaction-pin/verify` already validates. Requires
-  `Idempotency-Key`. Returns the intent with `transferInstructions` for a
-  transfer or `checkoutUrl` for a card.
-- **Required** `GET /api/v1/payments/intents/:id` — polled while `PROCESSING`,
-  e.g. while a bank transfer is awaited.
-- **Required** `GET /api/v1/wallets/me/balance` — available balance, so the
-  wallet method can be shown as affordable or not before the user commits.
+| Endpoint                                    | Purpose                                                     |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `POST /api/v1/payments/intents`             | Creates an intent for a target. Requires `Idempotency-Key`. |
+| `POST /api/v1/payments/intents/:id/confirm` | Method plus transaction PIN. Requires `Idempotency-Key`.    |
+| `GET  /api/v1/payments/intents/:id`         | Polled while `PROCESSING`.                                  |
+| `GET  /api/v1/wallets/me/balance`           | Available balance, to offer or grey out the wallet.         |
 
-Settlement must post to the ledger and transition the target in one transaction.
-For an Akawo pool due specifically, ADR-007 requires that `PAID` is reached only
-this way; the pool module deliberately contains no path that writes it.
+Client notes:
 
-Blocked on: the fee model (`docs/open-questions/platform-fee-model.md` in the
-backend repo — `feeMinor` cannot be computed until the banded model is settled)
-and Monnify credentials for the transfer and card rails.
+- The request body is flat (`targetType`, optional `targetId`) and carries **no
+  amount**. The server resolves it from the target and re-checks it at
+  settlement, so a stale or tampered amount is refused rather than paid.
+- Status is `REQUIRES_CONFIRMATION` (not `REQUIRES_METHOD`), plus `PROCESSING`,
+  `SUCCEEDED`, `FAILED`, `CANCELLED`.
+- `transferInstructions` and `checkoutUrl` appear only on the confirm response,
+  and only for that method. Transfer instructions include a `reference` the
+  payer must quote — without it an incoming credit cannot be matched back.
+- `feeMinor` is currently always `"0"`. The banded model is still undecided, so
+  the field is real and displayed but charges nothing yet.
+
+**What still does not work end to end:** a `TRANSFER` or `CARD` payment reaches
+`PROCESSING` and stays there. Only a signature-verified Monnify webhook may
+complete an external payment, and that handler is not written. Wallet payments
+settle fully today, so the Akawo pool flow completes when the payer has a funded
+wallet.
+
+`AJO_CONTRIBUTION`, `FOOD_SUBSCRIPTION` and `WALLET_TOPUP` are refused with 422
+until those products expose something payable.
 
 ## Akawo group pools
 

@@ -373,9 +373,18 @@ Navigation: push for reversible steps (opening a pool, starting a payment,
 choosing a method); replace after creating a pool, joining one, and completing a
 payment, so a back gesture cannot resubmit a form or re-authorise a payment.
 
-Limitations: **the three payment endpoints do not exist** — the flow is typed
-against the contract in `BACKEND_REQUIREMENTS.md` and cannot complete a payment
-until they land. `feeMinor` is additionally blocked on the fee model. Sharing
-from the manage screen omits the join code, because the backend stores only a
-digest and cannot return the plaintext again. Not exercised against a device;
-the deployed API was unreachable during this work.
+Limitations: sharing from the manage screen omits the join code, because the
+backend stores only a digest and cannot return the plaintext again. Not
+exercised against a device.
+
+**Update 2026-09-02 — the payment endpoints now exist.** All four are
+implemented and the mobile client is aligned to the delivered shapes (a flat
+request body, `REQUIRES_CONFIRMATION` rather than `REQUIRES_METHOD`, and a
+transfer `reference` that is now displayed). A wallet payment completes end to
+end: verified locally against a seeded due, with the balance falling by exactly
+the amount and the due transitioning to `PAID`.
+
+Still incomplete: a `TRANSFER` or `CARD` payment reaches `PROCESSING` and stops,
+because the Monnify webhook that completes an external payment is not written,
+and no Monnify credentials are configured. `feeMinor` is a real field returning
+`"0"` until the banded fee model is decided.
