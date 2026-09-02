@@ -457,3 +457,31 @@ a reference that no longer matches its validation (422), a missing idempotency k
 
 Not yet built: Food subscription actions, Akawo goal creation, wallet
 fund/withdraw/send, and profile/settings.
+
+## Food, Akawo goals, wallet and profile (2026-09-02)
+
+| Screen                                | Route                             |
+| ------------------------------------- | --------------------------------- |
+| Create a savings goal                 | `/(tabs)/akawo/create-goal`       |
+| Join / leave a food programme         | `/(tabs)/food/[programmeId]`      |
+| Send money                            | `/(tabs)/profile/wallet/send`     |
+| Withdraw                              | `/(tabs)/profile/wallet/withdraw` |
+| Profile menu, edit, security, support | `/(tabs)/profile/*`               |
+
+Three of these needed backend routes that did not exist — food enrolment and
+wallet send/withdraw — which are described in the backend repo's commit. Wallet
+**funding** is still not possible: money enters a wallet through a payment rail
+that is not wired up, so development balances are seeded instead.
+
+A withdrawal reserves funds and stops at `PENDING`. The screens never say the
+money has been sent, because an operator releases the payout.
+
+`PATCH /users/me` returns the **profile alone**, not the whole user. Writing that
+response into the `current-user` cache blanked the email and status across every
+screen that read them; it is merged instead, and `mergeProfile` has a test.
+
+A goal's kind changes what is asked for: a flexible goal has no target, and a
+locked one needs a future date because it cannot be withdrawn from before it.
+
+Not yet built: Food coordinator tooling (creating programmes, procurement,
+distribution), Ajo swap approvals, and notification preferences.

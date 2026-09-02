@@ -41,3 +41,45 @@ export function listFoodProgrammes(): Promise<FoodProgrammePage> {
 export function getFoodProgramme(programmeId: string): Promise<FoodProgramme> {
   return client().request(`/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}`);
 }
+
+export type FoodSubscription = {
+  id: string;
+  groupId: string;
+  packageId: string;
+  status: string;
+  quantity: number;
+  fulfilmentMethod: string;
+  createdAt: string;
+  group: { name: string; status: string; distributionAt: string | null };
+  package: { name: string; priceMinor: string; currency: string };
+};
+
+/**
+ * Enrols in one of a programme's packages.
+ *
+ * Each portion consumes a place, so quantity is checked against the
+ * programme's remaining capacity rather than a headcount.
+ */
+export function subscribeToProgramme(
+  programmeId: string,
+  input: { packageId: string; quantity?: number; fulfilmentMethod?: string },
+): Promise<FoodSubscription> {
+  if (!apiClient) throw new Error('API configuration is unavailable');
+  return apiClient.request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/subscribe`,
+    { method: 'POST', body: input },
+  );
+}
+
+export function unsubscribeFromProgramme(programmeId: string): Promise<FoodSubscription> {
+  if (!apiClient) throw new Error('API configuration is unavailable');
+  return apiClient.request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/unsubscribe`,
+    { method: 'POST' },
+  );
+}
+
+export function listMySubscriptions(): Promise<FoodSubscription[]> {
+  if (!apiClient) throw new Error('API configuration is unavailable');
+  return apiClient.request('/api/v1/food-ajo/programmes/subscriptions/mine');
+}

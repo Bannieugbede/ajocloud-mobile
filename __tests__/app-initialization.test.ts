@@ -35,7 +35,13 @@ function signedInAs(status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED') {
     email: 'member@example.com',
     phone: '+2348012345678',
     status,
-    profile: { firstName: 'Ayo', lastName: 'Cloud', avatarUrl: null },
+    profile: {
+      firstName: 'Ayo',
+      lastName: 'Cloud',
+      avatarUrl: null,
+      timezone: 'Africa/Lagos',
+      locale: 'en-NG',
+    },
   });
 }
 
@@ -89,7 +95,13 @@ it('restores an active authenticated session', async () => {
     email: 'member@example.com',
     phone: '+2348012345678',
     status: 'ACTIVE',
-    profile: { firstName: 'Ayo', lastName: 'Cloud', avatarUrl: null },
+    profile: {
+      firstName: 'Ayo',
+      lastName: 'Cloud',
+      avatarUrl: null,
+      timezone: 'Africa/Lagos',
+      locale: 'en-NG',
+    },
   });
   await expect(initializeApp()).resolves.toMatchObject({ initialRoute: '/(tabs)/home' });
 });

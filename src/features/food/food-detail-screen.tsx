@@ -1,20 +1,33 @@
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import type { FoodProgramme } from '@/api/endpoints/food-ajo';
+import type { FoodProgramme, FoodSubscription } from '@/api/endpoints/food-ajo';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
+import { statusLabel } from '@/utils/status';
+import type { AppError } from '@/types/errors';
 export function FoodDetailScreen({
   programme,
+  subscription,
   loading,
   error,
+  submitting,
+  actionError,
   onRetry,
+  onSubscribe,
+  onUnsubscribe,
 }: {
   programme?: FoodProgramme;
+  /** The viewer's own enrolment in this programme, if any. */
+  subscription?: FoodSubscription | null;
   loading: boolean;
   error: boolean;
+  submitting?: boolean;
+  actionError?: AppError | null;
   onRetry: () => void;
+  onSubscribe: (packageId: string) => void;
+  onUnsubscribe: () => void;
 }) {
   const { colors } = useTheme();
   if (loading)
@@ -29,6 +42,10 @@ export function FoodDetailScreen({
       </View>
     );
   const spots = Math.max(0, programme.enrolmentCapacity - programme._count.subscriptions);
+  const open = programme.status === 'OPEN';
+  // A cancelled enrolment does not count: the member may join again.
+  const enrolled =
+    subscription != null && (subscription.status === 'PENDING' || subscription.status === 'ACTIVE');
   return (
     <ScrollView
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
@@ -65,6 +82,42 @@ export function FoodDetailScreen({
           </View>
         ))}
       </View>
+      {enrolled ? (
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.successSoft, borderColor: colors.successSoft },
+          ]}
+        >
+          <AppText weight="semibold">You have joined this programme</AppText>
+          <AppText style={{ color: colors.textMuted }}>
+            {subscription?.quantity ?? 1} portion{(subscription?.quantity ?? 1) === 1 ? '' : 's'} ·{' '}
+            {statusLabel(subscription?.status ?? '')}
+          </AppText>
+          <AppButton
+            label="Leave this programme"
+            variant="outline"
+            onPress={onUnsubscribe}
+            loading={submitting ?? false}
+            disabled={submitting ?? false}
+          />
+        </View>
+      ) : null}
+
+      {!open && !enrolled ? (
+        <AppText style={{ color: colors.textMuted }}>
+          {/* ACTIVE means buying has started, so a late joiner would not be in
+              what was ordered. */}
+          This programme is not taking new members.
+        </AppText>
+      ) : null}
+
+      {actionError ? (
+        <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
+          {actionError.message}
+        </AppText>
+      ) : null}
+
       <AppText accessibilityRole="header" weight="semibold">
         Package options
       </AppText>
@@ -87,6 +140,14 @@ export function FoodDetailScreen({
               ✓ {item.name} · {item.quantity} {item.unit}
             </AppText>
           ))}
+          {open && !enrolled ? (
+            <AppButton
+              label={spots > 0 ? 'Join with this package' : 'Programme full'}
+              onPress={() => onSubscribe(foodPackage.id)}
+              loading={submitting ?? false}
+              disabled={(submitting ?? false) || spots <= 0}
+            />
+          ) : null}
           <AppText style={{ color: foodPackage.priceLockedAt ? colors.success : colors.warning }}>
             {foodPackage.priceLockedAt ? 'Price locked' : 'Price not yet locked'}
           </AppText>

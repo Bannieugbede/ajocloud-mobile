@@ -166,9 +166,12 @@ describe('BankAccountStep', () => {
       bankCode: '000001',
     });
     jest.mocked(linkBankAccount).mockResolvedValue({
+      id: 'bank-1',
+      bankCode: '000001',
+      bankName: 'Test Bank',
       accountMasked: '******6789',
       accountName: 'Ada Okafor',
-      bankName: 'Test Bank',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
     });
     const onLinked = jest.fn();
     const view = await render(<BankAccountStep onLinked={onLinked} />, { wrapper: Wrapper });

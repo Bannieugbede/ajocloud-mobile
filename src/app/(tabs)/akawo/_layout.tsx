@@ -8,6 +8,7 @@ export default function AkawoLayout() {
   return (
     <Stack screenOptions={stackOptions}>
       <Stack.Screen name="index" options={{ title: 'Akawo' }} />
+      <Stack.Screen name="create-goal" options={{ title: 'New goal' }} />
       <Stack.Screen name="[goalId]" options={{ title: 'Akawo Goal' }} />
       <Stack.Screen name="pools/index" options={{ title: 'Pools' }} />
       <Stack.Screen name="pools/create" options={{ title: 'New pool' }} />

@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AkawoGoal } from '@/api/endpoints/akawo';
 import { AppListItem } from '@/components/ui/app-list-item';
 import { AppAmount } from '@/components/ui/app-amount';
+import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppProgress } from '@/components/ui/app-progress';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
@@ -17,11 +18,13 @@ export function AkawoListScreen({
   loading,
   onOpen,
   onOpenPools,
+  onCreateGoal,
 }: {
   goals?: AkawoGoal[];
   loading: boolean;
   onOpen: (id: string) => void;
   onOpenPools: () => void;
+  onCreateGoal: () => void;
 }) {
   const { colors } = useTheme();
   const total = sumMinorAmounts(goals?.map((goal) => goal.savedMinor) ?? []);
@@ -49,6 +52,8 @@ export function AkawoListScreen({
         Your savings goals
       </AppText>
 
+      <AppButton label="Start a goal" onPress={onCreateGoal} />
+
       {loading ? (
         <>
           <AppSkeletonCard testID="akawo-skeleton" />
@@ -60,7 +65,9 @@ export function AkawoListScreen({
         <AppEmptyState
           icon="wallet-outline"
           title="No Akawo goals yet"
-          description="Create-goal form is the next step in this phase."
+          description="Set aside money towards something, on your own terms."
+          action="Start a goal"
+          onAction={onCreateGoal}
         />
       ) : null}
 

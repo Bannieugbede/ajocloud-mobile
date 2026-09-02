@@ -12,7 +12,13 @@ it('renders the reference dashboard hierarchy without invented balances', async 
         email: 'ayo@example.com',
         phone: '+2348012345678',
         status: 'ACTIVE',
-        profile: { firstName: 'Ayo', lastName: 'Cloud', avatarUrl: null },
+        profile: {
+          firstName: 'Ayo',
+          lastName: 'Cloud',
+          avatarUrl: null,
+          timezone: 'Africa/Lagos',
+          locale: 'en-NG',
+        },
       }}
       wallets={[]}
       groups={[]}

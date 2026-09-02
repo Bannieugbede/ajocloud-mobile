@@ -50,9 +50,14 @@ export type Bank = { code: string; name: string };
 export type AccountInquiry = { accountName: string; bankCode: string };
 
 export type LinkedBankAccount = {
-  accountMasked: string;
-  accountName: string;
+  id: string;
+  bankCode: string;
   bankName: string;
+  /** Last four digits only; the full number is never returned. */
+  accountMasked: string;
+  /** Name the bank returned at inquiry, not one the user typed. */
+  accountName: string;
+  verifiedAt: string;
 };
 
 function client() {
@@ -88,4 +93,9 @@ export function linkBankAccount(input: {
   accountNumber: string;
 }): Promise<LinkedBankAccount> {
   return client().request('/api/v1/kyc/bank-accounts', { method: 'POST', body: input });
+}
+
+/** Bank accounts already linked and verified. Wrapped, as the API returns it. */
+export function listBankAccounts(): Promise<{ accounts: LinkedBankAccount[] }> {
+  return client().request('/api/v1/kyc/bank-accounts');
 }

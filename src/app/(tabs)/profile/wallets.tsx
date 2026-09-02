@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { ScrollView, View } from 'react-native';
 import { getWalletSummary, getWalletTransactions, listWallets } from '@/api/endpoints/wallets';
+import { router } from 'expo-router';
+import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { formatMinorAmount } from '@/utils/money';
 
@@ -23,14 +25,24 @@ export default function WalletsRoute() {
         Wallet and Activity
       </AppText>
       {summary.data ? (
-        <View>
+        <View style={{ gap: 8 }}>
           <AppText>Available</AppText>
           <AppText weight="bold">
             {formatMinorAmount(summary.data.availableMinor, summary.data.currency)}
           </AppText>
+          {/* Shown because a withdrawal moves funds here: without it the
+              available balance appears to drop with the money nowhere. */}
           <AppText>
             Reserved: {formatMinorAmount(summary.data.reservedMinor, summary.data.currency)}
           </AppText>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <AppButton label="Send" onPress={() => router.push('/(tabs)/profile/wallet/send')} />
+            <AppButton
+              label="Withdraw"
+              variant="outline"
+              onPress={() => router.push('/(tabs)/profile/wallet/withdraw')}
+            />
+          </View>
         </View>
       ) : (
         <AppText>{wallets.isPending ? 'Loading wallet…' : 'Wallet balance unavailable.'}</AppText>
