@@ -1,7 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { AppAmount } from '@/components/ui/app-amount';
-import { AppBadge, statusLabel, statusTone } from '@/components/ui/app-badge';
 import { AppCard } from '@/components/ui/app-card';
 import { AppIconButton } from '@/components/ui/app-icon-button';
 import { AppListItem } from '@/components/ui/app-list-item';
@@ -9,6 +8,7 @@ import { AppProgress } from '@/components/ui/app-progress';
 import { AppSearch } from '@/components/ui/app-search';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
+import { statusLabel } from '@/utils/status';
 
 describe('AppCard', () => {
   it('stays a plain container until it is given an action', async () => {
@@ -45,17 +45,15 @@ describe('AppAmount', () => {
   });
 });
 
-describe('AppBadge', () => {
-  it('carries meaning in the label rather than colour alone', async () => {
-    const view = await render(<AppBadge label={statusLabel('PENDING_REVIEW')} tone="warning" />);
-    expect(view.getByText('Pending Review')).toBeTruthy();
+describe('statusLabel', () => {
+  it('renders a domain status as readable text', () => {
+    expect(statusLabel('PENDING_REVIEW')).toBe('Pending Review');
+    expect(statusLabel('ACTIVE')).toBe('Active');
   });
 
-  it('maps domain statuses onto consistent tones', async () => {
-    expect(statusTone('ACTIVE')).toBe('success');
-    expect(statusTone('DEFAULTED')).toBe('error');
-    expect(statusTone('PENDING')).toBe('warning');
-    expect(statusTone('SOMETHING_NEW')).toBe('neutral');
+  it('tolerates an unexpected shape rather than throwing', () => {
+    expect(statusLabel('')).toBe('');
+    expect(statusLabel('__ODD__VALUE__')).toBe('Odd Value');
   });
 });
 

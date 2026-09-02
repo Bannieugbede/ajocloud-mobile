@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
 import { AppAmount } from '@/components/ui/app-amount';
-import { AppBadge, statusLabel, statusTone } from '@/components/ui/app-badge';
 import { AppCard } from '@/components/ui/app-card';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
+import { statusLabel } from '@/utils/status';
 import { fontSizes, radius, spacing } from '@/theme';
 
 export function AjoListScreen({
@@ -30,15 +30,6 @@ export function AjoListScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View>
-        <AppText accessibilityRole="header" weight="bold" style={styles.title}>
-          My Ajo Groups
-        </AppText>
-        <AppText style={{ color: colors.textMuted }}>
-          Track contributions, membership, and group schedules.
-        </AppText>
-      </View>
-
       <View style={[styles.joinCard, { backgroundColor: colors.primarySoft }]}>
         <Ionicons
           name="key-outline"
@@ -84,14 +75,12 @@ export function AjoListScreen({
           onPress={() => onOpen(group.id)}
           accessibilityLabel={`Open ${group.name}`}
         >
-          <View style={styles.row}>
-            <AppText weight="semibold" style={styles.name}>
-              {group.name}
-            </AppText>
-            <AppBadge label={statusLabel(group.status)} tone={statusTone(group.status)} />
-          </View>
+          <AppText weight="semibold" style={styles.name}>
+            {group.name}
+          </AppText>
           <AppText style={{ color: colors.textMuted }}>
-            {group._count.members} members · {group._count.slots}/{group.maxSlots} slots
+            {statusLabel(group.status)} · {group._count.members} members · {group._count.slots}/
+            {group.maxSlots} slots
           </AppText>
           <View style={styles.row}>
             <AppAmount amountMinor={group.baseContributionMinor} currency={group.currency} />
@@ -107,7 +96,6 @@ export function AjoListScreen({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { fontSize: fontSizes.heading },
   joinCard: {
     alignItems: 'center',
     borderRadius: radius.lg,

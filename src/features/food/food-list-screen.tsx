@@ -24,14 +24,6 @@ export function FoodListScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View>
-        <AppText accessibilityRole="header" weight="bold" style={styles.title}>
-          Food Ajo
-        </AppText>
-        <AppText style={{ color: colors.textMuted }}>
-          Community food savings and verified bulk-purchase programmes.
-        </AppText>
-      </View>
       {loading ? (
         <ActivityIndicator
           accessibilityLabel="Loading Food Ajo programmes"
@@ -96,7 +88,6 @@ export function FoodListScreen({
 }
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { fontSize: fontSizes.heading },
   card: { borderRadius: radius.lg, borderWidth: 1, gap: spacing.md, padding: spacing.md },
   row: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   name: { flex: 1, fontSize: fontSizes.body },
