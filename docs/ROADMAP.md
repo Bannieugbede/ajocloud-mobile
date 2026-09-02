@@ -418,3 +418,42 @@ member's carries only their own.
 
 Not yet built: Food subscription actions, bill payments, Akawo goal creation,
 wallet fund/withdraw/send, and profile/settings.
+
+## Bill payment screens (2026-09-02)
+
+The bill-payments module was fully implemented on the backend with no mobile
+screen at all. Now built:
+
+| Screen     | Route                            | Notes                                                                        |
+| ---------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| Categories | `/(tabs)/bills`                  | Categories plus the five most recent payments, so a receipt can be reopened. |
+| Billers    | `/(tabs)/bills/[categoryId]`     | Products show their price: a fixed amount, a range, or "Any amount".         |
+| Pay        | `/(tabs)/bills/[categoryId]/pay` | Check the number, confirm the name, then the amount.                         |
+| Receipt    | `/(tabs)/bills/receipt`          | Polls only while the outcome can still change.                               |
+
+Bills does **not** use the shared payment-intent flow. The backend's
+`POST /bill-payments` takes a wallet and an amount directly and settles through
+its own reserve-then-settle path, which is already implemented and tested; routing
+it through payment intents would have meant backend work for no user-visible gain.
+
+Order matters in the pay screen: the reference is validated with the provider
+_before_ the amount is asked for. A payment quotes a validation bound to the exact
+reference that expires after fifteen minutes, so validating last would routinely
+produce a stale pair. Editing the reference clears the confirmation for the same
+reason.
+
+A fixed-amount product is displayed, not asked for — the backend refuses anything
+but the exact figure — and `resolveAmountMinor` sends the biller's amount rather
+than whatever is in the field, so a stale entry cannot submit a rejected figure.
+
+`RECONCILIATION_REQUIRED` is presented as its own outcome, neither success nor
+failure: the wallet was debited and the provider's result is unknown.
+
+Verified against a local backend: categories, billers, validation, payment,
+receipt, and the wallet balance falling by exactly the amount. The refusals the UI
+guards against were confirmed to be real — wrong amount for a fixed product (422),
+a reference that no longer matches its validation (422), a missing idempotency key
+(400) — and a replayed key returns the original payment rather than charging twice.
+
+Not yet built: Food subscription actions, Akawo goal creation, wallet
+fund/withdraw/send, and profile/settings.

@@ -26,6 +26,7 @@ export default function HomeRoute() {
       onToggleBalance={() => setBalanceVisible((visible) => !visible)}
       onRetry={retry}
       onOpenAjo={() => router.navigate('/(tabs)/ajo')}
+      onPayBill={() => router.push('/(tabs)/bills')}
       onOpenAkawo={() => router.navigate('/(tabs)/akawo')}
     />
   );

@@ -20,6 +20,7 @@ type HomeScreenProps = {
   onRetry: () => void;
   onOpenAjo: () => void;
   onOpenAkawo: () => void;
+  onPayBill: () => void;
 };
 
 export function HomeScreen(props: HomeScreenProps) {
@@ -109,6 +110,12 @@ export function HomeScreen(props: HomeScreenProps) {
         </AppText>
       </View>
 
+      {/* Bills is the one thing the wallet can already do, so it is offered
+          here rather than left only in the tab bar. */}
+      <View style={styles.billsRow}>
+        <AppButton label="Pay a bill" variant="outline" onPress={props.onPayBill} />
+      </View>
+
       <Section title="Upcoming Activity">
         <EmptyCard text="No authoritative upcoming contribution or payout feed is available yet." />
       </Section>
@@ -187,6 +194,7 @@ function EmptyCard({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  billsRow: { paddingHorizontal: spacing.lg },
   container: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
   heading: { fontSize: fontSizes.title },
   notice: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },

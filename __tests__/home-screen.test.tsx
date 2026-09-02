@@ -23,6 +23,7 @@ it('renders the reference dashboard hierarchy without invented balances', async 
       onRetry={jest.fn()}
       onOpenAjo={onOpenAjo}
       onOpenAkawo={jest.fn()}
+      onPayBill={jest.fn()}
     />,
   );
 
