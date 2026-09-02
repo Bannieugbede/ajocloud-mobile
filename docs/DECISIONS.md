@@ -228,3 +228,38 @@ everything on save would change settings the person never touched.
 **Only EMAIL and SMS are offered.** `PUSH` and `IN_APP` exist in the backend
 schema, but nothing delivers on either, and a switch for a channel that never
 sends misrepresents what the app does.
+
+## Device registration and push notifications (2026-09-03)
+
+**Registration lives in `saveTokenPair`, not in each sign-in screen.** That
+function is the one point every authentication path passes through — password,
+OTP and Google — so putting it there means no route can forget to announce the
+device. It is deliberately not awaited by the caller: a device that cannot be
+registered right now still has a valid session, and blocking navigation on a
+push token would make a slow network look like a failed login.
+
+**The fingerprint is generated, not derived from hardware.** Device identifiers
+are restricted on both platforms, change across reinstalls anyway, and would
+make the record more identifying than it needs to be. An opaque value in
+SecureStore is enough to recognise the same installation again; losing it
+registers a new device, which is the honest outcome because the app really is a
+fresh installation at that point.
+
+**A declined permission still registers the device.** The record is what a
+security review of an account reads, and a device nobody knows about cannot be
+reviewed or signed out. Being unreachable by push is an ordinary state rather
+than an error, so `acquirePushToken` returns null instead of throwing.
+
+**Deep links from notifications are validated before they are followed.** The
+link arrives from the server and travels through Apple's and Google's
+infrastructure, so following it unchecked would let anything that can forge a
+payload send a user anywhere. Only paths under the known tab prefixes are
+honoured, and anything carrying a scheme is refused.
+
+**The inbox is reached from Profile rather than becoming a seventh tab.** Six
+product tabs already fill the bar; a seventh would crowd them without earning
+its place next to Ajo, Food, Akawo and Bills.
+
+**Unread state is a word as well as a dot.** Status must never be carried by
+colour or shape alone, and the accessibility label says "unread" so a screen
+reader conveys the same thing the dot does.

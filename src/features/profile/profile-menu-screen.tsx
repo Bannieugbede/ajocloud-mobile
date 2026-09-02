@@ -20,6 +20,8 @@ export function ProfileMenuScreen({
   onEditProfile,
   onOpenSecurity,
   onOpenNotifications,
+  onOpenInbox,
+  unreadCount,
   onOpenSupport,
   onOpenLegal,
   onCompleteKyc,
@@ -32,6 +34,9 @@ export function ProfileMenuScreen({
   onEditProfile: () => void;
   onOpenSecurity: () => void;
   onOpenNotifications: () => void;
+  onOpenInbox: () => void;
+  /** Shown on the inbox row so an unread update is visible without opening it. */
+  unreadCount: number;
   onOpenSupport: () => void;
   onOpenLegal: () => void;
   onCompleteKyc: () => void;
@@ -72,10 +77,15 @@ export function ProfileMenuScreen({
         </AppCard>
       ) : null}
 
+      <AppListItem
+        title={unreadCount > 0 ? `Notifications (${String(unreadCount)} new)` : 'Notifications'}
+        icon="mail-outline"
+        onPress={onOpenInbox}
+      />
       <AppListItem title="Edit profile" icon="person-outline" onPress={onEditProfile} />
       <AppListItem title="Security" icon="lock-closed-outline" onPress={onOpenSecurity} />
       <AppListItem
-        title="Notifications"
+        title="Notification settings"
         icon="notifications-outline"
         onPress={onOpenNotifications}
       />

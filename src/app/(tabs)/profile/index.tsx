@@ -3,12 +3,19 @@ import { router } from 'expo-router';
 
 import { logout } from '@/api/endpoints/auth';
 import { getKycStatus } from '@/api/endpoints/kyc';
+import { getNotificationFeed } from '@/api/endpoints/notifications';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
 import { clearSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
 
 export default function ProfileRoute() {
+  // Read here so the menu row can show an unread count without the user having
+  // to open the inbox to discover there is something waiting.
+  const feed = useQuery({
+    queryKey: ['notification-feed'],
+    queryFn: () => getNotificationFeed(),
+  });
   const queryClient = useQueryClient();
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser, retry: 1 });
   // Failure here must not block the menu: verification status is extra
@@ -41,6 +48,8 @@ export default function ProfileRoute() {
       onEditProfile={() => router.push('/(tabs)/profile/edit')}
       onOpenSecurity={() => router.push('/(tabs)/profile/security')}
       onOpenNotifications={() => router.push('/(tabs)/profile/notifications')}
+      onOpenInbox={() => router.push('/(tabs)/notifications')}
+      unreadCount={feed.data?.unreadCount ?? 0}
       onOpenSupport={() => router.push('/(tabs)/profile/support')}
       onOpenLegal={() => router.push('/(public)/legal/privacy')}
       onCompleteKyc={() => router.push('/(auth)/verify-identity')}

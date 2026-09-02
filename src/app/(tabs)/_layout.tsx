@@ -75,6 +75,9 @@ export default function TabsLayout() {
       {/* The payment flow is entered from a feature, never from the tab bar:
           without a payment in progress it has nothing to show. */}
       <Tabs.Screen name="pay" options={{ href: null }} />
+      {/* Reached from Profile and from a notification tap. A seventh tab would
+          crowd the bar without earning its place next to the products. */}
+      <Tabs.Screen name="notifications" options={{ href: null, title: 'Notifications' }} />
       <Tabs.Screen
         name="profile"
         options={{

@@ -516,6 +516,46 @@ shows "Off" rather than guessing when stored preferences disagree about the
 window, since applying one row's window to everything on save would change
 settings the person never touched.
 
+## Push notifications, device registration, and the in-app inbox
+
+| Screen        | Route                   | Notes                                 |
+| ------------- | ----------------------- | ------------------------------------- |
+| Notifications | `/(tabs)/notifications` | Grouped by day; reached from Profile. |
+
+Every installation registers itself at sign-in. The call lives in `saveTokenPair`
+rather than in each screen, because that is the one point every sign-in passes
+through — password, OTP and Google alike — so no authentication path can forget
+to announce the device. It is deliberately not awaited: a device that cannot be
+registered right now still has a valid session, and blocking a sign-in on a push
+token would make a slow network look like a failed login.
+
+The device fingerprint is generated once and kept in SecureStore, not derived
+from hardware identifiers: those are restricted on both platforms, change across
+reinstalls anyway, and would make the record more identifying than it needs to
+be. Losing it simply registers a new device, which is honest — the app really is
+a fresh installation at that point.
+
+Permission refusal and offline token fetches return null rather than throwing.
+Being unreachable by push is an ordinary state, not an error, and the device is
+still registered so it appears in the account's device list either way.
+
+Per SDK 57: an Android channel is created before requesting a token, because
+Android requires one to exist first; `projectId` is passed explicitly rather
+than relying on manifest inference, which is absent in some build contexts; and
+the handler returns `shouldShowBanner`/`shouldShowList` rather than the
+deprecated `shouldShowAlert`.
+
+A notification's deep link is checked before it is followed. The link arrives
+from the server through Apple's and Google's infrastructure, so anything
+carrying a scheme or falling outside the known tab prefixes is refused — an
+unchecked server-supplied link is an open redirect.
+
+The inbox is reached from Profile rather than a seventh tab, which would crowd
+the bar without earning its place next to the products. Unread entries are
+marked with a word as well as a dot, since status must never be carried by
+colour alone.
+
 Not yet built: Food coordinator tooling (creating programmes, procurement,
 distribution) has no mobile surface — those routes exist on the backend but are
-only reachable by API.
+only reachable by API. Nothing yet emits product notifications either, so the
+inbox is empty in practice until the domain events are wired.
