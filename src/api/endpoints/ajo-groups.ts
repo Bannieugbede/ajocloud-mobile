@@ -135,6 +135,43 @@ export function lockAjoGroup(groupId: string): Promise<unknown> {
   });
 }
 
+/** One side of a proposed swap, named for display. */
+export type AjoSwapSide = {
+  slotId: string;
+  position: number | null;
+  memberId: string | null;
+  displayName: string;
+};
+
+export type AjoSwapApproval = {
+  approverMemberId: string;
+  decision: 'APPROVED' | 'REJECTED';
+  reason: string | null;
+  decidedAt: string;
+};
+
+export type AjoSwapRequest = {
+  id: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXECUTED' | 'EXPIRED' | 'CANCELLED';
+  initiatorType: string;
+  requestedByMemberId: string;
+  from: AjoSwapSide;
+  to: AjoSwapSide;
+  reason: string | null;
+  expiresAt: string | null;
+  decidedAt: string | null;
+  executedAt: string | null;
+  createdAt: string;
+  approvals: AjoSwapApproval[];
+  /** Server-computed: it depends on who owns the two affected positions, which
+      the client would otherwise have to re-derive and could get wrong. */
+  awaitingMyDecision: boolean;
+};
+
+export function listAjoSwaps(groupId: string): Promise<AjoSwapRequest[]> {
+  return client().request(`/api/v1/ajo-groups/${encodeURIComponent(groupId)}/swaps`);
+}
+
 export function requestAjoSwap(
   groupId: string,
   input: { fromSlotId: string; toSlotId: string; reason?: string },

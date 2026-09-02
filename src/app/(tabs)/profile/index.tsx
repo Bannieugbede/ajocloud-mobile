@@ -40,6 +40,7 @@ export default function ProfileRoute() {
       signingOut={signOut.isPending}
       onEditProfile={() => router.push('/(tabs)/profile/edit')}
       onOpenSecurity={() => router.push('/(tabs)/profile/security')}
+      onOpenNotifications={() => router.push('/(tabs)/profile/notifications')}
       onOpenSupport={() => router.push('/(tabs)/profile/support')}
       onOpenLegal={() => router.push('/(public)/legal/privacy')}
       onCompleteKyc={() => router.push('/(auth)/verify-identity')}

@@ -139,6 +139,8 @@ describe('AjoDetailScreen', () => {
         onRetry={jest.fn()}
         onLock={jest.fn()}
         onRequestSwap={jest.fn()}
+        onViewSwaps={jest.fn()}
+        swapsAwaitingMe={0}
         onPayContribution={jest.fn()}
         {...overrides}
       />,

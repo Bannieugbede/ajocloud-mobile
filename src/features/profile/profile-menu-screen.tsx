@@ -19,6 +19,7 @@ export function ProfileMenuScreen({
   signingOut,
   onEditProfile,
   onOpenSecurity,
+  onOpenNotifications,
   onOpenSupport,
   onOpenLegal,
   onCompleteKyc,
@@ -30,6 +31,7 @@ export function ProfileMenuScreen({
   signingOut: boolean;
   onEditProfile: () => void;
   onOpenSecurity: () => void;
+  onOpenNotifications: () => void;
   onOpenSupport: () => void;
   onOpenLegal: () => void;
   onCompleteKyc: () => void;
@@ -72,6 +74,11 @@ export function ProfileMenuScreen({
 
       <AppListItem title="Edit profile" icon="person-outline" onPress={onEditProfile} />
       <AppListItem title="Security" icon="lock-closed-outline" onPress={onOpenSecurity} />
+      <AppListItem
+        title="Notifications"
+        icon="notifications-outline"
+        onPress={onOpenNotifications}
+      />
       <AppListItem title="Get help" icon="help-buoy-outline" onPress={onOpenSupport} />
       <AppListItem title="Privacy and terms" icon="document-text-outline" onPress={onOpenLegal} />
 

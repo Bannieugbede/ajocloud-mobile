@@ -28,6 +28,8 @@ export function AjoDetailScreen({
   onRetry,
   onLock,
   onRequestSwap,
+  onViewSwaps,
+  swapsAwaitingMe,
   onPayContribution,
 }: {
   group?: AjoGroupDetail;
@@ -39,6 +41,10 @@ export function AjoDetailScreen({
   onRetry: () => void;
   onLock: () => void;
   onRequestSwap: () => void;
+  onViewSwaps: () => void;
+  /** Requests needing this member's decision, so the entry point says so
+      rather than making them open the screen to find out. */
+  swapsAwaitingMe: number;
   onPayContribution: (input: { slotId: string; amountMinor: string; sequence: number }) => void;
 }) {
   const { colors } = useTheme();
@@ -170,6 +176,16 @@ export function AjoDetailScreen({
       {canRequestSwap(group) ? (
         <AppButton label="Ask to swap positions" variant="outline" onPress={onRequestSwap} />
       ) : null}
+
+      <AppButton
+        label={
+          swapsAwaitingMe > 0
+            ? `Swap requests (${String(swapsAwaitingMe)} need you)`
+            : 'Swap requests'
+        }
+        variant={swapsAwaitingMe > 0 ? 'primary' : 'ghost'}
+        onPress={onViewSwaps}
+      />
 
       <AppDivider />
 

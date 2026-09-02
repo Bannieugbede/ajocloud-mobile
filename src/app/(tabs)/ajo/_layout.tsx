@@ -18,6 +18,7 @@ export default function AjoLayout() {
       <Stack.Screen name="join" options={{ title: 'Join a group' }} />
       <Stack.Screen name="[groupId]/index" options={{ title: 'Ajo group' }} />
       <Stack.Screen name="[groupId]/swap" options={{ title: 'Swap positions' }} />
+      <Stack.Screen name="[groupId]/swaps" options={{ title: 'Swap requests' }} />
     </Stack>
   );
 }

@@ -483,5 +483,39 @@ screen that read them; it is merged instead, and `mergeProfile` has a test.
 A goal's kind changes what is asked for: a flexible goal has no target, and a
 locked one needs a future date because it cannot be withdrawn from before it.
 
+## Ajo swap approvals and notification preferences
+
+Two surfaces that existed only as backend routes with nothing calling them.
+
+| Screen        | Route                           | Notes                                               |
+| ------------- | ------------------------------- | --------------------------------------------------- |
+| Swap requests | `/(tabs)/ajo/[groupId]/swaps`   | Requests needing this member first, then history.   |
+| Notifications | `/(tabs)/profile/notifications` | Per-topic email and SMS switches, plus quiet hours. |
+
+Approve and reject already existed on the API and in the client, but nothing
+listed a pending swap, so a request could only be acted on by someone who
+already knew its id. The new `GET /ajo-groups/:groupId/swaps` returns
+`awaitingMyDecision` per request; it is computed on the server because it
+depends on who owns the two affected positions, and a client re-deriving it
+could disagree with what the approve route will accept. The group screen shows
+the count so a member does not have to open the screen to discover they are
+being asked.
+
+The buttons are withdrawn once a request's deadline passes, mirroring the server
+rule rather than only checking status: the approve route refuses an expired
+request, so offering the button would produce an error the member could not have
+predicted. Approving is what rewrites the rotation, so the card says that in
+words rather than only naming the two members.
+
+Notification preferences cover product topics only. Security and
+account-recovery messages — signing in, password changes, account locks — are
+always sent and are deliberately absent from the screen, because a switch that
+does nothing is worse than no switch; the screen says so at its foot instead of
+leaving it to be inferred. Quiet hours are offered as presets, and the screen
+shows "Off" rather than guessing when stored preferences disagree about the
+window, since applying one row's window to everything on save would change
+settings the person never touched.
+
 Not yet built: Food coordinator tooling (creating programmes, procurement,
-distribution), Ajo swap approvals, and notification preferences.
+distribution) has no mobile surface — those routes exist on the backend but are
+only reachable by API.

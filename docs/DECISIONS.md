@@ -191,3 +191,40 @@ Explicitly not done: the timeout was not raised beyond 30 seconds. `/users/me`
 was observed at 32.8s, so some requests will still abort — but a mobile app that
 waits a minute on a tap is a worse experience than one that reports a timeout,
 and the fix for a 30-second read belongs on the server.
+
+## Swap approvals and notification preferences (2026-09-02)
+
+**`awaitingMyDecision` is computed on the server, not derived in the client.**
+Whether a swap needs a particular member's decision depends on who owns the two
+affected positions and whether that member has already answered. The client
+holds the group's slots and members and could re-derive it, but a divergence
+between what the screen offers and what the approve route accepts would show up
+as an error the member could not have predicted. One source of truth, on the
+side that enforces it.
+
+**Decision buttons are withdrawn once a request's deadline passes.** The screen
+checks the deadline as well as the status, mirroring the server rule rather than
+mirroring only the stored status. The server refuses an expired request and the
+list already reports it as expired, so a live-looking button would produce a
+guaranteed failure. `canDecide` holds that rule in one tested place rather than
+in the screen body.
+
+**Notification preferences cover product topics only.** Security and
+account-recovery messages — verification, sign-in codes, password reset and
+change, login alerts, device additions, account locks — are always sent, and the
+API does not accept a preference against them. The screen therefore does not
+show a switch for them, and says so at its foot instead of leaving a person to
+wonder why the list looks incomplete. A switch that silently does nothing is
+worse than no switch, and someone who successfully switched off reset mail could
+not recover their account.
+
+**The settings screen collapses the topic-by-channel grid into one row per
+topic.** The API answers per topic _and_ channel, which is the right shape to
+store and the wrong one to read: a person thinks "tell me about payouts", then
+chooses how. Quiet hours show "Off" rather than a guess when stored preferences
+disagree about the window — picking one row's window and applying it to
+everything on save would change settings the person never touched.
+
+**Only EMAIL and SMS are offered.** `PUSH` and `IN_APP` exist in the backend
+schema, but nothing delivers on either, and a switch for a channel that never
+sends misrepresents what the app does.

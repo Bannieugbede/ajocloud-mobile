@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { getAjoGroup, getAjoSchedule, lockAjoGroup } from '@/api/endpoints/ajo-groups';
+import {
+  getAjoGroup,
+  getAjoSchedule,
+  listAjoSwaps,
+  lockAjoGroup,
+} from '@/api/endpoints/ajo-groups';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
 import { usePaymentStore } from '@/store/payment-store';
@@ -28,6 +33,14 @@ export default function AjoGroupRoute() {
 
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser });
 
+  // Fetched here so the entry point can say a decision is needed, rather than
+  // making the member open the screen to discover it.
+  const swaps = useQuery({
+    queryKey: ['ajo-swaps', groupId],
+    queryFn: () => listAjoSwaps(groupId),
+    enabled: Boolean(groupId),
+  });
+
   const lock = useMutation({
     mutationFn: () => lockAjoGroup(groupId),
     onSuccess: () => {
@@ -49,9 +62,13 @@ export default function AjoGroupRoute() {
         void schedule.refetch();
       }}
       onLock={() => lock.mutate()}
+      swapsAwaitingMe={swaps.data?.filter((swap) => swap.awaitingMyDecision).length ?? 0}
       onRequestSwap={() =>
         // push: the group stays underneath, so cancelling a swap returns to it.
         router.push({ pathname: '/(tabs)/ajo/[groupId]/swap', params: { groupId } })
+      }
+      onViewSwaps={() =>
+        router.push({ pathname: '/(tabs)/ajo/[groupId]/swaps', params: { groupId } })
       }
       onPayContribution={({ slotId, amountMinor, sequence }) => {
         startPayment({
