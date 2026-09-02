@@ -10,6 +10,14 @@ import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 
+type Presentation = {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  tint: string;
+  soft: string;
+  heading: string;
+  body: string;
+};
+
 /**
  * The outcome of a payment. `PROCESSING` is a first-class state rather than a
  * spinner: a bank transfer can take minutes, and telling someone their payment
@@ -28,36 +36,47 @@ export function PaymentResultScreen({
 }) {
   const { colors } = useTheme();
 
-  const presentation = {
-    SUCCEEDED: {
-      icon: 'checkmark-circle' as const,
-      tint: colors.success,
-      soft: colors.successSoft,
-      heading: 'Payment complete',
-      body: `Your payment for ${title} has been received.`,
-    },
-    PROCESSING: {
-      icon: 'time-outline' as const,
-      tint: colors.warning,
-      soft: colors.warningSoft,
-      heading: 'Waiting for your payment',
-      body: 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
-    },
-    FAILED: {
-      icon: 'close-circle' as const,
-      tint: colors.error,
-      soft: colors.errorSoft,
-      heading: 'Payment failed',
-      body: intent.failureReason ?? 'Nothing was charged. You can try again.',
-    },
-    REQUIRES_METHOD: {
-      icon: 'help-circle-outline' as const,
-      tint: colors.textMuted,
-      soft: colors.surfaceMuted,
-      heading: 'Payment not started',
-      body: 'This payment was not completed. Nothing was charged.',
-    },
-  }[intent.status];
+  const presentation = (
+    {
+      SUCCEEDED: {
+        icon: 'checkmark-circle' as const,
+        tint: colors.success,
+        soft: colors.successSoft,
+        heading: 'Payment complete',
+        body: `Your payment for ${title} has been received.`,
+      },
+      PROCESSING: {
+        icon: 'time-outline' as const,
+        tint: colors.warning,
+        soft: colors.warningSoft,
+        heading: 'Waiting for your payment',
+        body: 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
+      },
+      FAILED: {
+        icon: 'close-circle' as const,
+        tint: colors.error,
+        soft: colors.errorSoft,
+        heading: 'Payment failed',
+        body: intent.failureReason ?? 'Nothing was charged. You can try again.',
+      },
+      REQUIRES_CONFIRMATION: {
+        icon: 'help-circle-outline' as const,
+        tint: colors.textMuted,
+        soft: colors.surfaceMuted,
+        heading: 'Payment not started',
+        body: 'This payment was not completed. Nothing was charged.',
+      },
+      CANCELLED: {
+        icon: 'close-circle-outline' as const,
+        tint: colors.textMuted,
+        soft: colors.surfaceMuted,
+        heading: 'Payment cancelled',
+        body: 'This payment was cancelled. Nothing was charged.',
+      },
+      // Typed as a total record so a status added to the API fails to compile
+      // here rather than rendering an undefined heading at runtime.
+    } satisfies Record<PaymentIntent['status'], Presentation>
+  )[intent.status];
 
   return (
     <ScrollView
@@ -96,6 +115,15 @@ export function PaymentResultScreen({
           <AppText style={{ color: colors.textMuted }}>
             {intent.transferInstructions.bankName} · {intent.transferInstructions.accountName}
           </AppText>
+          {/* The reference is how an incoming credit is matched back to this
+              payment. Without it a transfer can arrive unattributable, so it is
+              shown as prominently as the account number. */}
+          <AppText weight="semibold" style={styles.referenceLabel}>
+            Use this reference
+          </AppText>
+          <AppText weight="bold" style={styles.reference}>
+            {intent.transferInstructions.reference}
+          </AppText>
           <AppButton
             label="Copy account number"
             variant="outline"
@@ -130,6 +158,8 @@ const styles = StyleSheet.create({
   },
   heading: { fontSize: fontSizes.title, textAlign: 'center' },
   body: { textAlign: 'center' },
+  referenceLabel: { marginTop: spacing.sm },
+  reference: { fontSize: fontSizes.title, letterSpacing: 1 },
   account: { fontSize: fontSizes.title, letterSpacing: 2 },
   footer: { gap: spacing.sm },
 });

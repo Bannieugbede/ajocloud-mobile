@@ -3,40 +3,63 @@ import { apiClient } from '@/api/client/api-client';
 /**
  * The payment contract every feature pays through.
  *
- * None of these endpoints exist on the backend yet — wallets are read-only and
- * nothing moves money. The shapes are defined here so the payment screens are
- * real and typed, and so the required contract is one file rather than an
- * assumption spread across features. See docs/BACKEND_REQUIREMENTS.md.
+ * Implemented on the backend as of 2026-09-02 — see `docs/payments.md` and
+ * ADR-008 in the backend repo. Wallet payments settle inside the request;
+ * transfer and card payments reach PROCESSING and wait for a provider webhook
+ * that is not yet written, so they cannot complete today.
  */
 
 export type PaymentMethod = 'WALLET' | 'TRANSFER' | 'CARD';
 
-/** What is being paid for. Adding a product means adding a variant here. */
+export type PaymentTargetType =
+  'AKAWO_POOL_DUE' | 'AJO_CONTRIBUTION' | 'FOOD_SUBSCRIPTION' | 'WALLET_TOPUP';
+
+/**
+ * What is being paid for. Adding a product means adding a variant here and a
+ * case in `targetRequest` below.
+ *
+ * Note there is no amount: the server reads it from the target. Sending one
+ * would be ignored, and accepting one would be an underpayment vulnerability.
+ */
 export type PaymentIntentTarget =
   | { kind: 'AKAWO_POOL_DUE'; poolId: string; dueId: string }
   | { kind: 'AJO_CONTRIBUTION'; groupId: string; scheduleId: string }
   | { kind: 'FOOD_SUBSCRIPTION'; subscriptionId: string }
   | { kind: 'WALLET_TOPUP' };
 
+/**
+ * `REQUIRES_CONFIRMATION` is the server's name for "not yet paid for".
+ * `CANCELLED` exists on the server but no client flow produces it today.
+ */
+export type PaymentIntentStatus =
+  'REQUIRES_CONFIRMATION' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
+
 export type PaymentIntent = {
   id: string;
+  status: PaymentIntentStatus;
+  targetType: PaymentTargetType;
+  targetId: string | null;
   amountMinor: string;
   /** Platform fee, separate so the screen can show what is charged and why. */
   feeMinor: string;
   totalMinor: string;
   currency: string;
-  status: 'REQUIRES_METHOD' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED';
-  /** Set for TRANSFER: the reserved account the user should send money to. */
-  transferInstructions: {
+  method: PaymentMethod | null;
+  /** Server-supplied label for what is being paid, e.g. the pool's name. */
+  description: string;
+  expiresAt: string;
+  settledAt: string | null;
+  failureReason: string | null;
+  /** Present only on the confirm response for TRANSFER. */
+  transferInstructions?: {
     accountNumber: string;
     bankName: string;
     accountName: string;
+    reference: string;
     expiresAt: string;
-  } | null;
-  /** Set for CARD: the provider URL the user is sent to. */
-  checkoutUrl: string | null;
-  failureReason: string | null;
-  createdAt: string;
+  };
+  /** Present only on the confirm response for CARD. */
+  checkoutUrl?: string;
 };
 
 export type WalletBalance = {
@@ -49,11 +72,31 @@ function client() {
   return apiClient;
 }
 
+/** Maps a target to the flat body the API expects. */
+function targetRequest(target: PaymentIntentTarget): {
+  targetType: PaymentTargetType;
+  targetId?: string;
+} {
+  switch (target.kind) {
+    case 'AKAWO_POOL_DUE':
+      return { targetType: 'AKAWO_POOL_DUE', targetId: target.dueId };
+    case 'AJO_CONTRIBUTION':
+      return { targetType: 'AJO_CONTRIBUTION', targetId: target.scheduleId };
+    case 'FOOD_SUBSCRIPTION':
+      return { targetType: 'FOOD_SUBSCRIPTION', targetId: target.subscriptionId };
+    case 'WALLET_TOPUP':
+      // No target row to point at; the server refuses this until a funding
+      // contract defines where the amount comes from.
+      return { targetType: 'WALLET_TOPUP' };
+  }
+}
+
 /**
  * Creates an intent for a target. The amount comes from the server, not the
  * client, so a tampered request cannot underpay a due.
  *
  * `idempotencyKey` is required: a retried tap must not create a second payment.
+ * Repeating a key returns the original intent rather than an error.
  */
 export function createPaymentIntent(
   target: PaymentIntentTarget,
@@ -61,12 +104,17 @@ export function createPaymentIntent(
 ): Promise<PaymentIntent> {
   return client().request('/api/v1/payments/intents', {
     method: 'POST',
-    body: { target },
+    body: targetRequest(target),
     idempotencyKey,
   });
 }
 
-/** Confirms an intent with a chosen method and the user's transaction PIN. */
+/**
+ * Confirms an intent with a chosen method and the user's transaction PIN.
+ *
+ * The PIN is held in component state for this one call and never persisted,
+ * logged, or put in a route param.
+ */
 export function confirmPaymentIntent(
   intentId: string,
   input: { method: PaymentMethod; transactionPin: string },

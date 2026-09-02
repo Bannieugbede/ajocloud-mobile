@@ -6,15 +6,20 @@ import { PaymentResultScreen } from '@/features/payments/payment-result-screen';
 
 const intent: PaymentIntent = {
   id: 'intent-1',
+  status: 'REQUIRES_CONFIRMATION',
+  targetType: 'AKAWO_POOL_DUE',
+  targetId: 'due-1',
   amountMinor: '500000',
+  // A non-zero fee, so the screens are exercised against the banded model
+  // landing rather than only against today's zero.
   feeMinor: '5000',
   totalMinor: '505000',
   currency: 'NGN',
-  status: 'REQUIRES_METHOD',
-  transferInstructions: null,
-  checkoutUrl: null,
+  method: null,
+  description: 'Akawo pool: Class of 2026 dues',
+  expiresAt: '2026-09-02T00:15:00.000Z',
+  settledAt: null,
   failureReason: null,
-  createdAt: '2026-09-02T00:00:00.000Z',
 };
 
 describe('PaymentMethodScreen', () => {
@@ -93,11 +98,21 @@ describe('PaymentResultScreen', () => {
         accountNumber: '0123456789',
         bankName: 'Test Bank',
         accountName: 'Ajo Cloud',
+        reference: 'PAY-ABC123',
         expiresAt: '2026-09-03T00:00:00.000Z',
       },
     });
     expect(view.getByText('Waiting for your payment')).toBeTruthy();
     expect(view.getByText('0123456789')).toBeTruthy();
+    // The reference is how the backend matches an incoming credit back to this
+    // payment; a transfer sent without it can arrive unattributable.
+    expect(view.getByText('PAY-ABC123')).toBeTruthy();
+  });
+
+  it('shows the cancelled state without offering a retry', async () => {
+    const view = await setup('CANCELLED');
+    expect(view.getByText('Payment cancelled')).toBeTruthy();
+    expect(view.getByText(/Nothing was charged/i)).toBeTruthy();
   });
 
   it('offers a retry on failure and says nothing was charged', async () => {
