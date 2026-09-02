@@ -160,3 +160,34 @@ financial/product contracts render explicit unavailable states and disabled info
 - **Chosen approach:** ship the introduction listing what will be required, with both paths leading to the intent step for now, and record the missing contracts in `docs/BACKEND_REQUIREMENTS.md`. Nothing pretends to verify anything.
 - **Consequences:** the flow is complete and honest today; the detour slots in without reshaping it. The agreed constraint is that the raw BVN/NIN is never persisted — only a masked value and result — so the client must never cache or log the identifier.
 - **Status:** Accepted; steps g-i remain BLOCKED on the backend KYC ADR.
+
+## 2026-09-02 — Request timeout raised to 30 seconds
+
+Sign-in was failing against `api.ajocloud.com`. The cause was mostly server-side,
+but two client bugs turned a slow backend into an unexplained failure.
+
+Measured against the deployed API on 2026-09-02:
+
+| Endpoint                  | Result                                                                 |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `/api/v1/health/live`     | 200, but TTFB 1.2-3.0s for a static JSON object                        |
+| `/api/v1/health/ready`    | 503 roughly 1 in 3; when it passes, all three dependencies report `up` |
+| `POST /api/v1/auth/login` | 200 in 6-12s; 502 or timeout roughly 1 in 3                            |
+| `GET /api/v1/users/me`    | 200 in 32.8s                                                           |
+| TLS handshake             | 1.8s                                                                   |
+
+`/health/live` performs no I/O, and the TLS handshake happens before any
+application code runs, so a multi-second figure for either is not the API being
+slow — it is the host being resource-starved. The marketing site and admin
+console on the same origin are equally slow, which rules out anything specific
+to this application. Readiness fails intermittently because its per-check budget
+is 2 seconds and the host lags past it, not because a dependency is down.
+
+Client changes: the request budget moved from 15s to 30s, a caller-supplied
+signal no longer replaces (and thereby disables) the timeout, and an abort is
+reported as `timeout` rather than falling through to "something unexpected".
+
+Explicitly not done: the timeout was not raised beyond 30 seconds. `/users/me`
+was observed at 32.8s, so some requests will still abort — but a mobile app that
+waits a minute on a tap is a worse experience than one that reports a timeout,
+and the fix for a 30-second read belongs on the server.
