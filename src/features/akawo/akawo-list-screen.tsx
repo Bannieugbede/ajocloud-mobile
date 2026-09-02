@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AkawoGoal } from '@/api/endpoints/akawo';
+import { AppListItem } from '@/components/ui/app-list-item';
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppCard } from '@/components/ui/app-card';
 import { AppProgress } from '@/components/ui/app-progress';
@@ -15,10 +16,12 @@ export function AkawoListScreen({
   goals,
   loading,
   onOpen,
+  onOpenPools,
 }: {
   goals?: AkawoGoal[];
   loading: boolean;
   onOpen: (id: string) => void;
+  onOpenPools: () => void;
 }) {
   const { colors } = useTheme();
   const total = sumMinorAmounts(goals?.map((goal) => goal.savedMinor) ?? []);
@@ -32,6 +35,19 @@ export function AkawoListScreen({
           {goals?.length ?? 0} {goals?.length === 1 ? 'goal' : 'goals'}
         </AppText>
       </View>
+
+      <AppCard>
+        <AppListItem
+          icon="people-circle-outline"
+          title="Group pools"
+          description="Collect from a group, or pay into one you joined"
+          onPress={onOpenPools}
+        />
+      </AppCard>
+
+      <AppText accessibilityRole="header" weight="semibold">
+        Your savings goals
+      </AppText>
 
       {loading ? (
         <>

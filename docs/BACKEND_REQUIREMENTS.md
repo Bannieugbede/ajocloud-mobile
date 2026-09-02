@@ -130,3 +130,46 @@ Still deferred:
 
 - Tier 3 biometric checks (face match, liveness).
 - Compliance review tooling for profiles held at `REQUIRES_REVIEW`.
+
+## Payments — required contract
+
+Nothing on the backend moves money: wallets are read-only and no deposit,
+withdrawal, or funding route exists. The payment screens are built against the
+contract below, typed in `src/api/endpoints/payments.ts`, so they work the moment
+these land. Every product pays through this one contract rather than growing its
+own payment route.
+
+- **Required** `POST /api/v1/payments/intents` — creates an intent for a target
+  (`AKAWO_POOL_DUE`, `AJO_CONTRIBUTION`, `FOOD_SUBSCRIPTION`, `WALLET_TOPUP`).
+  The **amount must be resolved server-side from the target**, never accepted
+  from the client, or a tampered request underpays. Requires `Idempotency-Key`:
+  a retried tap must not create a second payment. Returns `amountMinor`,
+  `feeMinor` and `totalMinor` separately so the screen can show what is charged.
+- **Required** `POST /api/v1/payments/intents/:id/confirm` — takes a method
+  (`WALLET`, `TRANSFER`, `CARD`) and the transaction PIN, which the existing
+  `POST /auth/transaction-pin/verify` already validates. Requires
+  `Idempotency-Key`. Returns the intent with `transferInstructions` for a
+  transfer or `checkoutUrl` for a card.
+- **Required** `GET /api/v1/payments/intents/:id` — polled while `PROCESSING`,
+  e.g. while a bank transfer is awaited.
+- **Required** `GET /api/v1/wallets/me/balance` — available balance, so the
+  wallet method can be shown as affordable or not before the user commits.
+
+Settlement must post to the ledger and transition the target in one transaction.
+For an Akawo pool due specifically, ADR-007 requires that `PAID` is reached only
+this way; the pool module deliberately contains no path that writes it.
+
+Blocked on: the fee model (`docs/open-questions/platform-fee-model.md` in the
+backend repo — `feeMinor` cannot be computed until the banded model is settled)
+and Monnify credentials for the transfer and card rails.
+
+## Akawo group pools
+
+Implemented and in use — see `docs/akawo.md` in the backend repo. The mobile
+client consumes every route. Two client-side notes:
+
+- The plaintext `joinCode` is returned **only** by `POST /akawo/pools`. It cannot
+  be fetched again, so the create flow must show it and offer sharing before the
+  user leaves the screen.
+- The organiser record is rendered to PDF on the client. The backend deliberately
+  returns rows rather than a document.

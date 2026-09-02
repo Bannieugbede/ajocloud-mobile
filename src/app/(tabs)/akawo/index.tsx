@@ -9,6 +9,7 @@ export default function AkawoRoute() {
       goals={query.data}
       loading={query.isPending}
       onOpen={(id) => router.push({ pathname: '/(tabs)/akawo/[goalId]', params: { goalId: id } })}
+      onOpenPools={() => router.push('/(tabs)/akawo/pools')}
     />
   );
 }
