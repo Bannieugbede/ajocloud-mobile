@@ -10,6 +10,8 @@ it('opens a live Ajo group summary', async () => {
       error={false}
       onRetry={jest.fn()}
       onOpen={onOpen}
+      onCreate={jest.fn()}
+      onJoin={jest.fn()}
       groups={[
         {
           id: 'group',

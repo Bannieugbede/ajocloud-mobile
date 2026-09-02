@@ -1,15 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
 import { AppAmount } from '@/components/ui/app-amount';
+import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { statusLabel } from '@/utils/status';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, spacing } from '@/theme';
 
 export function AjoListScreen({
   groups,
@@ -17,12 +17,16 @@ export function AjoListScreen({
   error,
   onRetry,
   onOpen,
+  onCreate,
+  onJoin,
 }: {
   groups?: AjoGroupSummary[];
   loading: boolean;
   error: boolean;
   onRetry: () => void;
   onOpen: (id: string) => void;
+  onCreate: () => void;
+  onJoin: () => void;
 }) {
   const { colors } = useTheme();
   return (
@@ -30,20 +34,9 @@ export function AjoListScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View style={[styles.joinCard, { backgroundColor: colors.primarySoft }]}>
-        <Ionicons
-          name="key-outline"
-          size={22}
-          color={colors.primary}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        />
-        <View style={styles.flex}>
-          <AppText weight="semibold">Join via referral code</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            Code lookup is awaiting its backend contract.
-          </AppText>
-        </View>
+      <View style={styles.actions}>
+        <AppButton label="Start a group" onPress={onCreate} />
+        <AppButton label="Join with a code" variant="outline" onPress={onJoin} />
       </View>
 
       {loading ? (
@@ -95,15 +88,8 @@ export function AjoListScreen({
 }
 
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', gap: spacing.sm },
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  joinCard: {
-    alignItems: 'center',
-    borderRadius: radius.lg,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  flex: { flex: 1, gap: spacing.xs },
   row: {
     alignItems: 'center',
     flexDirection: 'row',

@@ -59,7 +59,7 @@ export default function PaymentMethodRoute() {
         // push: the method screen stays underneath so the user can change their
         // mind at the PIN prompt without restarting the payment.
         router.push({
-          pathname: '/(tabs)/akawo/pay/[intentId]',
+          pathname: '/(tabs)/pay/[intentId]',
           params: { intentId: intent.data.id, method },
         });
       }}

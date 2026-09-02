@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 
-import { majorToMinor } from '@/features/akawo/create-pool-screen';
+import { majorToMinor } from '@/utils/money';
 import { buildPoolRecordHtml } from '@/features/akawo/export-pool-record';
 import { JoinPoolScreen } from '@/features/akawo/join-pool-screen';
 import { MemberPoolScreen } from '@/features/akawo/member-pool-screen';

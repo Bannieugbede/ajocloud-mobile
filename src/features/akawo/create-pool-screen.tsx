@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
+import { majorToMinor } from '@/utils/money';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
 
@@ -14,18 +15,6 @@ export type CreatePoolValues = {
   amountMajor: string;
   referenceLabel: string;
 };
-
-/**
- * Amounts are entered in naira and converted to minor units once, here, so no
- * screen further in deals with a decimal.
- */
-export function majorToMinor(amountMajor: string): string | null {
-  const trimmed = amountMajor.trim().replace(/,/g, '');
-  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;
-  const [whole, fraction = ''] = trimmed.split('.');
-  const minor = `${whole}${fraction.padEnd(2, '0')}`.replace(/^0+(?=\d)/, '');
-  return minor === '' || /^0+$/.test(minor) ? null : minor;
-}
 
 export function CreatePoolScreen({
   submitting,

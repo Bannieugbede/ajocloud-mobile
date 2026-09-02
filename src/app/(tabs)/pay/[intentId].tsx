@@ -40,7 +40,7 @@ export default function PaymentConfirmRoute() {
       // replace: the PIN prompt must not remain behind a completed payment,
       // where a back gesture would invite paying twice.
       router.replace({
-        pathname: '/(tabs)/akawo/pay/result',
+        pathname: '/(tabs)/pay/result',
         params: { intent: JSON.stringify(result) },
       });
     },

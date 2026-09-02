@@ -33,3 +33,19 @@ export function formatMinorAmount(amountMinor: string, currency = 'NGN'): string
 export function sumMinorAmounts(amounts: readonly string[]): string {
   return amounts.reduce((total, amount) => total + (parseMinor(amount) ?? 0n), 0n).toString();
 }
+
+/**
+ * Converts a naira amount typed by a user into minor units.
+ *
+ * Returns null for anything unpayable — blank, malformed, more than two decimal
+ * places, or zero — so a caller must handle the invalid case rather than
+ * silently sending a wrong amount. Done with strings rather than Number, which
+ * would round: 0.1 + 0.2 is not 0.3, and money must be exact.
+ */
+export function majorToMinor(amountMajor: string): string | null {
+  const trimmed = amountMajor.trim().replace(/,/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;
+  const [whole, fraction = ''] = trimmed.split('.');
+  const minor = `${whole}${fraction.padEnd(2, '0')}`.replace(/^0+(?=\d)/, '');
+  return minor === '' || /^0+$/.test(minor) ? null : minor;
+}

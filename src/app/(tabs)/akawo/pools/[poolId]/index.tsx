@@ -34,7 +34,7 @@ export default function MemberPoolRoute() {
         });
         // push: the pool stays underneath, so abandoning the payment returns
         // here rather than dropping the user out of the pool entirely.
-        router.push('/(tabs)/akawo/pay');
+        router.push('/(tabs)/pay');
       }}
     />
   );

@@ -26,8 +26,10 @@ export default function PaymentResultRoute() {
     clear();
     // replace: the payment flow is over, so it is unwound rather than left in
     // the stack behind the screen the user returns to.
+    // The payment flow is shared by every product, so there is no sensible
+    // product-specific fallback: home is the one screen that always exists.
     if (returnTo) router.replace(returnTo as never);
-    else router.replace('/(tabs)/akawo/pools');
+    else router.replace('/(tabs)/home');
   };
 
   return (

@@ -8,7 +8,16 @@ export default function AjoLayout() {
   return (
     <Stack screenOptions={stackOptions}>
       <Stack.Screen name="index" options={{ title: 'Ajo' }} />
-      <Stack.Screen name="[groupId]" options={{ title: 'Ajo Group' }} />
+      <Stack.Screen name="create" options={{ title: 'New Ajo group' }} />
+      {/* Reached by replace after creating, so back returns to the list rather
+          than the form that has already been submitted. */}
+      <Stack.Screen
+        name="invitation"
+        options={{ title: 'Group created', headerBackVisible: false }}
+      />
+      <Stack.Screen name="join" options={{ title: 'Join a group' }} />
+      <Stack.Screen name="[groupId]/index" options={{ title: 'Ajo group' }} />
+      <Stack.Screen name="[groupId]/swap" options={{ title: 'Swap positions' }} />
     </Stack>
   );
 }

@@ -388,3 +388,33 @@ Still incomplete: a `TRANSFER` or `CARD` payment reaches `PROCESSING` and stops,
 because the Monnify webhook that completes an external payment is not written,
 and no Monnify credentials are configured. `feeMinor` is a real field returning
 `"0"` until the banded fee model is decided.
+
+## Ajo screens (2026-09-02)
+
+The flagship product had a list and a read-only detail screen; every action was
+missing. Now built:
+
+| Screen         | Route                        | Notes                                                                                           |
+| -------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| Create group   | `/(tabs)/ajo/create`         | Four steps; the last is optional and uses backend defaults.                                     |
+| Invitation     | `/(tabs)/ajo/invitation`     | The code is returned once and stored as a digest, so this screen is the only chance to copy it. |
+| Join           | `/(tabs)/ajo/join`           | Group ID plus the invitation code, both from the invitation.                                    |
+| Group detail   | `/(tabs)/ajo/[groupId]`      | Rotation with names, the viewer's next contribution, and the lock action.                       |
+| Swap positions | `/(tabs)/ajo/[groupId]/swap` | Offers only positions the viewer holds, asks only for others'.                                  |
+
+The payment flow moved from `/(tabs)/akawo/pay` to `/(tabs)/pay`: it is shared by
+every product, and its "done" fallback pointed at the Akawo pool list regardless
+of which feature started it.
+
+Navigation: `push` for reversible steps; `replace` after creating a group (backing
+into the form would create a second one) and after joining (backing into the code
+form would offer to rejoin). A swap request uses `back`, because the group screen
+it returns to is already in the stack and the request is only pending approval.
+
+Verified against a local backend with two accounts: create, join by code, lock,
+a two-cycle schedule, and a swap request all succeed. Role scoping confirmed —
+an administrator's schedule carries every member's contribution rows, an ordinary
+member's carries only their own.
+
+Not yet built: Food subscription actions, bill payments, Akawo goal creation,
+wallet fund/withdraw/send, and profile/settings.

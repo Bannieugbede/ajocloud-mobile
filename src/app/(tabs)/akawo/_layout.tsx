@@ -20,11 +20,6 @@ export default function AkawoLayout() {
       <Stack.Screen name="pools/join" options={{ title: 'Join a pool' }} />
       <Stack.Screen name="pools/[poolId]/index" options={{ title: 'Pool' }} />
       <Stack.Screen name="pools/[poolId]/manage" options={{ title: 'Manage pool' }} />
-      <Stack.Screen name="pay/[intentId]" options={{ title: 'Confirm payment' }} />
-      {/* The result replaces the confirm screen: going back to a PIN prompt for
-          a payment that already completed would invite a double payment. */}
-      <Stack.Screen name="pay/result" options={{ title: 'Payment', headerBackVisible: false }} />
-      <Stack.Screen name="pay/index" options={{ title: 'Payment' }} />
     </Stack>
   );
 }
