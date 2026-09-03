@@ -17,15 +17,24 @@ export const MIN_INVITATION_CODE_LENGTH = 32;
 export function JoinGroupScreen({
   submitting,
   error,
+  initialGroupId = '',
+  initialInvitationCode = '',
   onSubmit,
 }: {
   submitting: boolean;
   error?: AppError | null;
+  /**
+   * Prefilled when the screen was reached from an invitation link, which
+   * already carries both values. Typing them by hand is the fallback for
+   * someone who was read a code rather than sent one.
+   */
+  initialGroupId?: string;
+  initialInvitationCode?: string;
   onSubmit: (input: { groupId: string; invitationCode: string; requestedSlots: number }) => void;
 }) {
   const { colors } = useTheme();
-  const [groupId, setGroupId] = useState('');
-  const [code, setCode] = useState('');
+  const [groupId, setGroupId] = useState(initialGroupId);
+  const [code, setCode] = useState(initialInvitationCode);
   const [slots, setSlots] = useState('1');
   const [touched, setTouched] = useState(false);
 
@@ -46,7 +55,9 @@ export function JoinGroupScreen({
         keyboardShouldPersistTaps="handled"
       >
         <AppText style={{ color: colors.textMuted }}>
-          Ask the group administrator for the invitation they were given when the group was created.
+          {initialInvitationCode
+            ? 'Choose how many positions you want in this group.'
+            : 'Ask the group administrator for the invitation they were given when the group was created.'}
         </AppText>
 
         <AppInput

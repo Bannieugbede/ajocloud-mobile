@@ -115,6 +115,61 @@ export function createAjoGroup(input: CreateAjoGroupInput): Promise<CreatedAjoGr
   return client().request('/api/v1/ajo-groups', { method: 'POST', body: input });
 }
 
+/**
+ * What a shared invitation link says about its group.
+ *
+ * Read without a session: the link may be opened by someone who has just
+ * installed the app and has not signed in yet, so the screen can show what they
+ * were invited to before asking them to.
+ */
+export type GroupInvitePreview = {
+  groupName: string;
+  inviterName: string;
+  contributionAmountMinor: string;
+  currency: string;
+  contributionFrequency: string;
+  memberCount: number;
+  maxMembers: number;
+  expiresAt: string;
+};
+
+export function previewGroupInvitation(code: string): Promise<GroupInvitePreview> {
+  return client().request(`/api/v1/invitations/${encodeURIComponent(code)}`);
+}
+
+/** Issues a shareable invitation link. The code is returned only here. */
+export type IssuedInvitation = {
+  id: string;
+  code: string;
+  url: string;
+  maxUses: number;
+  useCount: number;
+  remainingUses: number;
+  expiresAt: string;
+};
+
+export function createGroupInvitation(
+  groupId: string,
+  input: { maxUses?: number } = {},
+): Promise<IssuedInvitation> {
+  return client().request(`/api/v1/ajo-groups/${encodeURIComponent(groupId)}/invitations`, {
+    method: 'POST',
+    body: input,
+  });
+}
+
+/**
+ * Exchanges an invitation code for the group it admits.
+ *
+ * Authenticated, unlike the preview: this returns a group id, which the public
+ * endpoint withholds so that a forwarded link discloses nothing addressable.
+ */
+export function resolveInvitationGroup(
+  code: string,
+): Promise<{ groupId: string; groupName: string }> {
+  return client().request(`/api/v1/ajo-groups/invitations/${encodeURIComponent(code)}/group`);
+}
+
 export function joinAjoGroup(
   groupId: string,
   input: { invitationCode: string; requestedSlots: number },

@@ -12,6 +12,8 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { AppErrorBoundary } from '@/components/app-error-boundary';
+import { useIncomingInvitation } from '@/hooks/use-incoming-invitation';
+import { useNotificationNavigation } from '@/hooks/use-notification-navigation';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStackOptions } from '@/hooks/use-themed-stack-options';
 import { AppBootstrap } from '@/providers/app-bootstrap';
@@ -44,6 +46,12 @@ function ThemedNavigation() {
   const { colors, mode } = useTheme();
   const stackOptions = useThemedStackOptions();
 
+  // Both live here rather than on a screen: a tapped notification or an
+  // invitation link often launches the app from cold, so whatever handles them
+  // has to be mounted before any particular screen is.
+  useNotificationNavigation();
+  useIncomingInvitation();
+
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(colors.background);
   }, [colors.background]);
@@ -56,6 +64,7 @@ function ThemedNavigation() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(public)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="join/[code]" options={{ title: 'Invitation' }} />
       </Stack>
     </>
   );

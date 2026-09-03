@@ -394,13 +394,14 @@ and no Monnify credentials are configured. `feeMinor` is a real field returning
 The flagship product had a list and a read-only detail screen; every action was
 missing. Now built:
 
-| Screen         | Route                        | Notes                                                                                           |
-| -------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
-| Create group   | `/(tabs)/ajo/create`         | Four steps; the last is optional and uses backend defaults.                                     |
-| Invitation     | `/(tabs)/ajo/invitation`     | The code is returned once and stored as a digest, so this screen is the only chance to copy it. |
-| Join           | `/(tabs)/ajo/join`           | Group ID plus the invitation code, both from the invitation.                                    |
-| Group detail   | `/(tabs)/ajo/[groupId]`      | Rotation with names, the viewer's next contribution, and the lock action.                       |
-| Swap positions | `/(tabs)/ajo/[groupId]/swap` | Offers only positions the viewer holds, asks only for others'.                                  |
+| Screen          | Route                        | Notes                                                                                           |
+| --------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| Create group    | `/(tabs)/ajo/create`         | Four steps; the last is optional and uses backend defaults.                                     |
+| Invitation      | `/(tabs)/ajo/invitation`     | The code is returned once and stored as a digest, so this screen is the only chance to copy it. |
+| Join            | `/(tabs)/ajo/join`           | Group ID plus the invitation code; both are prefilled when reached from an invitation link.     |
+| Invitation link | `/join/[code]`               | Where a shared link lands, signed in or not. Names the group before asking for an account.      |
+| Group detail    | `/(tabs)/ajo/[groupId]`      | Rotation with names, the viewer's next contribution, and the lock action.                       |
+| Swap positions  | `/(tabs)/ajo/[groupId]/swap` | Offers only positions the viewer holds, asks only for others'.                                  |
 
 The payment flow moved from `/(tabs)/akawo/pay` to `/(tabs)/pay`: it is shared by
 every product, and its "done" fallback pointed at the Akawo pool list regardless

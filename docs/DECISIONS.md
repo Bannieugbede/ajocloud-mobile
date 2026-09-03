@@ -263,3 +263,41 @@ its place next to Ajo, Food, Akawo and Bills.
 **Unread state is a word as well as a dot.** Status must never be carried by
 colour or shape alone, and the accessibility label says "unread" so a screen
 reader conveys the same thing the dot does.
+
+## Invitation links (2026-09-03)
+
+**An invitation link carries only a code, never a group id.** The public page a
+recipient lands on may be opened by anyone the link was forwarded to, so it
+describes the group without identifying it. A signed-in caller exchanges the
+code for the group id through an authenticated endpoint; nothing addressable
+leaks to a stranger holding a forwarded message.
+
+**The code is held in SecureStore across sign-in, not AsyncStorage.** It is a
+bearer credential for a place in someone's savings group — anything that can
+read it can redeem it — so it is stored the way a token is. It is taken rather
+than read, so a held invitation is offered on the sign-in it was held for and
+not re-offered on every later one, and it expires after an hour: a code still
+sitting there a day later belongs to an abandoned journey, and silently joining
+a group would be a surprise rather than a convenience.
+
+**Incoming links are parsed as strings, not through `Linking.parse`.** The value
+can be typed, forwarded, or crafted by any page the user visits, so the code
+that inspects it should be testable without a native module behind it — under
+`jest-expo`, `Linking.parse` is unavailable, which would have left this
+untested. Only `/join/<code>` at the exact expected path position is honoured:
+scanning for a `join` segment anywhere would accept
+`https://anyone.example/x/join/CODE` and hand the app a code as though the user
+had been invited.
+
+**Notification taps navigate through `useLastNotificationResponse`, not a
+listener.** A notification most often arrives while the app is closed, so the
+tap that launches it is the common case — and a listener registered during
+render is too late for that. The response identifier is remembered so a
+re-render does not navigate again and fight whatever the user did next.
+
+**Universal links are not enabled yet.** `associatedDomains` and
+`intentFilters` are deliberately absent from `app.json`: declaring them while
+the website serves placeholder association files makes `https://` links fail
+silently and in a harder way to diagnose than not claiming them at all. The
+custom scheme works today; see `docs/app-links.md` in the web repository for
+what has to be filled in first.
