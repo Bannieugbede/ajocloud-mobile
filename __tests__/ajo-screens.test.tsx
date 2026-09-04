@@ -58,6 +58,7 @@ const cycles = [
     status: 'PENDING',
     contributionSchedules: [
       {
+        id: 'sched-slot-1',
         slotId: 'slot-1',
         amountDueMinor: '1000000',
         amountPaidMinor: '0',
@@ -67,6 +68,7 @@ const cycles = [
     ],
     payoutSchedules: [
       {
+        id: 'sched-slot-1',
         slotId: 'slot-1',
         amountDueMinor: '2000000',
         amountPaidMinor: '0',
@@ -157,8 +159,10 @@ describe('AjoDetailScreen', () => {
     await act(async () => {
       fireEvent.press(view.getByRole('button', { name: 'Pay contribution' }));
     });
+    // The schedule id, not the slot id: they are different rows, and paying
+    // against a slot settles nothing.
     expect(onPayContribution).toHaveBeenCalledWith(
-      expect.objectContaining({ slotId: 'slot-1', amountMinor: '1000000' }),
+      expect.objectContaining({ scheduleId: 'sched-slot-1', amountMinor: '1000000' }),
     );
   });
 

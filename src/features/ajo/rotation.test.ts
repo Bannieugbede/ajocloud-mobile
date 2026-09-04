@@ -36,7 +36,10 @@ const group = {
   ],
 } satisfies Pick<AjoGroupDetail, 'status' | 'slots' | 'members'>;
 
+// The schedule id is distinct from the slot id on purpose: they are different
+// rows, and a payment settles the schedule.
 const row = (slotId: string, status = 'PENDING') => ({
+  id: `sched-${slotId}`,
   slotId,
   amountDueMinor: '1000000',
   amountPaidMinor: '0',

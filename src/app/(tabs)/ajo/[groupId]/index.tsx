@@ -9,13 +9,10 @@ import {
 } from '@/api/endpoints/ajo-groups';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
-import { usePaymentStore } from '@/store/payment-store';
-import { formatMinorAmount } from '@/utils/money';
 
 export default function AjoGroupRoute() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const queryClient = useQueryClient();
-  const startPayment = usePaymentStore((state) => state.start);
 
   const group = useQuery({
     queryKey: ['ajo-group', groupId],
@@ -70,14 +67,22 @@ export default function AjoGroupRoute() {
       onViewSwaps={() =>
         router.push({ pathname: '/(tabs)/ajo/[groupId]/swaps', params: { groupId } })
       }
-      onPayContribution={({ slotId, amountMinor, sequence }) => {
-        startPayment({
-          target: { kind: 'AJO_CONTRIBUTION', groupId, scheduleId: slotId },
-          title: group.data?.name ?? 'Ajo contribution',
-          subtitle: `Round ${sequence} · ${formatMinorAmount(amountMinor)}`,
-          returnTo: `/(tabs)/ajo/${groupId}`,
+      onPayContribution={({ scheduleId, amountMinor, amountPaidMinor, currency, sequence }) => {
+        // Straight to the contribution route rather than through the shared
+        // payment flow: that flow's AJO_CONTRIBUTION target is not implemented
+        // server-side, so it would take the member to a dead end.
+        router.push({
+          pathname: '/(tabs)/ajo/[groupId]/contribute',
+          params: {
+            groupId,
+            scheduleId,
+            groupName: group.data?.name ?? 'Your group',
+            sequence: String(sequence),
+            amountDueMinor: amountMinor,
+            amountPaidMinor,
+            currency,
+          },
         });
-        router.push('/(tabs)/pay');
       }}
     />
   );

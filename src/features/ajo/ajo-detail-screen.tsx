@@ -45,7 +45,13 @@ export function AjoDetailScreen({
   /** Requests needing this member's decision, so the entry point says so
       rather than making them open the screen to find out. */
   swapsAwaitingMe: number;
-  onPayContribution: (input: { slotId: string; amountMinor: string; sequence: number }) => void;
+  onPayContribution: (input: {
+    scheduleId: string;
+    amountMinor: string;
+    amountPaidMinor: string;
+    currency: string;
+    sequence: number;
+  }) => void;
 }) {
   const { colors } = useTheme();
 
@@ -106,8 +112,10 @@ export function AjoDetailScreen({
             label="Pay contribution"
             onPress={() =>
               onPayContribution({
-                slotId: nextDue.slotId,
+                scheduleId: nextDue.scheduleId,
                 amountMinor: nextDue.amountMinor,
+                amountPaidMinor: nextDue.amountPaidMinor,
+                currency: nextDue.currency,
                 sequence: nextDue.sequence,
               })
             }

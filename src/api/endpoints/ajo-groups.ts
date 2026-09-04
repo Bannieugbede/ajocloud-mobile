@@ -44,6 +44,8 @@ export type AjoGroupDetail = AjoGroupSummary & {
 };
 
 export type AjoScheduleRow = {
+  /** What a contribution is paid against, and a payout executed against. */
+  id: string;
   slotId: string;
   amountDueMinor: string;
   amountPaidMinor: string;
@@ -168,6 +170,42 @@ export function resolveInvitationGroup(
   code: string,
 ): Promise<{ groupId: string; groupName: string }> {
   return client().request(`/api/v1/ajo-groups/invitations/${encodeURIComponent(code)}/group`);
+}
+
+/**
+ * Pays one of the caller's own contributions from their wallet.
+ *
+ * The amount is in minor units as a string, matching the wire convention for
+ * money. Partial payment is allowed; the schedule reaches PAID only when the
+ * whole amount has arrived.
+ */
+export function payAjoContribution(
+  groupId: string,
+  scheduleId: string,
+  input: { amountMinor: string; idempotencyKey: string },
+): Promise<{ id: string; status: string; amountMinor: string }> {
+  return client().request(
+    `/api/v1/ajo-groups/${encodeURIComponent(groupId)}/contributions/${encodeURIComponent(
+      scheduleId,
+    )}/pay`,
+    { method: 'POST', body: input },
+  );
+}
+
+/**
+ * Pays a cycle's pool to the slot whose turn it is. Administrator only, and
+ * refused by the server unless every contribution in the cycle is settled.
+ */
+export function executeAjoPayout(
+  groupId: string,
+  payoutScheduleId: string,
+): Promise<{ id: string; status: string; amountMinor: string }> {
+  return client().request(
+    `/api/v1/ajo-groups/${encodeURIComponent(groupId)}/payouts/${encodeURIComponent(
+      payoutScheduleId,
+    )}/execute`,
+    { method: 'POST' },
+  );
 }
 
 export function joinAjoGroup(

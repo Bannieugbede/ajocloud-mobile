@@ -301,3 +301,32 @@ the website serves placeholder association files makes `https://` links fail
 silently and in a harder way to diagnose than not claiming them at all. The
 custom scheme works today; see `docs/app-links.md` in the web repository for
 what has to be filled in first.
+
+## Contribution payment (2026-09-04)
+
+**The contribution screen calls the Ajo settlement route directly, not the
+shared payment flow.** That flow's `AJO_CONTRIBUTION` target still throws
+"this payment type is not available yet" server-side, so routing a member
+through it would have taken them to a dead end. When the shared intent path
+grows a working Ajo branch, this should move back onto it.
+
+**Part payment is offered rather than hidden.** Flexible groups collect in
+whole units, so owing part of a round is an ordinary state, and someone who can
+pay some of it now should not have to wait until they can pay all of it. The
+screen offers the remainder rather than the original amount, because re-paying
+the full amount would be refused by the server and is not what is owed.
+
+**The screen says the money stays in the group until everyone has paid.** That
+solvency rule is the thing most likely to surprise someone — a contribution
+that visibly leaves their wallet but does not visibly arrive anywhere — so it
+is stated before they pay rather than explained afterwards.
+
+**The idempotency key is generated once per visit, in an effect.** A retry
+after a timeout must settle the same contribution rather than a second one.
+Generating it during render would be impure — the clock and the random source
+both are — and a replayed render would produce a different key each time.
+
+**Paying identifies the contribution schedule, not the slot.** These are
+different rows, and the previous handler passed a slot id where a schedule id
+was required; it could never have worked, since the schedule endpoint did not
+return `id` at all. Both are fixed.

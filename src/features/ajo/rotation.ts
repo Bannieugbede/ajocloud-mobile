@@ -62,7 +62,17 @@ export function outstandingContributions(
   cycles: readonly AjoCycle[],
   group: Pick<AjoGroupDetail, 'slots' | 'members'>,
   viewerUserId: string | null,
-): { sequence: number; slotId: string; dueAt: string; amountMinor: string; currency: string }[] {
+): {
+  sequence: number;
+  /** The row a payment settles. Not the slot id: those are different rows. */
+  scheduleId: string;
+  slotId: string;
+  dueAt: string;
+  amountMinor: string;
+  /** Already paid on this schedule, so a part-paid round shows its remainder. */
+  amountPaidMinor: string;
+  currency: string;
+}[] {
   const mySlotIds = new Set(
     group.slots
       .filter((slot) => {
@@ -78,9 +88,11 @@ export function outstandingContributions(
         .filter((row) => mySlotIds.has(row.slotId) && row.status !== 'PAID')
         .map((row) => ({
           sequence: cycle.sequence,
+          scheduleId: row.id,
           slotId: row.slotId,
           dueAt: cycle.contributionDueAt,
           amountMinor: row.amountDueMinor,
+          amountPaidMinor: row.amountPaidMinor,
           currency: row.currency,
         })),
     )
