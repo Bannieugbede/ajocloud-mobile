@@ -517,3 +517,21 @@ having rather than a formality.
 The refresh call now goes through the shared client with an `unauthenticated`
 flag instead of a second client instance: it needs no Authorization header, and
 refreshing in response to its own 401 would recurse.
+
+## Compact buttons in screen headers (2026-09-05)
+
+Two full-size buttons beside a `fontSizes.title` heading made the Ajo header
+top-heavy: 48dp-tall buttons with 24px of horizontal padding each, crowding the
+title they belong to and pushing it towards wrapping on a small phone.
+
+`AppButton` gained a `compact` size rather than the call sites overriding its
+styles, so the two header pairs cannot drift apart and any future header gets
+the same shape for free. The title drops to 18 and the round icon buttons to
+38, between body and title size — enough to read as a heading without
+outweighing the actions next to it.
+
+**The touch target does not shrink with the button.** `hitSlop` puts back
+exactly the height the smaller padding gives up, keeping every control at 48dp.
+A test asserts drawn height plus slop rather than the drawn height alone, and
+removing the slop fails it — the point being that a design note about density
+must never quietly cost reachability.

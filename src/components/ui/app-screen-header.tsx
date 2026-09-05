@@ -49,12 +49,14 @@ export function AppScreenHeader({
   return (
     <View style={styles.header}>
       <View style={styles.titles}>
-        {eyebrow ? <AppText style={{ color: colors.textMuted }}>{eyebrow}</AppText> : null}
+        {eyebrow ? (
+          <AppText style={[styles.subtitle, { color: colors.textMuted }]}>{eyebrow}</AppText>
+        ) : null}
         <AppText accessibilityRole="header" weight="bold" style={styles.title} numberOfLines={1}>
           {title}
         </AppText>
         {subtitle ? (
-          <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
+          <AppText style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
             {subtitle}
           </AppText>
         ) : null}
@@ -80,7 +82,8 @@ function HeaderIconButton({ action }: { action: HeaderAction }) {
       accessibilityRole="button"
       accessibilityLabel={action.label}
       onPress={action.onPress}
-      hitSlop={6}
+      // Restores the 48dp touch target the smaller button gives up.
+      hitSlop={5}
       style={({ pressed }) => [
         styles.roundButton,
         {
@@ -90,7 +93,7 @@ function HeaderIconButton({ action }: { action: HeaderAction }) {
         },
       ]}
     >
-      <Ionicons name={action.icon} size={20} color={colors.text} />
+      <Ionicons name={action.icon} size={18} color={colors.text} />
       {action.badge ? (
         // Decorative: whatever the dot signifies is already in the button's
         // accessible name, so announcing it again would repeat it.
@@ -104,6 +107,19 @@ function HeaderIconButton({ action }: { action: HeaderAction }) {
   );
 }
 
+/**
+ * The title sits between body and title size.
+ *
+ * A full `fontSizes.title` next to the Join and Create pair left the row
+ * looking top-heavy and pushed the buttons into the title's line. This reads as
+ * a heading without dominating the actions beside it, and still scales with the
+ * user's font setting.
+ */
+const TITLE_SIZE = 18;
+
+/** Trimmed from 44 so a pair of them does not outweigh the title. */
+const ICON_BUTTON_SIZE = 38;
+
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
@@ -111,25 +127,26 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'space-between',
   },
-  titles: { flex: 1, gap: 2 },
-  title: { fontSize: fontSizes.title },
+  titles: { flex: 1, gap: 1 },
+  title: { fontSize: TITLE_SIZE },
+  subtitle: { fontSize: fontSizes.caption },
   inlineActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   iconActions: { flexDirection: 'row', gap: spacing.sm },
   roundButton: {
     alignItems: 'center',
     borderRadius: radius.pill,
     borderWidth: 1,
-    height: 44,
+    height: ICON_BUTTON_SIZE,
     justifyContent: 'center',
-    width: 44,
+    width: ICON_BUTTON_SIZE,
   },
   badgeDot: {
     borderRadius: radius.pill,
     borderWidth: 2,
-    height: 10,
+    height: 9,
     position: 'absolute',
-    right: 9,
-    top: 9,
-    width: 10,
+    right: 7,
+    top: 7,
+    width: 9,
   },
 });

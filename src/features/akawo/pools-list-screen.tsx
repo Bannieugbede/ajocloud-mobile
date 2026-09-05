@@ -55,8 +55,8 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
       }
     >
       <AppScreenHeader title="Akawo" subtitle="Group pool collection">
-        <AppButton label="Join" variant="outline" onPress={props.onJoin} />
-        <AppButton label="Create" onPress={props.onCreate} />
+        <AppButton label="Join" variant="outline" size="compact" onPress={props.onJoin} />
+        <AppButton label="Create" size="compact" onPress={props.onCreate} />
       </AppScreenHeader>
 
       {dues.length ? (

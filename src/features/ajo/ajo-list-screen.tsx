@@ -62,8 +62,8 @@ export function AjoListScreen(props: AjoListScreenProps) {
             : `${active} active ${active === 1 ? 'group' : 'groups'}`
         }
       >
-        <AppButton label="Join" variant="outline" onPress={props.onJoin} />
-        <AppButton label="Create" onPress={props.onCreate} />
+        <AppButton label="Join" variant="outline" size="compact" onPress={props.onJoin} />
+        <AppButton label="Create" size="compact" onPress={props.onCreate} />
       </AppScreenHeader>
 
       {props.loading ? (
