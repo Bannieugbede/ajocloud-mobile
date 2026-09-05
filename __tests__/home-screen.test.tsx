@@ -59,12 +59,16 @@ function props(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
     refreshing: false,
     error: false,
     balanceVisible: true,
+    unreadCount: 0,
+    dark: false,
+    onToggleTheme: jest.fn(),
+    onOpenNotifications: jest.fn(),
     onToggleBalance: jest.fn(),
     onRefresh: jest.fn(),
     onRetry: jest.fn(),
     onOpenAjo: jest.fn(),
     onOpenGroup: jest.fn(),
-    onPayContribution: jest.fn(),
+    onOpenUpcoming: jest.fn(),
     onOpenBills: jest.fn(),
     onOpenCategory: jest.fn(),
     onQuickPay: jest.fn(),
@@ -101,18 +105,18 @@ it('says the balance is unavailable rather than showing zero', async () => {
 });
 
 it('pays a contribution from the upcoming row', async () => {
-  const onPayContribution = jest.fn();
-  const view = await render(<HomeScreen {...props({ onPayContribution })} />);
+  const onOpenUpcoming = jest.fn();
+  const view = await render(<HomeScreen {...props({ onOpenUpcoming })} />);
 
   await act(async () =>
     fireEvent.press(view.getByLabelText(/Pay Eko Savings Circle, ₦25,000\.00, Due soon/)),
   );
-  expect(onPayContribution).toHaveBeenCalledWith(contribution);
+  expect(onOpenUpcoming).toHaveBeenCalledWith(contribution);
 });
 
 it('opens the group for an incoming payout rather than asking for money', async () => {
   const onOpenGroup = jest.fn();
-  const onPayContribution = jest.fn();
+  const onOpenUpcoming = jest.fn();
   const payout: UpcomingItem = {
     ...contribution,
     id: 'payout:p1',
@@ -120,12 +124,12 @@ it('opens the group for an incoming payout rather than asking for money', async 
     urgency: 'SCHEDULED',
   };
   const view = await render(
-    <HomeScreen {...props({ upcoming: [payout], onOpenGroup, onPayContribution })} />,
+    <HomeScreen {...props({ upcoming: [payout], onOpenGroup, onOpenUpcoming })} />,
   );
 
   await act(async () => fireEvent.press(view.getByLabelText(/Payout Eko Savings Circle/)));
   expect(onOpenGroup).toHaveBeenCalledWith('group-1');
-  expect(onPayContribution).not.toHaveBeenCalled();
+  expect(onOpenUpcoming).not.toHaveBeenCalled();
 });
 
 it('states urgency in words, not only in colour', async () => {

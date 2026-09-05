@@ -23,7 +23,7 @@ export const UPCOMING_WINDOW_DAYS = 45;
 /** Within this many days a contribution is called out as due soon. */
 export const DUE_SOON_DAYS = 3;
 
-export type UpcomingKind = 'CONTRIBUTION' | 'PAYOUT';
+export type UpcomingKind = 'CONTRIBUTION' | 'PAYOUT' | 'POOL_DUE';
 
 export type UpcomingItem = {
   /** Stable across refetches so React keys do not churn. */
@@ -31,6 +31,8 @@ export type UpcomingItem = {
   kind: UpcomingKind;
   groupId: string;
   groupName: string;
+  /** Which product the row belongs to, shown beside the date. */
+  product?: 'Ajo' | 'Akawo';
   amountMinor: string;
   currency: string;
   dueAt: string;
@@ -100,6 +102,7 @@ export function buildUpcoming(
           kind: 'CONTRIBUTION',
           groupId: group.id,
           groupName: group.name,
+          product: 'Ajo',
           // What is still owed, so a part-paid round shows its remainder rather
           // than asking for the full amount a second time.
           amountMinor: remainderMinor(row.amountDueMinor, row.amountPaidMinor),
@@ -118,6 +121,7 @@ export function buildUpcoming(
           kind: 'PAYOUT',
           groupId: group.id,
           groupName: group.name,
+          product: 'Ajo',
           amountMinor: row.amountDueMinor,
           currency: row.currency,
           dueAt: cycle.payoutDueAt,
@@ -129,6 +133,64 @@ export function buildUpcoming(
   }
 
   return items.sort((a, b) => a.dueAt.localeCompare(b.dueAt) || a.id.localeCompare(b.id));
+}
+
+/**
+ * Akawo pool dues the member still owes, as upcoming rows.
+ *
+ * A pool due belongs on this list for the same reason a contribution does: it
+ * is money owed by a date. Only PENDING and PROCESSING count — a waived due has
+ * been excused by the organiser, and a paid one is finished.
+ *
+ * A pool with no deadline is still owed, so it is kept rather than filtered out
+ * by the horizon that only applies to dated rows.
+ */
+export function poolDuesAsUpcoming(
+  joined:
+    | readonly {
+        pool: {
+          id: string;
+          name: string;
+          amountMinor: string;
+          currency: string;
+          dueAt: string | null;
+        };
+        due: { id: string; amountMinor: string; status: string } | null;
+      }[]
+    | undefined,
+  now: Date,
+): UpcomingItem[] {
+  const horizon = now.getTime() + UPCOMING_WINDOW_DAYS * DAY_MS;
+
+  return (joined ?? [])
+    .filter((entry) => entry.due?.status === 'PENDING' || entry.due?.status === 'PROCESSING')
+    .filter((entry) => !entry.pool.dueAt || withinHorizon(entry.pool.dueAt, horizon))
+    .map((entry) => ({
+      id: `pool-due:${entry.due?.id ?? entry.pool.id}`,
+      kind: 'POOL_DUE' as const,
+      groupId: entry.pool.id,
+      groupName: entry.pool.name,
+      product: 'Akawo' as const,
+      amountMinor: entry.due?.amountMinor ?? entry.pool.amountMinor,
+      currency: entry.pool.currency,
+      // An undated due sorts to the end rather than to the top on an empty
+      // string, which would make it look like the most urgent thing owed.
+      dueAt: entry.pool.dueAt ?? '',
+      urgency: entry.pool.dueAt ? urgencyFor(entry.pool.dueAt, now) : ('SCHEDULED' as const),
+    }));
+}
+
+/** Merges every upcoming obligation into one list, soonest first. */
+export function mergeUpcoming(
+  ...lists: readonly UpcomingItem[][]
+): UpcomingItem[] {
+  return lists.flat().sort((a, b) => {
+    // An undated row sorts last: no deadline is not the same as due today.
+    if (!a.dueAt && !b.dueAt) return a.id.localeCompare(b.id);
+    if (!a.dueAt) return 1;
+    if (!b.dueAt) return -1;
+    return a.dueAt.localeCompare(b.dueAt) || a.id.localeCompare(b.id);
+  });
 }
 
 function withinHorizon(dueAt: string, horizon: number): boolean {
@@ -227,4 +289,34 @@ export function relativeDueLabel(dueAt: string, now: Date): string {
 
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/**
+ * The tone a bill category is drawn in.
+ *
+ * The design gives each category its own colour so the row is scannable at a
+ * glance rather than four identical blue tiles. These are semantic token names
+ * rather than raw values, so both themes resolve them correctly — the screen
+ * looks them up against the palette.
+ */
+export type CategoryTone = 'warning' | 'info' | 'secondary' | 'primary';
+
+export function categoryTone(name: string): CategoryTone {
+  const lower = name.toLowerCase();
+  if (lower.includes('electric') || lower.includes('power')) return 'warning';
+  if (lower.includes('water')) return 'info';
+  if (lower.includes('tv') || lower.includes('cable')) return 'secondary';
+  return 'primary';
+}
+
+/** The icon a bill category is drawn with, matching its tone. */
+export function categoryIcon(
+  name: string,
+): 'flash-outline' | 'water-outline' | 'tv-outline' | 'wifi-outline' | 'receipt-outline' {
+  const lower = name.toLowerCase();
+  if (lower.includes('electric') || lower.includes('power')) return 'flash-outline';
+  if (lower.includes('water')) return 'water-outline';
+  if (lower.includes('tv') || lower.includes('cable')) return 'tv-outline';
+  if (lower.includes('internet') || lower.includes('data')) return 'wifi-outline';
+  return 'receipt-outline';
 }

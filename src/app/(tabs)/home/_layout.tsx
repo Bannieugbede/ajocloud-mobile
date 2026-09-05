@@ -7,7 +7,11 @@ export default function HomeLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      <Stack.Screen name="index" options={{ title: 'Home' }} />
+      {/* Home draws its own header: the greeting, the member's name, and the
+          appearance and notification controls sit inside the scroll view so
+          they scroll away with the content rather than pinning a title bar
+          above a screen that already names itself. */}
+      <Stack.Screen name="index" options={{ title: 'Home', headerShown: false }} />
     </Stack>
   );
 }

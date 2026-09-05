@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 
 import { getAjoGroup, getAjoSchedule, listAjoGroups } from '@/api/endpoints/ajo-groups';
 import { listAkawoGoals } from '@/api/endpoints/akawo';
+import { listJoinedPools } from '@/api/endpoints/akawo-pools';
+import { getNotificationFeed } from '@/api/endpoints/notifications';
 import { listBillPayments } from '@/api/endpoints/bill-payments';
 import { getReferralSummary } from '@/api/endpoints/referrals';
 import { getCurrentUser } from '@/api/endpoints/users';
@@ -11,11 +13,15 @@ import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { HomeScreen } from '@/features/home/home-screen';
 import {
   buildUpcoming,
+  mergeUpcoming,
+  poolDuesAsUpcoming,
   recentQuickPay,
   totalAkawoSaved,
   type QuickPayItem,
   type UpcomingItem,
 } from '@/features/home/home-data';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeStore } from '@/store/theme-store';
 
 /** How many groups are inspected for upcoming activity. */
 const SCHEDULE_FANOUT = 4;
@@ -29,6 +35,10 @@ export default function HomeRoute() {
   const goals = useQuery({ queryKey: ['akawo-goals'], queryFn: listAkawoGoals });
   const referrals = useQuery({ queryKey: ['referral-summary'], queryFn: getReferralSummary });
   const payments = useQuery({ queryKey: ['bill-payments'], queryFn: listBillPayments });
+  // Akawo pool dues belong on the same list as Ajo contributions: both are
+  // money owed by a date, and splitting them would hide one behind a tab.
+  const pools = useQuery({ queryKey: ['akawo-pools', 'joined'], queryFn: listJoinedPools, retry: 1 });
+  const feed = useQuery({ queryKey: ['notification-feed'], queryFn: () => getNotificationFeed() });
 
   // The wallet list carries no balance, so the summary is fetched for the
   // first one. A member has a single NGN wallet today; when that stops being
@@ -104,6 +114,25 @@ export default function HomeRoute() {
 
   const quickPay = useMemo(() => recentQuickPay(payments.data), [payments.data]);
 
+  // Ajo obligations and Akawo dues are one list, ordered by when each falls
+  // due rather than by which product it came from.
+  const allUpcoming = useMemo(
+    () => mergeUpcoming(upcoming, poolDuesAsUpcoming(pools.data, new Date())),
+    [upcoming, pools.data],
+  );
+
+  const { mode } = useTheme();
+  const themePreference = useThemeStore((state) => state.preference);
+  const setThemePreference = useThemeStore((state) => state.setPreference);
+  // The header toggle flips between light and dark. It sets an explicit choice
+  // rather than returning to "system", which is what a person tapping a
+  // sun/moon control means; Profile keeps the three-way control for choosing
+  // to follow the phone again.
+  const toggleTheme = () => {
+    setThemePreference(mode === 'dark' ? 'light' : 'dark');
+  };
+  void themePreference;
+
   const primary = [user, wallets, groups];
   const refetchAll = () => {
     void Promise.all([
@@ -114,10 +143,20 @@ export default function HomeRoute() {
       referrals.refetch(),
       payments.refetch(),
       summary.refetch(),
+      pools.refetch(),
+      feed.refetch(),
     ]);
   };
 
-  const openContribution = (item: UpcomingItem) => {
+  const openUpcoming = (item: UpcomingItem) => {
+    if (item.kind === 'POOL_DUE') {
+      router.push({ pathname: '/(tabs)/akawo/pools/[poolId]', params: { poolId: item.groupId } });
+      return;
+    }
+    if (item.kind === 'PAYOUT') {
+      router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: item.groupId } });
+      return;
+    }
     router.push({
       pathname: '/(tabs)/ajo/[groupId]/contribute',
       params: { groupId: item.groupId },
@@ -135,7 +174,7 @@ export default function HomeRoute() {
     <HomeScreen
       user={user.data}
       groups={groups.data}
-      upcoming={upcoming}
+      upcoming={allUpcoming}
       quickPay={quickPay}
       availableMinor={summary.data?.availableMinor}
       savingsMinor={totalAkawoSaved(goals.data)}
@@ -144,6 +183,10 @@ export default function HomeRoute() {
       loading={primary.some((query) => query.isPending)}
       refreshing={primary.some((query) => query.isRefetching)}
       error={primary.some((query) => query.isError)}
+      unreadCount={feed.data?.unreadCount ?? 0}
+      dark={mode === 'dark'}
+      onToggleTheme={toggleTheme}
+      onOpenNotifications={() => router.push('/(tabs)/notifications')}
       balanceVisible={balanceVisible}
       onToggleBalance={() => setBalanceVisible((visible) => !visible)}
       onRefresh={refetchAll}
@@ -152,7 +195,7 @@ export default function HomeRoute() {
       onOpenGroup={(groupId) =>
         router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId } })
       }
-      onPayContribution={openContribution}
+      onOpenUpcoming={openUpcoming}
       onOpenBills={() => router.push('/(tabs)/bills')}
       onOpenCategory={() => router.push('/(tabs)/bills')}
       onQuickPay={openQuickPay}
