@@ -35,6 +35,7 @@ function props(overrides: Partial<PoolsListScreenProps> = {}): PoolsListScreenPr
     onJoin: jest.fn(),
     onOpenOrganised: jest.fn(),
     onOpenJoined: jest.fn(),
+    onOpenGoals: jest.fn(),
     ...overrides,
   };
 }

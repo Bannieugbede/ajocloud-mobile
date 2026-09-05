@@ -12,6 +12,8 @@ export type AkawoPool = {
   dueAt: string | null;
   closedAt: string | null;
   createdAt: string;
+  /** Who is collecting. Present on the joined list; absent elsewhere. */
+  organiserName?: string;
 };
 
 export type AkawoDue = {

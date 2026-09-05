@@ -4,6 +4,10 @@ import type { BillPayment } from '@/api/endpoints/bill-payments';
 
 import {
   buildUpcoming,
+  categoryIcon,
+  categoryTone,
+  mergeUpcoming,
+  poolDuesAsUpcoming,
   greetingFor,
   recentQuickPay,
   relativeDueLabel,
@@ -384,5 +388,116 @@ describe('relativeDueLabel', () => {
 
   it('returns nothing for an unparseable date rather than throwing', () => {
     expect(relativeDueLabel('nonsense', today)).toBe('');
+  });
+});
+
+describe('poolDuesAsUpcoming', () => {
+  const pool = (
+    id: string,
+    name: string,
+    status: string,
+    dueAt: string | null = '2026-07-20T00:00:00Z',
+  ) => ({
+    pool: { id, name, amountMinor: '300000', currency: 'NGN', dueAt },
+    due: { id: `d-${id}`, amountMinor: '300000', status },
+  });
+
+  it('is empty without pools', () => {
+    expect(poolDuesAsUpcoming(undefined, NOW)).toEqual([]);
+    expect(poolDuesAsUpcoming([], NOW)).toEqual([]);
+  });
+
+  it('includes a pending due, tagged as Akawo', () => {
+    const items = poolDuesAsUpcoming([pool('p1', 'Faculty Week', 'PENDING')], NOW);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      kind: 'POOL_DUE',
+      groupId: 'p1',
+      groupName: 'Faculty Week',
+      product: 'Akawo',
+      amountMinor: '300000',
+    });
+  });
+
+  it('treats a processing payment as still owed', () => {
+    expect(poolDuesAsUpcoming([pool('p1', 'A', 'PROCESSING')], NOW)).toHaveLength(1);
+  });
+
+  it('excludes settled dues', () => {
+    // Waived is settled: the organiser excused it, so nothing is owed.
+    expect(poolDuesAsUpcoming([pool('p1', 'A', 'PAID'), pool('p2', 'B', 'WAIVED')], NOW)).toEqual(
+      [],
+    );
+  });
+
+  it('keeps a due with no deadline rather than filtering it out', () => {
+    // No deadline does not mean not owed.
+    const items = poolDuesAsUpcoming([pool('p1', 'Undated', 'PENDING', null)], NOW);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.dueAt).toBe('');
+  });
+
+  it('drops a dated due beyond the horizon', () => {
+    expect(poolDuesAsUpcoming([pool('p1', 'Far', 'PENDING', '2027-06-01T00:00:00Z')], NOW)).toEqual(
+      [],
+    );
+  });
+});
+
+describe('mergeUpcoming', () => {
+  const item = (id: string, dueAt: string) => ({
+    id,
+    kind: 'CONTRIBUTION' as const,
+    groupId: id,
+    groupName: id,
+    amountMinor: '1',
+    currency: 'NGN',
+    dueAt,
+    urgency: 'SCHEDULED' as const,
+  });
+
+  it('interleaves lists by date rather than concatenating them', () => {
+    const merged = mergeUpcoming(
+      [item('ajo-late', '2026-07-25T00:00:00Z')],
+      [item('pool-early', '2026-07-17T00:00:00Z')],
+    );
+    expect(merged.map((entry) => entry.id)).toEqual(['pool-early', 'ajo-late']);
+  });
+
+  it('sorts an undated row last, not first', () => {
+    // An empty date string would otherwise sort above every real one and read
+    // as the most urgent thing owed.
+    const merged = mergeUpcoming([item('undated', '')], [item('dated', '2026-12-01T00:00:00Z')]);
+    expect(merged.map((entry) => entry.id)).toEqual(['dated', 'undated']);
+  });
+
+  it('is stable for two rows sharing a date', () => {
+    const merged = mergeUpcoming(
+      [item('b', '2026-07-20T00:00:00Z')],
+      [item('a', '2026-07-20T00:00:00Z')],
+    );
+    expect(merged.map((entry) => entry.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('categoryTone and categoryIcon', () => {
+  it.each([
+    ['Electricity', 'warning', 'flash-outline'],
+    ['Water', 'info', 'water-outline'],
+    ['Cable TV', 'secondary', 'tv-outline'],
+    ['Internet', 'primary', 'wifi-outline'],
+  ])('%s is drawn %s with %s', (name, tone, icon) => {
+    expect(categoryTone(name)).toBe(tone);
+    expect(categoryIcon(name)).toBe(icon);
+  });
+
+  it('falls back rather than throwing on an unknown category', () => {
+    expect(categoryTone('Something else')).toBe('primary');
+    expect(categoryIcon('Something else')).toBe('receipt-outline');
+  });
+
+  it('matches however the API happens to case a name', () => {
+    expect(categoryTone('CABLE TV')).toBe('secondary');
+    expect(categoryIcon('electricity bills')).toBe('flash-outline');
   });
 });

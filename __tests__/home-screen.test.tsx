@@ -114,8 +114,9 @@ it('pays a contribution from the upcoming row', async () => {
   expect(onOpenUpcoming).toHaveBeenCalledWith(contribution);
 });
 
-it('opens the group for an incoming payout rather than asking for money', async () => {
-  const onOpenGroup = jest.fn();
+it('hands a payout row to the same handler, marked as incoming', async () => {
+  // Where each kind of row goes is the route's decision, not the screen's, so
+  // the screen reports which row was tapped and nothing more.
   const onOpenUpcoming = jest.fn();
   const payout: UpcomingItem = {
     ...contribution,
@@ -123,13 +124,66 @@ it('opens the group for an incoming payout rather than asking for money', async 
     kind: 'PAYOUT',
     urgency: 'SCHEDULED',
   };
-  const view = await render(
-    <HomeScreen {...props({ upcoming: [payout], onOpenGroup, onOpenUpcoming })} />,
-  );
+  const view = await render(<HomeScreen {...props({ upcoming: [payout], onOpenUpcoming })} />);
 
   await act(async () => fireEvent.press(view.getByLabelText(/Payout Eko Savings Circle/)));
-  expect(onOpenGroup).toHaveBeenCalledWith('group-1');
-  expect(onOpenUpcoming).not.toHaveBeenCalled();
+  expect(onOpenUpcoming).toHaveBeenCalledWith(payout);
+  expect(view.getByText('Incoming')).toBeTruthy();
+});
+
+describe('header', () => {
+  it('offers notifications, and shows an unread mark only when there are some', async () => {
+    const quiet = await render(<HomeScreen {...props({ unreadCount: 0 })} />);
+    expect(quiet.getByLabelText('Notifications')).toBeTruthy();
+
+    // The count is in the label, not only in a coloured dot a screen reader
+    // cannot see.
+    const busy = await render(<HomeScreen {...props({ unreadCount: 3 })} />);
+    expect(busy.getByLabelText('Notifications, 3 unread')).toBeTruthy();
+  });
+
+  it('opens notifications', async () => {
+    const onOpenNotifications = jest.fn();
+    const view = await render(<HomeScreen {...props({ onOpenNotifications })} />);
+    await act(async () => fireEvent.press(view.getByLabelText('Notifications')));
+    expect(onOpenNotifications).toHaveBeenCalledTimes(1);
+  });
+
+  it('names what the theme toggle will do, not what the theme is', async () => {
+    const light = await render(<HomeScreen {...props({ dark: false })} />);
+    expect(light.getByLabelText('Switch to dark mode')).toBeTruthy();
+
+    const dark = await render(<HomeScreen {...props({ dark: true })} />);
+    expect(dark.getByLabelText('Switch to light mode')).toBeTruthy();
+  });
+
+  it('toggles the theme', async () => {
+    const onToggleTheme = jest.fn();
+    const view = await render(<HomeScreen {...props({ onToggleTheme })} />);
+    await act(async () => fireEvent.press(view.getByLabelText('Switch to dark mode')));
+    expect(onToggleTheme).toHaveBeenCalledTimes(1);
+  });
+});
+
+it('shows an Akawo pool due alongside Ajo obligations', async () => {
+  // Both are money owed by a date; splitting them by product would hide one
+  // behind a tab the member has not opened.
+  const poolDue: UpcomingItem = {
+    id: 'pool-due:d1',
+    kind: 'POOL_DUE',
+    groupId: 'pool-1',
+    groupName: 'Faculty Week Contribution',
+    product: 'Akawo',
+    amountMinor: '300000',
+    currency: 'NGN',
+    dueAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+    urgency: 'SCHEDULED',
+  };
+  const view = await render(<HomeScreen {...props({ upcoming: [poolDue] })} />);
+
+  expect(view.getByText(/Faculty Week Contribution/)).toBeTruthy();
+  expect(view.getByText('Pending')).toBeTruthy();
+  expect(view.getByText(/Akawo/)).toBeTruthy();
 });
 
 it('states urgency in words, not only in colour', async () => {

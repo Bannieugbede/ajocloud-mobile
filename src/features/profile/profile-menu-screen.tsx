@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { KycStatus } from '@/api/endpoints/kyc';
 import type { ReferralSummary } from '@/api/endpoints/referrals';
@@ -10,6 +11,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppDivider } from '@/components/ui/app-divider';
 import { AppListItem } from '@/components/ui/app-list-item';
+import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing, type ThemePreference } from '@/theme';
@@ -53,6 +55,7 @@ export type ProfileMenuScreenProps = {
 
 export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const name = props.user
     ? `${props.user.profile.firstName} ${props.user.profile.lastName}`.trim()
     : '';
@@ -61,9 +64,23 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
+      ]}
+      contentInsetAdjustmentBehavior="never"
     >
+      <AppScreenHeader
+        title="Profile"
+        actions={[
+          {
+            icon: 'settings-outline',
+            label: 'Settings',
+            onPress: props.onOpenSecurity,
+          },
+        ]}
+      />
+
       <View style={styles.header}>
         <AppAvatar name={name || 'Member'} size={72} />
         <View style={styles.identity}>
@@ -352,7 +369,7 @@ function AppearanceRow({
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xxl },
+  container: { gap: spacing.sm, padding: spacing.md, paddingBottom: spacing.xxl },
   header: {
     alignItems: 'center',
     flexDirection: 'row',

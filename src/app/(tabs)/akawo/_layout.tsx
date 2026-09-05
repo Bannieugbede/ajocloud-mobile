@@ -7,10 +7,14 @@ export default function AkawoLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      <Stack.Screen name="index" options={{ title: 'Akawo' }} />
+      {/* Pools are what the tab opens: a collection someone else is running
+          has a deadline, where a personal goal does not. Goals keep their own
+          route, linked from the pools screen. Draws its own header, so the
+          navigator adds none. */}
+      <Stack.Screen name="index" options={{ title: 'Akawo', headerShown: false }} />
+      <Stack.Screen name="goals" options={{ title: 'Savings goals' }} />
       <Stack.Screen name="create-goal" options={{ title: 'New goal' }} />
       <Stack.Screen name="[goalId]" options={{ title: 'Akawo Goal' }} />
-      <Stack.Screen name="pools/index" options={{ title: 'Pools' }} />
       <Stack.Screen name="pools/create" options={{ title: 'New pool' }} />
       {/* Reached by replace after creating, so its back button returns to the
           pools list rather than the form that has already been submitted. */}

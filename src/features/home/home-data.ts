@@ -181,9 +181,7 @@ export function poolDuesAsUpcoming(
 }
 
 /** Merges every upcoming obligation into one list, soonest first. */
-export function mergeUpcoming(
-  ...lists: readonly UpcomingItem[][]
-): UpcomingItem[] {
+export function mergeUpcoming(...lists: readonly UpcomingItem[][]): UpcomingItem[] {
   return lists.flat().sort((a, b) => {
     // An undated row sorts last: no deadline is not the same as due today.
     if (!a.dueAt && !b.dueAt) return a.id.localeCompare(b.id);

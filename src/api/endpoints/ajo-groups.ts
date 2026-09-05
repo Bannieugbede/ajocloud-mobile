@@ -13,6 +13,10 @@ export type AjoGroupSummary = {
   startDate: string;
   endDate: string;
   _count: { slots: number; members: number };
+  /** Who runs the group. Null when no admin membership is active. */
+  adminName?: string | null;
+  /** The round in progress, for the rotation position and next due date. */
+  currentCycle?: { sequence: number; contributionDueAt: string; status: string } | null;
 };
 
 export type AjoMember = {

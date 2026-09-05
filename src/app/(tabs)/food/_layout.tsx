@@ -7,7 +7,8 @@ export default function FoodLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      <Stack.Screen name="index" options={{ title: 'Food' }} />
+      {/* Draws its own header; see the note in the Ajo layout. */}
+      <Stack.Screen name="index" options={{ title: 'Food', headerShown: false }} />
       <Stack.Screen name="[programmeId]" options={{ title: 'Food Ajo' }} />
     </Stack>
   );

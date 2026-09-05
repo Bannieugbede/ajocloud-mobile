@@ -37,7 +37,11 @@ export default function HomeRoute() {
   const payments = useQuery({ queryKey: ['bill-payments'], queryFn: listBillPayments });
   // Akawo pool dues belong on the same list as Ajo contributions: both are
   // money owed by a date, and splitting them would hide one behind a tab.
-  const pools = useQuery({ queryKey: ['akawo-pools', 'joined'], queryFn: listJoinedPools, retry: 1 });
+  const pools = useQuery({
+    queryKey: ['akawo-pools', 'joined'],
+    queryFn: listJoinedPools,
+    retry: 1,
+  });
   const feed = useQuery({ queryKey: ['notification-feed'], queryFn: () => getNotificationFeed() });
 
   // The wallet list carries no balance, so the summary is fetched for the

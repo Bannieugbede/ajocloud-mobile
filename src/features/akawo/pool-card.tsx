@@ -30,7 +30,7 @@ export function OrganisedPoolCard({
       style={styles.card}
     >
       <View style={styles.titleRow}>
-        <AppText weight="semibold" style={styles.name} numberOfLines={2}>
+        <AppText weight="bold" style={styles.name} numberOfLines={2}>
           {pool.name}
         </AppText>
         <Badge
@@ -83,9 +83,18 @@ export function JoinedPoolCard({
       style={styles.card}
     >
       <View style={styles.titleRow}>
-        <AppText weight="semibold" style={styles.name} numberOfLines={2}>
-          {pool.name}
-        </AppText>
+        <View style={styles.title}>
+          <AppText weight="bold" style={styles.name} numberOfLines={2}>
+            {pool.name}
+          </AppText>
+          {pool.organiserName ? (
+            // Whom a member is paying is what makes a collection trustworthy,
+            // so the card says it rather than leaving it to a tap.
+            <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
+              {pool.organiserName}
+            </AppText>
+          ) : null}
+        </View>
         <Badge
           label={due ? statusLabel(due.status) : 'No due'}
           tone={settled ? 'success' : due ? 'warning' : 'neutral'}
@@ -144,7 +153,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.metric}>
       <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{label}</AppText>
-      <AppText weight="semibold" numberOfLines={1}>
+      <AppText weight="bold" numberOfLines={1}>
         {value}
       </AppText>
     </View>
@@ -159,6 +168,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'space-between',
   },
+  title: { flex: 1, gap: 2 },
   name: { flex: 1, fontSize: fontSizes.body },
   badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   badgeText: { fontSize: fontSizes.caption },

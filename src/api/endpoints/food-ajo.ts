@@ -3,6 +3,9 @@ import { apiClient } from '@/api/client/api-client';
 export type FoodPackage = {
   id: string;
   name: string;
+  /** A photograph of the package, or null when none has been supplied. */
+  imageUrl: string | null;
+  description: string | null;
   priceMinor: string;
   priceLockedAt: string | null;
   currency: string;
@@ -25,6 +28,9 @@ export type FoodProgramme = {
   distributionAt: string | null;
   packages: FoodPackage[];
   _count: { subscriptions: number };
+  /** Who runs the programme, and whether their identity is verified. */
+  coordinatorName?: string;
+  coordinatorVerified?: boolean;
 };
 
 export type FoodProgrammePage = { items: FoodProgramme[]; nextCursor: string | null };

@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type {
   FoodCoordinatorApplication,
@@ -8,7 +10,7 @@ import type {
 } from '@/api/endpoints/food-ajo';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppProgress } from '@/components/ui/app-progress';
+import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
@@ -17,12 +19,7 @@ import { fontSizes, radius, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
-import {
-  coordinatorInvitation,
-  enrolmentProgressBps,
-  fulfilmentLabel,
-  placesLeft,
-} from './programme-summary';
+import { coordinatorInvitation, fulfilmentLabel, placesLeft } from './programme-summary';
 
 export type FoodListScreenProps = {
   programmes?: FoodProgramme[];
@@ -39,6 +36,7 @@ export type FoodListScreenProps = {
 
 export function FoodListScreen(props: FoodListScreenProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const joinedIds = new Set((props.subscriptions ?? []).map((entry) => entry.groupId));
   const browsable = (props.programmes ?? []).filter((programme) => !joinedIds.has(programme.id));
@@ -46,16 +44,22 @@ export function FoodListScreen(props: FoodListScreenProps) {
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
+      ]}
+      contentInsetAdjustmentBehavior="never"
       refreshControl={
         <RefreshControl
           refreshing={props.refreshing}
           onRefresh={props.onRefresh}
           tintColor={colors.primary}
+          progressViewOffset={insets.top}
         />
       }
     >
+      <AppScreenHeader title="Food Ajo" subtitle="Community bulk buying and distribution" />
+
       <View style={[styles.coordinator, { backgroundColor: colors.warningSoft }]}>
         <View style={[styles.coordinatorIcon, { backgroundColor: colors.surface }]}>
           <Ionicons name="star-outline" size={20} color={colors.warning} />
@@ -168,59 +172,109 @@ function SubscriptionCard({
 function ProgrammeCard({ programme, onPress }: { programme: FoodProgramme; onPress: () => void }) {
   const { colors } = useTheme();
   const left = placesLeft(programme);
-  const cheapest = programme.packages
-    .map((entry) => entry.priceMinor)
-    .sort((a, b) => (BigInt(a || '0') < BigInt(b || '0') ? -1 : 1))[0];
+  const cheapest = [...programme.packages].sort((a, b) =>
+    BigInt(a.priceMinor || '0') < BigInt(b.priceMinor || '0') ? -1 : 1,
+  )[0];
 
   return (
     <AppCard
       onPress={onPress}
       accessibilityLabel={`Open ${programme.name}, ${programme._count.subscriptions} of ${programme.enrolmentCapacity} joined`}
-      style={styles.card}
+      style={styles.programmeCard}
     >
-      <View style={styles.rowBetween}>
-        <AppText weight="semibold" style={styles.name} numberOfLines={2}>
-          {programme.name}
-        </AppText>
-        <AppText weight="semibold" style={{ color: colors.primary }}>
-          {formatMinorAmount(cheapest ?? programme.contributionMinor, programme.currency)}
-        </AppText>
+      <View style={styles.media}>
+        {cheapest?.imageUrl ? (
+          <Image
+            source={{ uri: cheapest.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={200}
+            // Decorative: the package name and contents below say everything
+            // the photograph does, so announcing it would only repeat them.
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
+        ) : (
+          // A package without a photograph still needs to occupy the same
+          // shape, or the list jumps as images resolve.
+          <View style={[styles.imageFallback, { backgroundColor: colors.primarySoft }]}>
+            <Ionicons name="basket-outline" size={32} color={colors.primary} />
+          </View>
+        )}
+        <View style={[styles.joinedPill, { backgroundColor: colors.scrim }]}>
+          <AppText weight="semibold" style={styles.joinedText}>
+            {programme._count.subscriptions}/{programme.enrolmentCapacity} joined
+          </AppText>
+        </View>
       </View>
 
-      <AppText style={{ color: colors.textMuted }} numberOfLines={2}>
-        {programme.packages.length === 1
-          ? programme.packages[0]?.name
-          : `${programme.packages.length} package options`}{' '}
-        · {fulfilmentLabel(programme.fulfilmentMethod)}
-      </AppText>
+      <View style={styles.programmeBody}>
+        <View style={styles.rowBetween}>
+          <AppText weight="bold" style={styles.name} numberOfLines={2}>
+            {programme.name}
+          </AppText>
+          <AppText weight="bold" style={{ color: colors.primary }}>
+            {formatMinorAmount(
+              cheapest?.priceMinor ?? programme.contributionMinor,
+              programme.currency,
+            )}
+          </AppText>
+        </View>
 
-      <AppProgress
-        progressBps={enrolmentProgressBps(programme)}
-        label={`${programme.name} enrolment`}
-        showValue={false}
-      />
-      <View style={styles.rowBetween}>
-        <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-          {programme._count.subscriptions}/{programme.enrolmentCapacity} joined
-        </AppText>
-        <AppText
-          weight="semibold"
-          style={{
-            // A nearly-full programme is the one worth acting on, so it is
-            // called out rather than left as one number among several.
-            color: left <= 3 && left > 0 ? colors.warning : colors.textMuted,
-            fontSize: fontSizes.caption,
-          }}
-        >
-          {left > 0 ? `${left} ${left === 1 ? 'place' : 'places'} left` : 'Full'}
-        </AppText>
+        {cheapest?.description ? (
+          <AppText style={{ color: colors.textMuted }} numberOfLines={2}>
+            {cheapest.description}
+          </AppText>
+        ) : null}
+
+        <View style={styles.rowBetween}>
+          <View style={styles.coordinatorLine}>
+            {programme.coordinatorVerified ? <VerifiedBadge /> : null}
+            {programme.coordinatorName ? (
+              <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
+                {programme.coordinatorName}
+              </AppText>
+            ) : null}
+          </View>
+          <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+            {statusLabel(programme.contributionFrequency)} ·{' '}
+            {fulfilmentLabel(programme.fulfilmentMethod)}
+          </AppText>
+        </View>
+
+        {left > 0 && left <= 3 ? (
+          <AppText weight="semibold" style={{ color: colors.warning, fontSize: fontSizes.caption }}>
+            Only {left} {left === 1 ? 'place' : 'places'} left
+          </AppText>
+        ) : null}
+        {left === 0 ? (
+          <AppText
+            weight="semibold"
+            style={{ color: colors.textMuted, fontSize: fontSizes.caption }}
+          >
+            Full
+          </AppText>
+        ) : null}
       </View>
     </AppCard>
   );
 }
 
+/** Says the coordinator's identity has been verified, and means it. */
+function VerifiedBadge() {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.verified, { backgroundColor: colors.warningSoft }]}>
+      <Ionicons name="shield-checkmark-outline" size={11} color={colors.warning} />
+      <AppText weight="semibold" style={[styles.verifiedText, { color: colors.warning }]}>
+        Verified
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
+  container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
 
   coordinator: {
     alignItems: 'center',
@@ -242,6 +296,30 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: fontSizes.body },
 
   card: { gap: spacing.sm },
+  programmeCard: { gap: 0, overflow: 'hidden', padding: 0 },
+  media: { height: 168, position: 'relative', width: '100%' },
+  image: { height: '100%', width: '100%' },
+  imageFallback: { alignItems: 'center', height: '100%', justifyContent: 'center', width: '100%' },
+  joinedPill: {
+    borderRadius: radius.sm,
+    bottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    position: 'absolute',
+    right: spacing.sm,
+  },
+  joinedText: { color: '#FFFFFF', fontSize: fontSizes.caption },
+  programmeBody: { gap: spacing.sm, padding: spacing.md },
+  coordinatorLine: { alignItems: 'center', flexDirection: 'row', flex: 1, gap: spacing.sm },
+  verified: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: 3,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  verifiedText: { fontSize: 10 },
   name: { flex: 1, fontSize: fontSizes.body },
   badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   badgeText: { fontSize: fontSizes.caption },

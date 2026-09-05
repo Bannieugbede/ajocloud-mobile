@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AkawoPool, JoinedPool, PoolTotals } from '@/api/endpoints/akawo-pools';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
@@ -26,29 +28,36 @@ export type PoolsListScreenProps = {
   onJoin: () => void;
   onOpenOrganised: (poolId: string) => void;
   onOpenJoined: (poolId: string) => void;
+  /** Personal savings goals, which share the Akawo name but not this screen. */
+  onOpenGoals: () => void;
 };
 
 export function PoolsListScreen(props: PoolsListScreenProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const nothingYet = !props.organised?.length && !props.joined?.length;
   const dues = outstandingDues(props.joined);
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
+      ]}
+      contentInsetAdjustmentBehavior="never"
       refreshControl={
         <RefreshControl
           refreshing={props.refreshing}
           onRefresh={props.onRefresh}
           tintColor={colors.primary}
+          progressViewOffset={insets.top}
         />
       }
     >
-      <View style={styles.actions}>
-        <AppButton label="Join" variant="outline" onPress={props.onJoin} style={styles.action} />
-        <AppButton label="Create" onPress={props.onCreate} style={styles.action} />
-      </View>
+      <AppScreenHeader title="Akawo" subtitle="Group pool collection">
+        <AppButton label="Join" variant="outline" onPress={props.onJoin} />
+        <AppButton label="Create" onPress={props.onCreate} />
+      </AppScreenHeader>
 
       {dues.length ? (
         <View style={[styles.due, { backgroundColor: colors.warningSoft }]}>
@@ -136,6 +145,18 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
         </View>
       ) : null}
 
+      <AppCard onPress={props.onOpenGoals} accessibilityLabel="Open your savings goals">
+        <View style={styles.rowBetween}>
+          <View style={styles.joinText}>
+            <AppText weight="semibold">My savings goals</AppText>
+            <AppText style={{ color: colors.textMuted }}>
+              Money you are putting aside on your own
+            </AppText>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </View>
+      </AppCard>
+
       {!props.loading && !props.error && !nothingYet ? (
         <AppCard onPress={props.onJoin} accessibilityLabel="Join a pool with a code">
           <View style={styles.rowBetween}>
@@ -156,9 +177,7 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  action: { flex: 1 },
+  container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
 
   due: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },
   dueHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },

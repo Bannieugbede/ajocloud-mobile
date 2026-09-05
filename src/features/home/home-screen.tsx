@@ -7,6 +7,7 @@ import type { CurrentUser } from '@/api/endpoints/users';
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
@@ -113,31 +114,30 @@ export function HomeScreen(props: HomeScreenProps) {
         />
       }
     >
-      <View style={styles.header}>
-        <View style={styles.greeting}>
-          <AppText style={{ color: colors.textMuted }}>{greetingFor(now)}</AppText>
-          <AppText accessibilityRole="header" weight="bold" style={styles.name} numberOfLines={1}>
-            {props.user
-              ? `${props.user.profile.firstName} ${props.user.profile.lastName}`
-              : 'Ajo Cloud member'}
-          </AppText>
-        </View>
-        <View style={styles.headerActions}>
-          <RoundButton
-            icon={props.dark ? 'sunny-outline' : 'moon-outline'}
-            label={props.dark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onPress={props.onToggleTheme}
-          />
-          <RoundButton
-            icon="notifications-outline"
-            label={
-              props.unreadCount > 0 ? `Notifications, ${props.unreadCount} unread` : 'Notifications'
-            }
-            onPress={props.onOpenNotifications}
-            badge={props.unreadCount > 0}
-          />
-        </View>
-      </View>
+      <AppScreenHeader
+        eyebrow={greetingFor(now)}
+        title={
+          props.user
+            ? `${props.user.profile.firstName} ${props.user.profile.lastName}`
+            : 'Ajo Cloud member'
+        }
+        actions={[
+          {
+            icon: props.dark ? 'sunny-outline' : 'moon-outline',
+            label: props.dark ? 'Switch to light mode' : 'Switch to dark mode',
+            onPress: props.onToggleTheme,
+          },
+          {
+            icon: 'notifications-outline',
+            label:
+              props.unreadCount > 0
+                ? `Notifications, ${props.unreadCount} unread`
+                : 'Notifications',
+            onPress: props.onOpenNotifications,
+            badge: props.unreadCount > 0,
+          },
+        ]}
+      />
 
       {props.error ? (
         <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
@@ -202,47 +202,6 @@ export function HomeScreen(props: HomeScreenProps) {
         )}
       </Section>
     </ScrollView>
-  );
-}
-
-function RoundButton({
-  icon,
-  label,
-  onPress,
-  badge = false,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  onPress: () => void;
-  badge?: boolean;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      hitSlop={6}
-      style={({ pressed }) => [
-        styles.roundButton,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
-    >
-      <Ionicons name={icon} size={20} color={colors.text} />
-      {badge ? (
-        // Decorative: the unread count is already in the button's label, so
-        // announcing the dot again would repeat it.
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-          style={[styles.badgeDot, { backgroundColor: colors.error, borderColor: colors.surface }]}
-        />
-      ) : null}
-    </Pressable>
   );
 }
 
@@ -610,33 +569,6 @@ function Section({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
-
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'space-between',
-  },
-  greeting: { flex: 1, gap: 2 },
-  name: { fontSize: fontSizes.title },
-  headerActions: { flexDirection: 'row', gap: spacing.sm },
-  roundButton: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  badgeDot: {
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    height: 10,
-    position: 'absolute',
-    right: 9,
-    top: 9,
-    width: 10,
-  },
 
   notice: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },
 
