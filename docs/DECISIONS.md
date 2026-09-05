@@ -375,3 +375,48 @@ is where someone goes looking for it.
 **The screen keeps its data when a refresh fails.** A failed refetch shows a
 banner and leaves the last known figures in place, because stale data that is
 labelled stale is more useful than a blank screen.
+
+## Product tab screens (2026-09-05)
+
+**Appearance is a three-way choice, not a switch.** The theme store has always
+modelled System, Light and Dark and persisted the result, but nothing in the app
+called `setPreference` — the theme could not be changed from inside the product.
+The Profile row now does, and keeps System as the default so the app follows the
+phone unless someone decides otherwise. A plain on/off switch would have removed
+that option entirely.
+
+**The referral code is the member's own, not the one they were referred by.**
+Those are different values and only one is shareable. Registration now issues a
+code to every account and creates the `Referral` row that links a new signup to
+whoever referred them — without that row the reward engine had nothing to fire
+on, so the whole programme was unreachable.
+
+**Referral earnings are read from released rewards.** The figure on the card and
+the figure in the ledger come from the same rows, so they cannot disagree. A
+count of invites is shown next to it because a total with no denominator does
+not tell a member whether sharing is working.
+
+**Outstanding pool dues are called out above the list.** A due that is missed
+because it was three cards down is the failure the Akawo tab exists to prevent.
+Only PENDING and PROCESSING dues count as owed: a waived due has been excused by
+the organiser, and showing it would ask for money nobody expects. The banner is
+absent entirely when nothing is due, because a banner that is always there
+trains people to ignore the one that matters.
+
+**Food Ajo separates what you joined from what you could join.** A programme
+already subscribed to is not a browsing option, and listing it twice would
+suggest a second enrolment was possible. The coordinator banner reads the
+member's existing applications rather than inviting everyone every time — an
+invitation shown to someone already waiting reads as though their application
+was lost.
+
+**Ajo group cards show slots rather than members.** A member holding several
+slots fills several places, so counting heads would show a full group as half
+empty. The flexible-unit groups are labelled "Variable" and their amount is
+described as "My amount", because in those groups the figure is this member's
+obligation rather than everyone's.
+
+**Coordinator applications open support, not a form.** There is no in-app
+application screen, and building one would collect documents the app cannot
+submit. Support can start the process today; the row will point at a real form
+when one exists.

@@ -23,9 +23,9 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests     |
 | 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review |
 | 5 Home                      |                1/1 | COMPLETED   | Live APIs               | Ready            | 45 tests added      |
-| 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
-| 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
-| 8 Akawo                     |              12/13 | IN PROGRESS | Pools live; goals ready | Ready            | 20 tests added      |
+| 6 Ajo                       |                3/3 | IN REVIEW   | List/detail live        | Ready            | List/detail tested  |
+| 7 Food plans                |                3/3 | IN REVIEW   | List/detail/plans live  | Ready            | 14 tests added      |
+| 8 Akawo                     |              13/13 | IN REVIEW   | Pools and goals live    | Ready            | 31 tests added      |
 | 9 Wallet/payments/activity  |              5/TBD | IN PROGRESS | Payment APIs missing    | Screens ready    | 8 tests added       |
 | 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started         |
 | 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started         |

@@ -233,6 +233,14 @@ describe('ProfileMenuScreen', () => {
         kyc={kyc}
         loading={false}
         signingOut={false}
+        savingsMinor="0"
+        currency="NGN"
+        themePreference="system"
+        onChangeTheme={jest.fn()}
+        onCopyReferralCode={jest.fn()}
+        onShareReferralCode={jest.fn()}
+        onOpenBankAccounts={jest.fn()}
+        onOpenTransactions={jest.fn()}
         onEditProfile={jest.fn()}
         onOpenSecurity={jest.fn()}
         onOpenNotifications={jest.fn()}
@@ -262,6 +270,14 @@ describe('ProfileMenuScreen', () => {
         }}
         loading={false}
         signingOut={false}
+        savingsMinor="0"
+        currency="NGN"
+        themePreference="system"
+        onChangeTheme={jest.fn()}
+        onCopyReferralCode={jest.fn()}
+        onShareReferralCode={jest.fn()}
+        onOpenBankAccounts={jest.fn()}
+        onOpenTransactions={jest.fn()}
         onEditProfile={jest.fn()}
         onOpenSecurity={jest.fn()}
         onOpenNotifications={jest.fn()}
@@ -273,6 +289,11 @@ describe('ProfileMenuScreen', () => {
         onSignOut={jest.fn()}
       />,
     );
-    expect(view.getByText(/verification is complete/i)).toBeTruthy();
+    // The completed state is now the badge beside the name and the pill on the
+    // KYC row, rather than a sentence in a card that only appeared when
+    // something was outstanding.
+    expect(view.getByText('KYC Verified')).toBeTruthy();
+    expect(view.getByText('Verified')).toBeTruthy();
+    expect(view.getByText('Fully verified')).toBeTruthy();
   });
 });

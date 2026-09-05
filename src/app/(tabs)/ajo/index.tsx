@@ -12,6 +12,8 @@ export default function AjoRoute() {
       groups={query.data}
       loading={query.isPending}
       error={query.isError}
+      refreshing={query.isRefetching}
+      onRefresh={() => void query.refetch()}
       onRetry={() => void query.refetch()}
       // push throughout: each is a reversible step from the list.
       onOpen={(id) => router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: id } })}

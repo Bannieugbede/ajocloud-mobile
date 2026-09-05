@@ -83,3 +83,20 @@ export function listMySubscriptions(): Promise<FoodSubscription[]> {
   if (!apiClient) throw new Error('API configuration is unavailable');
   return apiClient.request('/api/v1/food-ajo/programmes/subscriptions/mine');
 }
+
+/**
+ * A member's application to become a food coordinator. Only the status matters
+ * to the Food tab: it decides whether the tab invites an application or reports
+ * one already in progress.
+ */
+export type FoodCoordinatorApplication = {
+  id: string;
+  status: string;
+  createdAt: string;
+  submittedAt: string | null;
+};
+
+export function listMyCoordinatorApplications(): Promise<FoodCoordinatorApplication[]> {
+  if (!apiClient) throw new Error('API configuration is unavailable');
+  return apiClient.request('/api/v1/food-coordinator-applications/me');
+}

@@ -8,6 +8,8 @@ it('opens a live Ajo group summary', async () => {
     <AjoListScreen
       loading={false}
       error={false}
+      refreshing={false}
+      onRefresh={jest.fn()}
       onRetry={jest.fn()}
       onOpen={onOpen}
       onCreate={jest.fn()}
@@ -31,7 +33,9 @@ it('opens a live Ajo group summary', async () => {
     />,
   );
   expect(view.getByText('₦25,000.00')).toBeTruthy();
-  await act(async () => fireEvent.press(view.getByRole('button', { name: 'Open Market Circle' })));
+  // The label carries the figures a screen reader user would otherwise have to
+  // hunt for across four separate text nodes.
+  await act(async () => fireEvent.press(view.getByLabelText(/^Open Market Circle, Active/)));
   expect(onOpen).toHaveBeenCalledWith('group');
 });
 
@@ -41,6 +45,9 @@ it('opens a live Food Ajo programme', async () => {
     <FoodListScreen
       loading={false}
       error={false}
+      refreshing={false}
+      onRefresh={jest.fn()}
+      onApplyAsCoordinator={jest.fn()}
       onRetry={jest.fn()}
       onOpen={onOpen}
       programmes={[
@@ -65,6 +72,8 @@ it('opens a live Food Ajo programme', async () => {
     />,
   );
   expect(view.getByText('₦10,000.00')).toBeTruthy();
-  await act(async () => fireEvent.press(view.getByRole('button', { name: 'Open Family Staples' })));
+  // The label now states enrolment too, which is the fact that decides whether
+  // joining is still possible.
+  await act(async () => fireEvent.press(view.getByLabelText(/^Open Family Staples, 12 of/)));
   expect(onOpen).toHaveBeenCalledWith('food');
 });

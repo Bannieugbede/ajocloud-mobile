@@ -15,6 +15,7 @@ export default function TabsLayout() {
         headerTintColor: colors.text,
         headerTitleStyle: { fontFamily: fontFamilies.semibold },
         headerShadowVisible: false,
+        headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
