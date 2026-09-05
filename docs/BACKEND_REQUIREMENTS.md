@@ -13,9 +13,19 @@
 
 ## Home dashboard gaps
 
-- Available/reserved wallet summary is implemented as posted-ledger minor-unit strings. Dedicated
-  savings/reward account summaries remain required if those balances become separate products.
-- Upcoming contribution, payout, food distribution, and Akawo schedule feed.
+- Available/reserved wallet summary is implemented as posted-ledger minor-unit strings. The Home
+  savings figure is summed client-side from live Akawo goals; a dedicated savings account summary
+  is only required if savings becomes a separate balance rather than the sum of goals.
+- Referral rewards are live: `GET /api/v1/referrals/me` returns the released reward total in minor
+  units. Rewards are issued on a settled first deposit and reversed if that deposit reverses
+  (backend ADR-012).
+- Bill payment history now returns the biller and its category, which is what Quick Pay names.
+  A saved-beneficiary API is still missing: Quick Pay is derived from history and cannot prefill a
+  customer reference, so tapping one opens the bills home rather than resuming the exact payment.
+- Upcoming contribution and payout activity is assembled client-side from `GET /ajo-groups`,
+  `GET /ajo-groups/:id` and `GET /ajo-groups/:id/schedule`, one pair of requests per group and
+  bounded to the first four. A composed dashboard feed would replace that fan-out.
+- Food distribution and Akawo schedule feeds remain outstanding.
 - Akawo goal summary/list/detail is implemented; contribution money movement is still absent.
 - Unread notification count and guarded notification destinations.
 - Owner-scoped recent wallet history is implemented. Idempotent funding, transfer, and withdrawal

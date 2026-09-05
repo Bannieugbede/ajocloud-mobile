@@ -22,7 +22,7 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 2 Design system             |              16/19 | IN REVIEW   | N/A                     | Tokens ready     | 21 tests added      |
 | 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests     |
 | 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review |
-| 5 Home                      |                0/1 | IN PROGRESS | Partial live APIs       | Ready            | Screen tested       |
+| 5 Home                      |                1/1 | COMPLETED   | Live APIs               | Ready            | 45 tests added      |
 | 6 Ajo                       |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
 | 7 Food plans                |                2/3 | IN PROGRESS | List/detail ready       | Ready            | List tested         |
 | 8 Akawo                     |              12/13 | IN PROGRESS | Pools live; goals ready | Ready            | 20 tests added      |

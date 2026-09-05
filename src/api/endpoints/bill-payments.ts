@@ -61,6 +61,8 @@ export type BillPayment = {
   failureReason: string | null;
   createdAt: string;
   completedAt: string | null;
+  /** Who was paid. Present so a past payment can be offered again by name. */
+  biller?: { id: string; name: string; category: { id: string; name: string } };
   receipt?: BillPaymentReceipt;
 };
 

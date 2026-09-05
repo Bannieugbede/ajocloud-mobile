@@ -63,15 +63,11 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="bills"
-        options={{
-          title: 'Bills',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" color={color} size={size} />
-          ),
-        }}
-      />
+      {/* Bills is reached from the wallet's Bills action and the Pay Bills
+          section on Home, which is where a person goes looking for it. Keeping
+          it out of the bar holds the product tabs to five, so each keeps a
+          comfortable target on a small phone. */}
+      <Tabs.Screen name="bills" options={{ href: null, title: 'Bills' }} />
       {/* The payment flow is entered from a feature, never from the tab bar:
           without a payment in progress it has nothing to show. */}
       <Tabs.Screen name="pay" options={{ href: null }} />

@@ -330,3 +330,48 @@ both are — and a replayed render would produce a different key each time.
 different rows, and the previous handler passed a slot id where a schedule id
 was required; it could never have worked, since the schedule endpoint did not
 return `id` at all. Both are fixed.
+
+## Home dashboard (2026-09-05)
+
+**Every figure on the dashboard comes from an API.** The wallet balance, the
+Akawo savings total, the referral rewards balance, the upcoming schedule and the
+recently paid billers are all read from the backend. Phase 5 had been blocked on
+exactly these, and the previous screen showed "Balance unavailable" beside four
+padlocked actions. Where a figure genuinely cannot be read, the screen says so
+rather than showing a zero: an unavailable balance and an empty wallet are
+different facts, and a member must never be shown the second when the first is
+true.
+
+**Derivation lives in `home-data.ts`, not in the component.** Totals, remainders,
+urgency and relative dates are money arithmetic, and a wrong total should fail a
+unit test rather than be noticed on a screenshot. `now` is a parameter
+throughout, so the boundary between "due soon" and "scheduled" is testable
+exactly instead of depending on when the suite runs.
+
+**Upcoming activity is filtered to the viewer's own slots.** A group admin
+receives every member's schedule rows from the backend. Rendering them without
+filtering would tell an admin they personally owe the entire group's
+contributions. The filter is by slot ownership, and a test holds it.
+
+**Only successful bill payments are offered again.** Quick Pay is derived from
+payment history because no saved-beneficiary API exists. Re-offering a failed or
+reversed payment would imply it had worked, so the filter is `SUCCESSFUL` alone,
+one row per customer reference and most recent first.
+
+**Wallet actions are enabled only where an API exists.** Send, Withdraw and Bills
+work today. Fund stays locked until the payment provider is wired, and its
+accessible label says why rather than presenting a bare padlock. An action that
+looks live and then dead-ends is worse than one that explains itself.
+
+**Hiding the balance hides all three figures.** The main balance, savings and
+rewards mask together. Hiding only the largest number would defeat the point of
+the control for anyone glancing over a shoulder.
+
+**Bills left the tab bar.** The design carries five tabs — Home, Ajo, Food,
+Akawo, Profile — which is also the product order the shell already recorded.
+Bills is reached from the wallet's Bills action and the Pay Bills section, which
+is where someone goes looking for it.
+
+**The screen keeps its data when a refresh fails.** A failed refetch shows a
+banner and leaves the last known figures in place, because stale data that is
+labelled stale is more useful than a blank screen.
