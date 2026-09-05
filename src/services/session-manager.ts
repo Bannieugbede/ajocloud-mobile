@@ -1,3 +1,4 @@
+import { installSessionTokens } from '@/api/client/api-client';
 import { refreshSession as requestRefresh } from '@/api/endpoints/auth-refresh';
 import { clearSession, restoreSession, saveSession } from '@/services/session-storage';
 import type { StoredSession } from '@/services/session-storage';
@@ -109,6 +110,20 @@ function isRefusal(error: unknown): boolean {
   const kind = (error as { kind: unknown }).kind;
   return kind === 'authentication' || kind === 'authorization';
 }
+
+/**
+ * Hands the shared client its token providers.
+ *
+ * Done at module load rather than in a startup effect so that no request can
+ * be made before the client knows how to authenticate it. `app-initialization`
+ * imports this module, so importing it at all is enough to install them.
+ *
+ * The direction matters: this module imports the client, never the reverse.
+ * The client importing the session manager was a cycle — the manager refreshes
+ * through an endpoint, and every endpoint imports the client — which Metro
+ * resolved by handing one of them an undefined `ApiClient` at startup.
+ */
+installSessionTokens(currentAccessToken, refreshAccessToken);
 
 /** Test seam: drops any in-flight refresh so cases cannot leak into each other. */
 export function resetRefreshStateForTests(): void {

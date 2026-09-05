@@ -1,6 +1,5 @@
 import { environment } from '@/config/environment';
 import type { AppError } from '@/types/errors';
-import { currentAccessToken, refreshAccessToken } from '@/services/session-manager';
 
 import { normalizeHttpError, normalizeUnknownError } from './normalize-error';
 
@@ -25,6 +24,14 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
   timeoutMs?: number;
   idempotencyKey?: string;
+  /**
+   * Sends no Authorization header and does not refresh on a 401.
+   *
+   * For the refresh call itself: its credential is the refresh token in the
+   * body, and attaching the spent access token it is replacing would achieve
+   * nothing. Refreshing in response to its own 401 would recurse.
+   */
+  unauthenticated?: boolean;
 };
 
 export class ApiClient {
@@ -43,6 +50,7 @@ export class ApiClient {
    * the answer, not a state to loop on.
    */
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+    if (options.unauthenticated) return this.send<T>(path, options);
     try {
       return await this.send<T>(path, options);
     } catch (error) {
@@ -67,7 +75,9 @@ export class ApiClient {
     callerSignal?.addEventListener('abort', onCallerAbort);
 
     try {
-      const token = overrideToken ?? (await this.getAccessToken());
+      const token = options.unauthenticated
+        ? null
+        : (overrideToken ?? (await this.getAccessToken()));
       const headers = new Headers(options.headers);
       headers.set('Accept', 'application/json');
       if (options.body !== undefined) headers.set('Content-Type', 'application/json');
@@ -108,6 +118,35 @@ function isAuthenticationError(value: unknown): boolean {
   return isAppError(value) && value.kind === 'authentication';
 }
 
+/**
+ * How the shared client obtains tokens.
+ *
+ * Injected rather than imported, because importing the session manager here
+ * would be a cycle: the session manager refreshes by calling an endpoint, and
+ * every endpoint imports this module. Metro resolves that cycle by handing
+ * whichever module loses the race an undefined `ApiClient`, so the app dies on
+ * `new ApiClient(...)` at startup. Jest's loader tolerates the same cycle,
+ * which is why only a real launch found it.
+ *
+ * `installSessionTokens` is called once during startup. Until it is, requests
+ * go out unauthenticated and are refused, which is the right answer for a
+ * request made before there is a session to speak of.
+ */
+let accessTokenProvider: AccessTokenProvider = async () => null;
+let accessTokenRefresher: AccessTokenRefresher = async () => null;
+
+export function installSessionTokens(
+  provider: AccessTokenProvider,
+  refresher: AccessTokenRefresher,
+): void {
+  accessTokenProvider = provider;
+  accessTokenRefresher = refresher;
+}
+
 export const apiClient = environment.EXPO_PUBLIC_API_BASE_URL
-  ? new ApiClient(environment.EXPO_PUBLIC_API_BASE_URL, currentAccessToken, refreshAccessToken)
+  ? new ApiClient(
+      environment.EXPO_PUBLIC_API_BASE_URL,
+      () => accessTokenProvider(),
+      () => accessTokenRefresher(),
+    )
   : null;

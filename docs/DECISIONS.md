@@ -490,3 +490,30 @@ Once: a second failure is the answer, not a state to loop on.
 asks the session manager for a token, and the session manager refreshes by
 calling the endpoint. Routing that call through the shared client would mean
 fetching a token in order to fetch a token.
+
+## Token providers are injected into the API client (2026-09-05)
+
+The first cut of the refresh work had `api-client` importing `session-manager`
+for its token providers, while `session-manager` reached `api-client` again
+through the endpoint it refreshes with. That is a cycle, and Metro resolves a
+cycle by handing whichever module loses the race a partially-evaluated one —
+so `ApiClient` was `undefined` at the moment `auth-refresh` called
+`new ApiClient(...)`, and the app died before its first screen.
+
+Every unit test passed, because Jest's loader tolerates the same cycle. Only a
+real launch found it.
+
+The dependency now points one way: `session-manager` imports the client and
+calls `installSessionTokens` at module load, and the client imports nothing
+from the session layer. Installation happens at load rather than in a startup
+effect so there is no window in which a request goes out unauthenticated
+because the wiring had not run yet.
+
+`__tests__/module-graph.test.ts` loads the real modules in a fresh registry in
+the order startup uses. Restoring the cycle reproduces the exact production
+error — `ApiClient is not a constructor` — which is what makes the test worth
+having rather than a formality.
+
+The refresh call now goes through the shared client with an `unauthenticated`
+flag instead of a second client instance: it needs no Authorization header, and
+refreshing in response to its own 401 would recurse.
