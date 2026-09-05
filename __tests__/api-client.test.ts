@@ -74,3 +74,61 @@ describe('ApiClient timeouts', () => {
     await expect(client.request('/fast')).resolves.toEqual({ ok: true });
   });
 });
+
+describe('recovering from a rejected access token', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('refreshes and retries once when the server rejects the token', async () => {
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse({ message: 'Unauthorized' }, 401))
+      .mockResolvedValueOnce(jsonResponse({ id: 'wallet-1' }));
+    const refresh = jest.fn().mockResolvedValue('fresh-token');
+
+    const client = new ApiClient(BASE, async () => 'stale-token', refresh);
+
+    await expect(client.request('/wallets')).resolves.toEqual({ id: 'wallet-1' });
+    expect(refresh).toHaveBeenCalledTimes(1);
+    // The retry must carry the new token; sending the stale one again would
+    // fail identically and burn a rotation for nothing.
+    const retryHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Headers;
+    expect(retryHeaders.get('Authorization')).toBe('Bearer fresh-token');
+  });
+
+  it('gives up after one retry rather than looping on a token the server keeps refusing', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ message: 'Nope' }, 401));
+    const refresh = jest.fn().mockResolvedValue('fresh-token');
+
+    const client = new ApiClient(BASE, async () => 'stale-token', refresh);
+
+    await expect(client.request('/wallets')).rejects.toMatchObject({ kind: 'authentication' });
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces the original refusal when the session cannot be refreshed', async () => {
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ message: 'Unauthorized' }, 401));
+
+    const client = new ApiClient(
+      BASE,
+      async () => 'stale-token',
+      async () => null,
+    );
+
+    await expect(client.request('/wallets')).rejects.toMatchObject({ kind: 'authentication' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh on failures that are not about authentication', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ message: 'Boom' }, 500));
+    const refresh = jest.fn();
+
+    const client = new ApiClient(BASE, async () => 'token', refresh);
+
+    await expect(client.request('/wallets')).rejects.toMatchObject({ kind: 'server' });
+    expect(refresh).not.toHaveBeenCalled();
+  });
+});

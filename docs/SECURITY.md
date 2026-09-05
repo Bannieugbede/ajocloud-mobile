@@ -8,6 +8,11 @@ mandatory for every protected record/action; hiding a control is only presentati
 
 - Keep tokens in SecureStore with device-only unlocked accessibility; clear them on logout and
   terminal refresh failure. AsyncStorage contains preferences only.
+- Terminal means refused, not merely failed: a refresh rejected with 401 or 403 ends the session,
+  while one that failed on a timeout or a dead radio leaves it intact. A network error is not
+  evidence that a token has expired, and clearing on one signs people out for losing signal.
+- Refresh tokens rotate, so exactly one refresh may be in flight at a time. Presenting a rotated
+  token twice is indistinguishable from theft and the backend revokes the whole session.
 - Never ship private credentials in source, app config, assets, logs, analytics, or `EXPO_PUBLIC_`
   variables. Redact tokens, OTPs, PINs, passwords, PII, account/payment data, and full responses.
 - Validate every deep link against scheme/host/path and expected parameters. Restore and authorize

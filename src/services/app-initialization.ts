@@ -2,7 +2,9 @@ import * as Network from 'expo-network';
 import * as Updates from 'expo-updates';
 
 import { getCurrentUser } from '@/api/endpoints/users';
+import { refreshAccessToken } from '@/services/session-manager';
 import { clearSession, restoreSession } from '@/services/session-storage';
+import type { StoredSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useRegistrationStore } from '@/store/registration-store';
 import { useThemeStore } from '@/store/theme-store';
@@ -37,7 +39,9 @@ export async function initializeApp(): Promise<AppInitialization> {
     : '/(auth)/onboarding';
   let initialRoute: InitialRoute = signedOutRoute;
 
-  if (session && Date.parse(session.expiresAt) > Date.now()) {
+  const state = session ? await sessionState(session, isOnline) : 'none';
+
+  if (state !== 'none' && state !== 'expired') {
     if (!isOnline) {
       initialRoute = '/(tabs)/home';
     } else {
@@ -63,7 +67,7 @@ export async function initializeApp(): Promise<AppInitialization> {
         initialRoute = resumeRoute();
       }
     }
-  } else if (session) {
+  } else if (state === 'expired') {
     await clearSession();
   }
 
@@ -75,6 +79,33 @@ export async function initializeApp(): Promise<AppInitialization> {
   }
 
   return { initialRoute, isOnline, updateAvailable };
+}
+
+type SessionState =
+  /** No stored session at all. */
+  | 'none'
+  /** Usable now, either already valid or just refreshed. */
+  | 'live'
+  /** Spent, and the server confirmed it cannot be renewed. */
+  | 'expired'
+  /** Spent, but nothing has disproved it — we simply could not ask. */
+  | 'unverified';
+
+/**
+ * Whether a stored session is still worth opening the app with.
+ *
+ * An expired access token is not an expired session: it lives fifteen minutes,
+ * while the refresh token behind it lives thirty days. Trading one for the
+ * other here is what stops closing the app for a quarter of an hour from
+ * ending on the Sign in screen.
+ */
+async function sessionState(session: StoredSession, isOnline: boolean): Promise<SessionState> {
+  if (Date.parse(session.expiresAt) > Date.now()) return 'live';
+  // Offline with a spent token: it can be neither renewed nor disproved, so it
+  // is kept for the next launch that has a network rather than discarded on no
+  // evidence. Every protected query will still fail until then.
+  if (!isOnline) return 'unverified';
+  return (await refreshAccessToken()) === null ? 'expired' : 'live';
 }
 
 /**

@@ -2,13 +2,18 @@
 
 ## Launch initialization
 
-`GET /api/v1/users/me` validates an unexpired restored access token when online. It requires Bearer
-authentication and returns current user/profile/status. `ACTIVE` enters the authenticated shell;
-inactive status clears credentials. Transient failure preserves the still-unexpired local session so
-protected queries can re-evaluate it. Expired sessions are cleared.
+A restored session whose access token has lapsed is refreshed before anything else, via
+`POST /api/v1/auth/refresh`. The access token lives fifteen minutes and the refresh token thirty
+days, so a lapsed access token says nothing about the session behind it; only a refusal from that
+endpoint clears stored credentials. Offline, a lapsed token is kept rather than discarded, since it
+can be neither renewed nor disproved.
+
+`GET /api/v1/users/me` then validates the session. It requires Bearer authentication and returns
+current user/profile/status. `ACTIVE` enters the authenticated shell; inactive status clears
+credentials. Transient failure preserves the local session so protected queries can re-evaluate it.
 
 Welcome, Terms, and Privacy use no API. Missing approved legal content is explicit, never invented.
-Missing contracts: startup refresh rotation, onboarding status, and organization/branch context.
+Missing contracts: onboarding status, and organization/branch context.
 
 ## Authenticated shell and Home
 
@@ -51,10 +56,17 @@ use a dedicated method so JSON headers are not forced.
 
 ## Authentication and refresh
 
-Access and refresh tokens live in SecureStore. Once confirmed, the client will attach the access
-token, coordinate exactly one refresh for concurrent 401s, rotate stored tokens atomically, retry an
-eligible request once, and clear session on terminal refresh failure. Login, refresh, and logout
-payloads must come from backend documentation; tokens and sensitive payloads are never logged.
+Access and refresh tokens live in SecureStore. `src/services/session-manager.ts` owns the exchange:
+it attaches the access token, refreshes one before it lapses, and coordinates exactly one rotation
+across concurrent callers. That last point is a correctness requirement rather than an optimisation
+— the backend rotates on every refresh and treats a token presented twice as theft, marking the
+session `COMPROMISED` and revoking every token on it.
+
+`POST /api/v1/auth/refresh` takes `{ refreshToken }` in the body for bearer clients and returns a
+full token pair; both halves are stored, since keeping the old refresh token would break the next
+rotation. A 401 is retried exactly once with a freshly refreshed token, which is the only way to
+discover a drifted clock or a token revoked from another device. A refusal (401/403) clears the
+session; a network failure does not. Tokens and sensitive payloads are never logged.
 
 ## Errors
 

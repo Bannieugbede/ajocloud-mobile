@@ -420,3 +420,73 @@ obligation rather than everyone's.
 application screen, and building one would collect documents the app cannot
 submit. Support can start the process today; the row will point at a real form
 when one exists.
+
+## Custom headers on the tab screens (2026-09-05)
+
+**Each tab draws its own header.** This is the documented exception to the rule
+that every screen uses the native navigator header, and it is taken for one
+reason: each tab already names itself in the first line of its content, so a
+title bar above that prints the name twice and costs a fixed strip of height on
+a small phone. The header scrolls away with the content instead. Every screen
+below the tab root keeps the native header, so back navigation is unchanged.
+
+One `AppScreenHeader` serves all five rather than each screen rolling its own,
+because five near-identical headers would drift apart within a month. It carries
+an optional eyebrow (Home's greeting), a subtitle, round icon buttons (Home's
+theme and notification controls, Profile's settings) and inline buttons (Join and
+Create on Ajo and Akawo).
+
+**Bill categories are drawn in their own colours.** Four identical blue tiles are
+harder to scan than four coloured ones, and the colour is the fastest way to
+find the row you want. The mapping is a tested function rather than a literal in
+the card, so the shortcut and the Quick Pay row that follows it cannot disagree
+about what Electricity looks like.
+
+**Akawo opens on pools rather than personal goals.** A collection someone else is
+running has a deadline and a person waiting; a personal savings goal has neither,
+so pools are what the tab should surface. Goals keep their own route, linked from
+the top of the pools screen, and the Home wallet still sums them into Savings.
+
+**Food package photographs are real data, not decoration.** `imageUrl` and
+`description` are nullable columns on `FoodPackage`, and the card falls back to a
+coloured tile when either is absent, so a package without a photograph still
+occupies the same shape and the list does not jump as images resolve.
+
+**The coordinator's "Verified" badge means their KYC tier.** It is read from the
+same verification every other part of the app uses. A badge that did not mean
+anything would be worse than no badge at all, because it would still be believed.
+
+## The session survives a closed app (2026-09-05)
+
+**The refresh token is now actually used.** It was stored from the first day
+sign-in existed and never sent anywhere: `refreshToken` appeared in the type, in
+the save, and nowhere else. The access token lives fifteen minutes and the
+refresh token thirty days, so closing the app over lunch was enough for startup
+to find a lapsed access token and delete a session that had twenty-nine days
+left. That is the whole of the reported bug, and the reason it looked like
+"everything is lost" rather than a slow expiry.
+
+**Refreshes are serialised, because the backend rotates.** Each refresh consumes
+its token and issues a new one, and a token presented twice is read as theft:
+the session is marked COMPROMISED and every token on it revoked. A cold start
+fans out several queries at once, all of which would find the same spent token,
+so the naive fix — refresh wherever a token is needed — would have signed people
+out harder than the bug it replaced. One in-flight rotation is shared by every
+caller that arrives during it.
+
+**Only a refusal ends a session.** A refresh that fails with 401 or 403 clears
+the stored session; a refresh that fails on a timeout or a dead radio does not.
+Being in a tunnel is not evidence that a thirty-day token has expired, and
+treating it as such would sign someone out for boarding a train. Offline at
+startup keeps the session and opens the app; the queries behind it still fail
+until there is a network, which is the honest state.
+
+**A 401 is retried once with a fresh token.** The stored expiry is only what the
+phone believes — a drifted clock or a token revoked from another device both
+look valid locally and can be discovered no other way than by being refused.
+Once: a second failure is the answer, not a state to loop on.
+
+**The refresh endpoint has its own unauthenticated client.** The shared client
+asks the session manager for a token, and the session manager refreshes by
+calling the endpoint. Routing that call through the shared client would mean
+fetching a token in order to fetch a token.
