@@ -129,7 +129,6 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
           <AppButton label="Finish verification" variant="outline" onPress={props.onCompleteKyc} />
         </AppCard>
       ) : null}
-
       <AppListItem
         card
         title="Bank Accounts"

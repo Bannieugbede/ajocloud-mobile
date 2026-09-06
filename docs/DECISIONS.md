@@ -920,3 +920,32 @@ contains "Ajo", and without the ordering every food package would be filed as a
 rotating-savings contribution. Anything unrecognised is `other` and lists
 normally — a movement that cannot be categorised is still the member's money and
 must never be hidden.
+
+## The joined pool list needed a backend field (2026-09-06)
+
+The Akawo tab's design shows every card the same way — amount, members, due
+date, a progress bar and "2/3 paid · ₦6,000 collected" — whether the member
+organises the pool or has joined it. `GET /akawo/pools/joined` returned only the
+pool and the member's own due, so a joined card could show what was owed but not
+whether anyone else was paying.
+
+`listJoined` now runs the same `withTotals` aggregation `listOrganised` already
+did. It exposes nothing new about anybody: a member count, a paid count and a
+sum, which is exactly what that member's own detail view (`GET /pools/:id`)
+already returned for the pool they are in. Who has paid stays in the organiser's
+view, and a backend test asserts the joined payload carries no roster and no
+organiser account id.
+
+This is a read shape, not a financial rule, so it needs no ADR — nothing about
+what is owed, charged or paid out changed.
+
+### One card, two callers
+
+`OrganisedPoolCard` and `JoinedPoolCard` are now one `PoolCard` with different
+props. They had drifted — the joined card showed a reference label where the
+organiser's showed a member count, and only one had a progress bar — despite the
+design drawing them identically. The only real difference is the badge: an
+organiser is told the pool's state, a member is told their own.
+
+A pool with no members draws no progress bar. A bar over zero can only ever read
+empty, which looks like a stalled collection rather than a new one.

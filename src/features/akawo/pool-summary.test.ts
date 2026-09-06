@@ -40,6 +40,11 @@ function joined(overrides: {
             status: overrides.dueStatus,
             paidAt: overrides.dueStatus === 'PAID' ? '2026-09-01T00:00:00Z' : null,
           },
+    memberCount: 3,
+    paidCount: 2,
+    collectedMinor: '600000',
+    expectedMinor: '900000',
+    progressBps: 6666,
   };
 }
 

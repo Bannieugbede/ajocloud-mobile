@@ -129,3 +129,22 @@ export function expectedTotalMinor(amountMinor: string, memberCount: number): st
     return '0';
   }
 }
+
+/**
+ * A deadline as a list reads it: "Aug 30", without the year.
+ *
+ * A card shows three facts side by side and the year is almost never the one
+ * that decides anything — the detail screen carries the full date. Formatted in
+ * UTC for the same reason as `deadlineLabel`.
+ */
+export function shortDeadlineLabel(dueAt: string | null, locale?: string): string {
+  if (!dueAt) return 'No deadline';
+  const parsed = Date.parse(dueAt);
+  return Number.isNaN(parsed)
+    ? 'No deadline'
+    : new Date(parsed).toLocaleDateString(locale, {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      });
+}

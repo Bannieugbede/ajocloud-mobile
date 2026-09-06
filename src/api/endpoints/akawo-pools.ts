@@ -54,7 +54,16 @@ export type MemberPoolView = {
   collectedMinor: string;
 };
 
-export type JoinedPool = { membershipId: string; pool: AkawoPool; due: AkawoDue | null };
+/**
+ * A pool the member has joined, with their own due and how far the collection
+ * has got. The totals are aggregates only — how many have paid, never who, which
+ * stays in the organiser's view.
+ */
+export type JoinedPool = {
+  membershipId: string;
+  pool: AkawoPool;
+  due: AkawoDue | null;
+} & PoolTotals;
 
 export type PoolPreview = {
   id: string;

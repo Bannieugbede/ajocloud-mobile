@@ -70,7 +70,7 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
           <View style={styles.dueHeader}>
             <Ionicons name="alert-circle-outline" size={18} color={colors.warning} />
             <AppText accessibilityRole="header" weight="semibold">
-              {dues.length === 1 ? 'Payment due' : `${dues.length} payments due`}
+              {dues.length === 1 ? 'Payment Due' : `${dues.length} Payments Due`}
             </AppText>
           </View>
           {dues.map((entry) => (
@@ -134,6 +134,7 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
               key={entry.membershipId}
               pool={entry.pool}
               due={entry.due}
+              totals={entry}
               onPress={() => props.onOpenJoined(entry.pool.id)}
             />
           ))}

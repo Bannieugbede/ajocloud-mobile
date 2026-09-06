@@ -15,6 +15,7 @@ export function AppProgress({
   progressBps,
   label,
   showValue = true,
+  tone = 'secondary',
   style,
   testID,
 }: {
@@ -22,10 +23,13 @@ export function AppProgress({
   /** Accessible name, e.g. the goal's title. */
   label: string;
   showValue?: boolean;
+  /** `success` for a collection that is filling up, where green reads as money in. */
+  tone?: 'secondary' | 'success';
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }) {
   const { colors } = useTheme();
+  const fill = tone === 'success' ? colors.success : colors.secondary;
   const clamped = Math.max(0, Math.min(10_000, Math.round(progressBps)));
   const percent = Math.round(clamped / 100);
 
@@ -37,7 +41,7 @@ export function AppProgress({
         accessibilityValue={{ min: 0, max: 100, now: percent, text: `${percent} percent` }}
         style={[styles.track, { backgroundColor: colors.surfaceMuted }]}
       >
-        <View style={[styles.fill, { backgroundColor: colors.secondary, width: `${percent}%` }]} />
+        <View style={[styles.fill, { backgroundColor: fill, width: `${percent}%` }]} />
       </View>
       {showValue ? (
         <AppText weight="medium" style={{ color: colors.textMuted }}>

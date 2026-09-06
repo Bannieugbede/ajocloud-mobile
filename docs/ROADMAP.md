@@ -424,6 +424,23 @@ confirmed the guards fail when broken.
 Not yet built: a real chat channel and a support phone number, both of which
 need the channel to exist before the UI can offer it.
 
+## Akawo tab list redesign (COMPLETED, 2026-09-06)
+
+The list itself, which the earlier pool work had left alone apart from its
+button icons. Both card types are now one `PoolCard`: organiser subtitle,
+Amount/Members/Due Date, a progress bar and the collected line, with a chevron
+and an abbreviated "Aug 30" date.
+
+Required a backend change — `GET /akawo/pools/joined` returned no pool totals,
+so a joined card could not show whether the rest of the group had paid. It now
+runs the same aggregation the organised list already did, exposing counts and a
+sum but no roster. See `ajocloud-backend` and `docs/DECISIONS.md`.
+
+Tests: 5 added to `__tests__/akawo-pools-screen.test.tsx`, 4 added to the
+backend's `akawo-pools.service.spec.ts`. Validation on 2026-09-06: mobile
+`bun run validate` passed — 69 suites, 792 tests; backend lint, typecheck,
+859 unit and 11 e2e tests passed. Three mutations confirmed the new guards.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

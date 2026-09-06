@@ -5,6 +5,11 @@
  * screen — a rounded balance in a fintech is a wrong balance.
  */
 function parseMinor(amountMinor: string): bigint | null {
+  // Guarded rather than trusted to the type. A field the API stops sending, or
+  // has not started sending yet, arrives as undefined at runtime however it is
+  // typed — and a money formatter must never be the thing that takes a screen
+  // down. An unreadable amount renders as "—" instead.
+  if (typeof amountMinor !== 'string') return null;
   const trimmed = amountMinor.trim();
   if (!/^-?\d+$/.test(trimmed)) return null;
   return BigInt(trimmed);

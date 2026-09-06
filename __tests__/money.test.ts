@@ -69,3 +69,12 @@ describe('minorToMajor', () => {
     expect(minorToMajor('')).toBe('');
   });
 });
+
+describe('formatMinorAmount robustness', () => {
+  it('renders a missing amount rather than throwing', () => {
+    // A field the API stops sending arrives as undefined however it is typed.
+    // A money formatter must never be what takes a screen down.
+    expect(formatMinorAmount(undefined as unknown as string)).toBe('NGN —');
+    expect(formatMinorAmount(null as unknown as string, 'NGN')).toBe('NGN —');
+  });
+});

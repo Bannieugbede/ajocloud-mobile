@@ -1,7 +1,8 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
 import type { AkawoDue, AkawoPool, PoolTotals } from '@/api/endpoints/akawo-pools';
-import { AppBadge } from '@/components/ui/app-badge';
+import { AppBadge, type BadgeTone } from '@/components/ui/app-badge';
 import { AppCard } from '@/components/ui/app-card';
 import { AppProgress } from '@/components/ui/app-progress';
 import { AppText } from '@/components/ui/app-text';
@@ -10,7 +11,98 @@ import { fontSizes, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
-import { deadlineLabel } from './pool-summary';
+import { dueLabel, dueTone } from './pool-status';
+import { shortDeadlineLabel } from './pool-summary';
+
+/**
+ * One pool in a list.
+ *
+ * Both sides of a collection are the same card: name, who is running it, the
+ * three facts that decide whether to act, and how far the group has got. What
+ * differs is only the badge — an organiser is told the pool's state, a member is
+ * told their own — so the shape is shared rather than drawn twice.
+ */
+function PoolCard({
+  name,
+  subtitle,
+  badge,
+  amountLabel,
+  memberCount,
+  dueAt,
+  paidCount,
+  collectedMinor,
+  currency,
+  accessibilityLabel,
+  onPress,
+}: {
+  name: string;
+  subtitle?: string | null;
+  badge: { label: string; tone: BadgeTone };
+  amountLabel: string;
+  memberCount: number;
+  dueAt: string | null;
+  paidCount: number;
+  collectedMinor: string;
+  currency: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  // Defended against a server that does not send totals yet: a card must degrade
+  // to showing what it does know rather than rendering "undefined paid", and the
+  // whole tab must never come down over a missing count.
+  const members = Number.isFinite(memberCount) ? memberCount : 0;
+  const paid = Number.isFinite(paidCount) ? paidCount : 0;
+  const progressBps = members > 0 ? Math.round((paid / members) * 10_000) : 0;
+
+  return (
+    <AppCard onPress={onPress} accessibilityLabel={accessibilityLabel} style={styles.card}>
+      <View style={styles.titleRow}>
+        <View style={styles.title}>
+          <AppText weight="bold" style={styles.name} numberOfLines={2}>
+            {name}
+          </AppText>
+          {subtitle ? (
+            // Whom a member is paying is what makes a collection trustworthy,
+            // so the card says it rather than leaving it to a tap.
+            <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
+              {subtitle}
+            </AppText>
+          ) : null}
+        </View>
+        <AppBadge label={badge.label} tone={badge.tone} />
+      </View>
+
+      <View style={styles.metrics}>
+        <Metric label="Amount" value={amountLabel} />
+        <Metric label="Members" value={String(members)} />
+        <Metric label="Due Date" value={shortDeadlineLabel(dueAt)} />
+      </View>
+
+      {members > 0 ? (
+        <AppProgress
+          progressBps={progressBps}
+          label={`${name} collection`}
+          showValue={false}
+          tone="success"
+        />
+      ) : null}
+
+      <View style={styles.footer}>
+        <AppText style={[styles.footerText, { color: colors.textMuted }]} numberOfLines={1}>
+          {paid}/{members} paid · {formatMinorAmount(collectedMinor ?? '0', currency)} collected
+        </AppText>
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={colors.textMuted}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
+      </View>
+    </AppCard>
+  );
+}
 
 /** One pool in the organiser's list, with how much of it has been collected. */
 export function OrganisedPoolCard({
@@ -20,102 +112,59 @@ export function OrganisedPoolCard({
   pool: AkawoPool & PoolTotals;
   onPress: () => void;
 }) {
-  const { colors } = useTheme();
   const settled = pool.memberCount > 0 && pool.paidCount === pool.memberCount;
 
   return (
-    <AppCard
-      onPress={onPress}
+    <PoolCard
+      name={pool.name}
+      subtitle={pool.purpose}
+      badge={{
+        label: settled ? 'Complete' : statusLabel(pool.status),
+        tone: settled ? 'success' : pool.status === 'OPEN' ? 'info' : 'neutral',
+      }}
+      amountLabel={formatMinorAmount(pool.amountMinor, pool.currency)}
+      memberCount={pool.memberCount}
+      dueAt={pool.dueAt}
+      paidCount={pool.paidCount}
+      collectedMinor={pool.collectedMinor}
+      currency={pool.currency}
       accessibilityLabel={`Open ${pool.name}, ${pool.paidCount} of ${pool.memberCount} paid, ${formatMinorAmount(
         pool.collectedMinor,
         pool.currency,
       )} collected`}
-      style={styles.card}
-    >
-      <View style={styles.titleRow}>
-        <AppText weight="bold" style={styles.name} numberOfLines={2}>
-          {pool.name}
-        </AppText>
-        <AppBadge
-          label={settled ? 'Complete' : statusLabel(pool.status)}
-          tone={settled ? 'success' : pool.status === 'OPEN' ? 'info' : 'neutral'}
-        />
-      </View>
-
-      <View style={styles.metrics}>
-        <Metric label="Amount" value={formatMinorAmount(pool.amountMinor, pool.currency)} />
-        <Metric label="Members" value={String(pool.memberCount)} />
-        <Metric label="Due date" value={deadlineLabel(pool.dueAt)} />
-      </View>
-
-      {pool.memberCount > 0 ? (
-        <AppProgress
-          progressBps={pool.progressBps}
-          label={`${pool.name} collection`}
-          showValue={false}
-        />
-      ) : null}
-      <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-        {pool.paidCount}/{pool.memberCount} paid ·{' '}
-        {formatMinorAmount(pool.collectedMinor, pool.currency)} collected
-      </AppText>
-    </AppCard>
+      onPress={onPress}
+    />
   );
 }
 
-/** One pool the user has joined, showing what they personally owe. */
+/** One pool the user has joined, badged with what they personally owe. */
 export function JoinedPoolCard({
   pool,
   due,
+  totals,
   onPress,
 }: {
   pool: AkawoPool;
   due: AkawoDue | null;
+  totals: PoolTotals;
   onPress: () => void;
 }) {
-  const { colors } = useTheme();
-  const settled = due?.status === 'PAID' || due?.status === 'WAIVED';
   const amount = formatMinorAmount(due?.amountMinor ?? pool.amountMinor, pool.currency);
 
   return (
-    <AppCard
+    <PoolCard
+      name={pool.name}
+      subtitle={pool.organiserName}
+      badge={{ label: dueLabel(due), tone: dueTone(due) }}
+      amountLabel={amount}
+      memberCount={totals.memberCount}
+      dueAt={pool.dueAt}
+      paidCount={totals.paidCount}
+      collectedMinor={totals.collectedMinor}
+      currency={pool.currency}
+      accessibilityLabel={`Open ${pool.name}, ${amount}, ${dueLabel(due)}`}
       onPress={onPress}
-      accessibilityLabel={`Open ${pool.name}, ${amount}, ${
-        due ? statusLabel(due.status) : 'no due recorded'
-      }`}
-      style={styles.card}
-    >
-      <View style={styles.titleRow}>
-        <View style={styles.title}>
-          <AppText weight="bold" style={styles.name} numberOfLines={2}>
-            {pool.name}
-          </AppText>
-          {pool.organiserName ? (
-            // Whom a member is paying is what makes a collection trustworthy,
-            // so the card says it rather than leaving it to a tap.
-            <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
-              {pool.organiserName}
-            </AppText>
-          ) : null}
-        </View>
-        <AppBadge
-          label={due ? statusLabel(due.status) : 'No due'}
-          tone={settled ? 'success' : due ? 'warning' : 'neutral'}
-        />
-      </View>
-
-      <View style={styles.metrics}>
-        <Metric label="Amount" value={amount} />
-        <Metric label="Reference" value={pool.referenceLabel} />
-        <Metric label="Due date" value={deadlineLabel(pool.dueAt)} />
-      </View>
-
-      {pool.purpose ? (
-        <AppText style={{ color: colors.textMuted }} numberOfLines={2}>
-          {pool.purpose}
-        </AppText>
-      ) : null}
-    </AppCard>
+    />
   );
 }
 
@@ -143,4 +192,6 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: fontSizes.body },
   metrics: { flexDirection: 'row', gap: spacing.md },
   metric: { flex: 1, gap: 2 },
+  footer: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  footerText: { flex: 1, fontSize: fontSizes.caption },
 });
