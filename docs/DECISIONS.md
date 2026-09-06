@@ -594,3 +594,29 @@ what surrounds it.
 
 The API stayed backwards compatible, so all sixteen call sites kept working
 while each was reviewed individually rather than being migrated in bulk.
+
+## The notification inbox (2026-09-06)
+
+The inbox was the thinnest screen in the app: a native header, plain cards, no
+icons, no timestamps, a hand-rolled empty panel, and — most consequentially —
+no pagination at all. The feed returns a `nextCursor` the screen ignored, so
+every notification past the first page was unreachable. It now pages with
+`useInfiniteQuery` behind a "Show older" control.
+
+**Category comes from the deep link, not the template.** `template` is a
+free-form `VARCHAR(100)` on the backend and only `welcome` is dispatched today,
+so matching on template names would be guessing at values that do not exist.
+The deep link has to name a real route for the notification to be openable at
+all, which makes it the reliable signal; the template is a fallback for entries
+that carry no link, and the link wins when the two disagree.
+
+Each category is drawn in the colour of the product it belongs to, so an Ajo
+payout and a security alert are distinguishable before either is read.
+
+**Unread is marked three ways** — a tinted row, a dot, and the word "New" — so
+the state survives being read without colour. The row is tinted as well as
+dotted because an unread entry should be findable while scrolling past it, not
+only once it has been looked at directly.
+
+The subtitle deliberately avoids "Nothing yet" when the feed is empty, because
+the empty state directly beneath it already says exactly that.

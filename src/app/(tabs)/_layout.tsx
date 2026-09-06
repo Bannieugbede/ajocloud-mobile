@@ -74,7 +74,11 @@ export default function TabsLayout() {
       <Tabs.Screen name="pay" options={{ href: null }} />
       {/* Reached from Profile and from a notification tap. A seventh tab would
           crowd the bar without earning its place next to the products. */}
-      <Tabs.Screen name="notifications" options={{ href: null, title: 'Notifications' }} />
+      {/* Draws its own header, like the tab roots; see the note in the Ajo layout. */}
+      <Tabs.Screen
+        name="notifications"
+        options={{ href: null, title: 'Notifications', headerShown: false }}
+      />
       <Tabs.Screen
         name="profile"
         options={{

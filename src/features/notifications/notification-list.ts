@@ -1,3 +1,5 @@
+import type { Ionicons } from '@expo/vector-icons';
+
 import type { InAppNotification } from '@/api/endpoints/notifications';
 
 export type NotificationGroup = {
@@ -51,4 +53,87 @@ export function unreadIds(notifications: readonly InAppNotification[]): string[]
 export function badgeLabel(unreadCount: number): string | null {
   if (unreadCount <= 0) return null;
   return unreadCount > 99 ? '99+' : String(unreadCount);
+}
+
+/**
+ * Which product a notification belongs to.
+ *
+ * Derived from the deep link first and the template second. `template` is a
+ * free-form string on the backend and only `welcome` is dispatched today, so
+ * matching on template names alone would be guessing at values that do not
+ * exist yet. The deep link is the reliable signal: it has to name a real route
+ * for the notification to be openable at all.
+ */
+export type NotificationCategory =
+  'ajo' | 'akawo' | 'food' | 'bills' | 'payment' | 'security' | 'general';
+
+export function categoryOf(notification: {
+  template: string;
+  deepLink: string | null;
+}): NotificationCategory {
+  const link = notification.deepLink ?? '';
+  if (link.includes('/ajo')) return 'ajo';
+  if (link.includes('/akawo')) return 'akawo';
+  if (link.includes('/food')) return 'food';
+  if (link.includes('/bills')) return 'bills';
+  if (link.includes('/wallet') || link.includes('/payment')) return 'payment';
+  if (link.includes('/security') || link.includes('/verify')) return 'security';
+
+  // Falls back to the template, which is all a notification without a link has.
+  const template = notification.template.toLowerCase();
+  if (template.includes('ajo')) return 'ajo';
+  if (template.includes('akawo')) return 'akawo';
+  if (template.includes('food')) return 'food';
+  if (template.includes('bill')) return 'bills';
+  if (
+    template.includes('payment') ||
+    template.includes('wallet') ||
+    template.includes('payout') ||
+    template.includes('deposit')
+  ) {
+    return 'payment';
+  }
+  if (
+    template.includes('security') ||
+    template.includes('login') ||
+    template.includes('password') ||
+    template.includes('device')
+  ) {
+    return 'security';
+  }
+  return 'general';
+}
+
+/** The icon each category is drawn with, matching the tab it belongs to. */
+export function categoryIcon(
+  category: NotificationCategory,
+): React.ComponentProps<typeof Ionicons>['name'] {
+  return {
+    ajo: 'people-outline',
+    akawo: 'wallet-outline',
+    food: 'basket-outline',
+    bills: 'receipt-outline',
+    payment: 'card-outline',
+    security: 'shield-checkmark-outline',
+    general: 'notifications-outline',
+  }[category] as React.ComponentProps<typeof Ionicons>['name'];
+}
+
+/**
+ * The clock time a notification is stamped with.
+ *
+ * Only the time, never the date: every row already sits under a day heading
+ * from `groupByDay`, so a date here would repeat what the heading just said.
+ */
+export function timeLabel(at: Date): string {
+  return at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+/** A one-line summary for the header, so the count is not only a number. */
+export function unreadSummary(unreadCount: number, total: number): string {
+  // The empty state below already says "Nothing yet"; repeating it in the
+  // subtitle would print the same words twice on one screen.
+  if (total === 0) return 'Your updates appear here';
+  if (unreadCount === 0) return 'You are all caught up';
+  return `${String(unreadCount)} unread`;
 }

@@ -1,6 +1,15 @@
 import type { InAppNotification } from '@/api/endpoints/notifications';
 
-import { badgeLabel, dayLabel, groupByDay, unreadIds } from './notification-list';
+import {
+  badgeLabel,
+  categoryIcon,
+  categoryOf,
+  dayLabel,
+  groupByDay,
+  timeLabel,
+  unreadIds,
+  unreadSummary,
+} from './notification-list';
 
 // Local-time constructors: the labels are calendar-day based, so UTC literals
 // would make this test pass or fail depending on the machine's timezone.
@@ -79,5 +88,68 @@ describe('badgeLabel', () => {
     expect(badgeLabel(9)).toBe('9');
     expect(badgeLabel(99)).toBe('99');
     expect(badgeLabel(100)).toBe('99+');
+  });
+});
+
+describe('categorising a notification', () => {
+  it('reads the product from the deep link', () => {
+    // The link is the reliable signal: it has to name a real route for the
+    // notification to be openable at all.
+    expect(categoryOf({ template: 'anything', deepLink: '/(tabs)/ajo/abc' })).toBe('ajo');
+    expect(categoryOf({ template: 'anything', deepLink: '/(tabs)/akawo/pools/1' })).toBe('akawo');
+    expect(categoryOf({ template: 'anything', deepLink: '/(tabs)/food/2' })).toBe('food');
+    expect(categoryOf({ template: 'anything', deepLink: '/(tabs)/bills' })).toBe('bills');
+  });
+
+  it('falls back to the template when there is no link', () => {
+    // template is a free-form string on the backend, so this is a best effort
+    // rather than a contract — but a notification with no link still has to be
+    // drawn as something.
+    expect(categoryOf({ template: 'ajo.payout.ready', deepLink: null })).toBe('ajo');
+    expect(categoryOf({ template: 'payment.deposit.settled', deepLink: null })).toBe('payment');
+    expect(categoryOf({ template: 'security.new_device', deepLink: null })).toBe('security');
+  });
+
+  it('prefers the link over the template when they disagree', () => {
+    // Where the notification actually goes matters more than what it was
+    // called, because that is what the member will see when they tap it.
+    expect(categoryOf({ template: 'payment.reminder', deepLink: '/(tabs)/ajo/abc' })).toBe('ajo');
+  });
+
+  it('falls back to general rather than guessing', () => {
+    expect(categoryOf({ template: 'welcome', deepLink: null })).toBe('general');
+  });
+
+  it('gives every category an icon', () => {
+    const categories = ['ajo', 'akawo', 'food', 'bills', 'payment', 'security', 'general'] as const;
+    for (const category of categories) {
+      expect(categoryIcon(category)).toBeTruthy();
+    }
+  });
+});
+
+describe('the unread summary', () => {
+  it("does not repeat the empty state's own wording", () => {
+    // The panel beneath already says "Nothing yet"; the subtitle saying it too
+    // would print the same words twice on one screen.
+    expect(unreadSummary(0, 0)).toBe('Your updates appear here');
+  });
+
+  it('congratulates an inbox that has been read', () => {
+    expect(unreadSummary(0, 12)).toBe('You are all caught up');
+  });
+
+  it('counts what is unread', () => {
+    expect(unreadSummary(3, 12)).toBe('3 unread');
+  });
+});
+
+describe('the time stamp', () => {
+  it('prints a clock time, never a date', () => {
+    // Every row sits under a day heading from groupByDay, so a date here would
+    // repeat what the heading just said.
+    const label = timeLabel(new Date('2026-09-06T14:14:00'));
+    expect(label).toMatch(/\d/);
+    expect(label).not.toMatch(/2026/);
   });
 });
