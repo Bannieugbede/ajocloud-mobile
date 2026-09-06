@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react-native';
 
 import { AppHero } from '@/components/ui/app-hero';
+import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppMetricRow } from '@/components/ui/app-metric-row';
 
 describe('AppHero', () => {
@@ -66,5 +67,28 @@ describe('AppMetricRow', () => {
     expect(view.getByLabelText('Amount: ₦5,000.00')).toBeTruthy();
     expect(view.getByLabelText('Members: 8')).toBeTruthy();
     expect(view.getByLabelText('Due Date: Aug 30')).toBeTruthy();
+  });
+});
+
+describe('AppMedallion', () => {
+  it('announces nothing of its own', async () => {
+    // The heading beneath always says what happened, so the glyph would stop a
+    // screen reader on a second, wordless element. It is hidden thoroughly
+    // enough that the testing library's queries cannot reach it either — which
+    // is the assertion: nothing here is addressable by role, label or test id.
+    const view = await render(
+      <AppMedallion icon="checkmark-circle" tone="success" testID="mark" />,
+    );
+    expect(view.queryByTestId('mark')).toBeNull();
+    expect(view.queryByLabelText(/checkmark/i)).toBeNull();
+  });
+
+  it('tints itself by tone rather than by the caller passing colours', async () => {
+    // Six screens used to pass their own tint and soft background. A tone name
+    // means a palette change lands everywhere at once.
+    // Same icon in both, so the tone is the only thing that can differ.
+    const success = await render(<AppMedallion icon="checkmark-circle" tone="success" />);
+    const error = await render(<AppMedallion icon="checkmark-circle" tone="error" />);
+    expect(JSON.stringify(success.toJSON())).not.toBe(JSON.stringify(error.toJSON()));
   });
 });

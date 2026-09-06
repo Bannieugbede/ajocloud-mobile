@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppBadge } from '@/components/ui/app-badge';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -41,19 +42,7 @@ export function PlatformFeesScreen() {
               </AppText>
               <AppText weight="semibold">{line.name}</AppText>
             </View>
-            <View
-              style={[
-                styles.pill,
-                { backgroundColor: line.amount ? colors.warningSoft : colors.successSoft },
-              ]}
-            >
-              <AppText
-                weight="semibold"
-                style={[styles.pillText, { color: line.amount ? colors.warning : colors.success }]}
-              >
-                {feeAmountLabel(line)}
-              </AppText>
-            </View>
+            <AppBadge label={feeAmountLabel(line)} tone={line.amount ? 'warning' : 'success'} />
           </View>
           <AppText style={{ color: colors.textMuted }}>{line.detail}</AppText>
         </AppCard>
@@ -76,7 +65,5 @@ const styles = StyleSheet.create({
   card: { gap: spacing.sm },
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   text: { flex: 1, gap: 2 },
-  pill: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
-  pillText: { fontSize: fontSizes.caption },
   footnote: { fontSize: fontSizes.caption },
 });

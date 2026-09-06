@@ -4,17 +4,17 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import type { BillPayment } from '@/api/endpoints/bill-payments';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppMedallion, type MedallionTone } from '@/components/ui/app-medallion';
 import { AppDivider } from '@/components/ui/app-divider';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 import { billOutcome } from './bill-amount';
 
 type Presentation = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  tint: string;
-  soft: string;
+  tone: MedallionTone;
   heading: string;
   body: string;
 };
@@ -35,29 +35,25 @@ export function BillReceiptScreen({
     {
       succeeded: {
         icon: 'checkmark-circle' as const,
-        tint: colors.success,
-        soft: colors.successSoft,
+        tone: 'success' as const,
         heading: 'Payment complete',
         body: `Your payment to ${payment.customerReferenceMasked} went through.`,
       },
       pending: {
         icon: 'time-outline' as const,
-        tint: colors.warning,
-        soft: colors.warningSoft,
+        tone: 'warning' as const,
         heading: 'Payment in progress',
         body: 'We will confirm this as soon as the biller responds. You can safely leave this screen.',
       },
       failed: {
         icon: 'close-circle' as const,
-        tint: colors.error,
-        soft: colors.errorSoft,
+        tone: 'error' as const,
         heading: 'Payment failed',
         body: payment.failureReason ?? 'Your wallet was not charged. You can try again.',
       },
       unresolved: {
         icon: 'help-circle' as const,
-        tint: colors.warning,
-        soft: colors.warningSoft,
+        tone: 'warning' as const,
         heading: 'We are checking this payment',
         // Deliberately does not claim either outcome: the wallet was debited
         // and the provider's result is not yet known.
@@ -73,15 +69,7 @@ export function BillReceiptScreen({
       contentInsetAdjustmentBehavior="automatic"
     >
       <View style={styles.header}>
-        <View style={[styles.badge, { backgroundColor: presentation.soft }]}>
-          <Ionicons
-            name={presentation.icon}
-            size={32}
-            color={presentation.tint}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
+        <AppMedallion icon={presentation.icon} tone={presentation.tone} />
         <AppText accessibilityRole="header" weight="bold" style={styles.heading}>
           {presentation.heading}
         </AppText>
@@ -134,13 +122,6 @@ function Row({ label, value, emphasis }: { label: string; value: string; emphasi
 
 const styles = StyleSheet.create({
   actions: { gap: spacing.sm },
-  badge: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 64,
-    justifyContent: 'center',
-    width: 64,
-  },
   body: { textAlign: 'center' },
   container: { gap: spacing.lg, padding: spacing.lg },
   header: { alignItems: 'center', gap: spacing.sm },

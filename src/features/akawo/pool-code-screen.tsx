@@ -1,8 +1,8 @@
 import { Share, StyleSheet, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
+import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
@@ -36,15 +36,7 @@ export function PoolCodeScreen({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
-          <Ionicons
-            name="checkmark-circle"
-            size={32}
-            color={colors.success}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
+        <AppMedallion icon="checkmark-circle" tone="success" />
 
         <AppText accessibilityRole="header" weight="bold" style={styles.title}>
           {poolName} is ready
@@ -86,13 +78,6 @@ export function PoolCodeScreen({
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'space-between', padding: spacing.lg },
   content: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
-  badge: {
-    alignItems: 'center',
-    borderRadius: 999,
-    height: 64,
-    justifyContent: 'center',
-    width: 64,
-  },
   title: { fontSize: fontSizes.title, textAlign: 'center' },
   subtitle: { textAlign: 'center' },
   codeBox: {

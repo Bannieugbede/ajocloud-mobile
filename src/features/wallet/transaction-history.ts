@@ -1,4 +1,5 @@
 import type { WalletTransaction } from '@/api/endpoints/wallets';
+import { dateAndTime } from '@/utils/dates';
 import { sumMinorAmounts } from '@/utils/money';
 
 /**
@@ -123,11 +124,5 @@ export function signedAmountLabel(movement: WalletTransaction, formatted: string
  */
 export function movementTimeLabel(movement: WalletTransaction, locale?: string): string {
   const source = movement.transaction.postedAt ?? movement.createdAt;
-  const parsed = Date.parse(source);
-  if (Number.isNaN(parsed)) return 'Date unavailable';
-
-  const date = new Date(parsed);
-  const day = date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-  const time = date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
-  return `${day} · ${time}`;
+  return dateAndTime(source, locale) ?? 'Date unavailable';
 }

@@ -2,6 +2,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import type { OrganiserPoolView } from '@/api/endpoints/akawo-pools';
+import { longDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
@@ -15,11 +16,10 @@ function escapeHtml(value: string): string {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? '—'
-    : date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+  const label = longDate(value);
+  // An em dash rather than "No date": this is a table cell in a printed record,
+  // where a blank-looking mark reads better than a sentence.
+  return label === 'No date' ? '—' : label;
 }
 
 /**

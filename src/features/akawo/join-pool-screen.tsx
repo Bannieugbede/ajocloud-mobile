@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { PoolPreview } from '@/api/endpoints/akawo-pools';
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
+import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -56,15 +56,7 @@ export function JoinPoolScreen({
       >
         {!preview ? (
           <View style={styles.intro}>
-            <View style={[styles.medallion, { backgroundColor: colors.primarySoft }]}>
-              <Ionicons
-                name="people-outline"
-                size={28}
-                color={colors.primary}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-              />
-            </View>
+            <AppMedallion icon="people-outline" shape="rounded" />
             <AppText style={{ color: colors.textMuted }}>
               Enter the pool code shared by your organiser to see what you are being asked to pay
               before you join.
@@ -183,13 +175,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
   intro: { gap: spacing.md },
-  medallion: {
-    alignItems: 'center',
-    borderRadius: radius.lg,
-    height: 64,
-    justifyContent: 'center',
-    width: 64,
-  },
   summary: { borderRadius: radius.lg, gap: spacing.xs, padding: spacing.md },
   summaryLabel: { fontSize: fontSizes.caption, letterSpacing: 1 },
   summaryName: { fontSize: fontSizes.body },

@@ -1,12 +1,12 @@
 import { Share, StyleSheet, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { AppButton } from '@/components/ui/app-button';
+import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, spacing } from '@/theme';
 
 /**
  * Shown once, immediately after a group is created.
@@ -34,15 +34,7 @@ export function GroupInvitationScreen({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
-          <Ionicons
-            name="checkmark-circle"
-            size={32}
-            color={colors.success}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
+        <AppMedallion icon="checkmark-circle" tone="success" />
 
         <AppText accessibilityRole="header" weight="bold" style={styles.title}>
           {groupName} is ready
@@ -87,13 +79,6 @@ export function GroupInvitationScreen({
 
 const styles = StyleSheet.create({
   actions: { gap: spacing.sm, padding: spacing.lg },
-  badge: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 64,
-    justifyContent: 'center',
-    width: 64,
-  },
   container: { flex: 1, justifyContent: 'space-between' },
   content: { alignItems: 'center', gap: spacing.md, padding: spacing.lg },
   lead: { textAlign: 'center' },
