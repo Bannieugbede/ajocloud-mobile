@@ -5,12 +5,13 @@ import { AppListItem } from '@/components/ui/app-list-item';
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppHero } from '@/components/ui/app-hero';
 import { AppProgress } from '@/components/ui/app-progress';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, spacing } from '@/theme';
 import { sumMinorAmounts } from '@/utils/money';
 
 export function AkawoListScreen({
@@ -31,13 +32,11 @@ export function AkawoListScreen({
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.hero, { backgroundColor: colors.primary }]}>
-        <AppText style={styles.heroLabel}>TOTAL SAVED</AppText>
-        <AppAmount amountMinor={total} size="heading" onInverse />
-        <AppText style={styles.heroLabel}>
-          {goals?.length ?? 0} {goals?.length === 1 ? 'goal' : 'goals'}
-        </AppText>
-      </View>
+      <AppHero
+        label="TOTAL SAVED"
+        amountMinor={total}
+        meta={`${goals?.length ?? 0} ${goals?.length === 1 ? 'goal' : 'goals'}`}
+      />
 
       <AppCard>
         <AppListItem
@@ -112,8 +111,6 @@ export function AkawoListScreen({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  hero: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.lg },
-  heroLabel: { color: 'rgba(255,255,255,0.78)', fontSize: fontSizes.caption, letterSpacing: 1.1 },
   row: {
     alignItems: 'center',
     flexDirection: 'row',

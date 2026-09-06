@@ -9,6 +9,7 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppHero } from '@/components/ui/app-hero';
 import { AppListItem } from '@/components/ui/app-list-item';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
@@ -97,10 +98,7 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         </View>
       </View>
 
-      <View style={[styles.wallet, { backgroundColor: colors.primary }]}>
-        <AppText weight="semibold" style={styles.walletLabel}>
-          WALLET SUMMARY
-        </AppText>
+      <AppHero label="WALLET SUMMARY" style={styles.wallet}>
         <View style={styles.tiles}>
           <WalletTile label="Main" amountMinor={props.availableMinor} currency={props.currency} />
           <WalletTile label="Savings" amountMinor={props.savingsMinor} currency={props.currency} />
@@ -110,7 +108,7 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
             currency={props.currency}
           />
         </View>
-      </View>
+      </AppHero>
 
       <ReferralCard
         referrals={props.referrals}
@@ -333,13 +331,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: fontSizes.caption },
 
-  wallet: {
-    borderRadius: radius.lg,
-    gap: spacing.sm,
-    marginVertical: spacing.sm,
-    padding: spacing.md,
-  },
-  walletLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.label, letterSpacing: 1.2 },
+  wallet: { marginVertical: spacing.sm },
   tiles: { flexDirection: 'row', gap: spacing.sm },
   tile: {
     backgroundColor: 'rgba(255,255,255,0.12)',
