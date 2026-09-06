@@ -6,6 +6,7 @@ export const fontFamilies = {
 } as const;
 
 export const fontSizes = {
+  label: 11,
   caption: 12,
   body: 16,
   title: 20,

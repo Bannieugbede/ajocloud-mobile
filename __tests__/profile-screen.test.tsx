@@ -121,7 +121,7 @@ it('explains the absence of a code rather than showing an empty box', async () =
 
 it('marks a fully verified account', async () => {
   const view = await render(<ProfileMenuScreen {...props()} />);
-  expect(view.getByText('KYC Verified')).toBeTruthy();
+  expect(view.getByLabelText('KYC Verified')).toBeTruthy();
   expect(view.getByText('Verified')).toBeTruthy();
 });
 
@@ -142,7 +142,7 @@ it('names what verification still needs rather than showing a badge', async () =
     />,
   );
   expect(view.getByText(/your BVN or NIN, a bank account/)).toBeTruthy();
-  expect(view.queryByText('KYC Verified')).toBeNull();
+  expect(view.queryByLabelText('KYC Verified')).toBeNull();
 });
 
 describe('the Dark Mode row', () => {

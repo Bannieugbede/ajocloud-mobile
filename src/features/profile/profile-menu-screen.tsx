@@ -203,12 +203,17 @@ function VerificationBadge({ verified, tier }: { verified: boolean; tier: string
   const { colors } = useTheme();
   const background = verified ? colors.successSoft : colors.warningSoft;
   const foreground = verified ? colors.success : colors.warning;
+  const label = verified ? 'KYC Verified' : tierLabel(tier);
   return (
-    <View style={[styles.badge, { backgroundColor: background }]}>
+    // The shield alone is the whole badge, so the state it carries has to be
+    // in its accessible name: an icon announces nothing on its own, and colour
+    // is not readable by a screen reader either.
+    <View
+      accessible
+      accessibilityLabel={label}
+      style={[styles.badge, { backgroundColor: background }]}
+    >
       <Ionicons name="shield-checkmark-outline" size={12} color={foreground} />
-      <AppText weight="semibold" style={[styles.badgeText, { color: foreground }]}>
-        {verified ? 'KYC Verified' : tierLabel(tier)}
-      </AppText>
     </View>
   );
 }
@@ -237,6 +242,7 @@ function WalletTile({
           amountMinor={amountMinor}
           currency={currency}
           onInverse
+          size={'label'}
           style={accent ? { color: colors.secondary } : undefined}
         />
       )}
@@ -316,7 +322,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   identity: { flex: 1, gap: 2 },
-  nameRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  nameRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   name: { fontSize: fontSizes.title },
   badge: {
     alignItems: 'center',
@@ -324,27 +330,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 4,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   badgeText: { fontSize: fontSizes.caption },
 
   wallet: {
     borderRadius: radius.lg,
-    gap: spacing.md,
+    gap: spacing.sm,
     marginVertical: spacing.sm,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
-  walletLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.caption, letterSpacing: 1.2 },
+  walletLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.label, letterSpacing: 1.2 },
   tiles: { flexDirection: 'row', gap: spacing.sm },
   tile: {
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: radius.md,
     flex: 1,
     gap: spacing.xs,
-    padding: spacing.md,
+    padding: spacing.sm,
   },
-  tileLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.caption },
-  tileUnavailable: { color: '#FFFFFF', fontSize: fontSizes.caption },
+  tileLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.label },
+  tileUnavailable: { color: '#FFFFFF', fontSize: fontSizes.label },
 
   referralCard: { gap: spacing.md, marginBottom: spacing.sm },
   codeRow: {

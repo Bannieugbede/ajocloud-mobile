@@ -284,7 +284,7 @@ describe('ProfileMenuScreen', () => {
     // The completed state is now the badge beside the name and the pill on the
     // KYC row, rather than a sentence in a card that only appeared when
     // something was outstanding.
-    expect(view.getByText('KYC Verified')).toBeTruthy();
+    expect(view.getByLabelText('KYC Verified')).toBeTruthy();
     expect(view.getByText('Verified')).toBeTruthy();
     expect(view.getByText('Fully verified')).toBeTruthy();
   });
