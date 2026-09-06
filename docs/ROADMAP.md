@@ -441,6 +441,33 @@ backend's `akawo-pools.service.spec.ts`. Validation on 2026-09-06: mobile
 `bun run validate` passed — 69 suites, 792 tests; backend lint, typecheck,
 859 unit and 11 e2e tests passed. Three mutations confirmed the new guards.
 
+## Design consistency sweep (COMPLETED, 2026-09-06)
+
+Brought the remaining screens onto the patterns the redesigned ones established,
+by first removing the duplication that made a design change a multi-file edit.
+
+New shared components: `AppHero`, `AppBadge`, `AppMetricRow`, `AppMedallion`,
+plus `src/utils/dates`. Existing ones gained what the screens needed rather than
+being worked around — an optional icon on `AppBadge` and `AppButton`, a success
+tone on `AppProgress`.
+
+Screens rebuilt or converted: Ajo detail (tabs, stat tiles, badged rotation
+rows, real dates in place of raw ISO strings), Ajo list, Food list, Food detail,
+Bills home, bill receipt, payment method, Akawo goals list, pool code, join
+pool, group invitation, platform fees, profile wallet panel.
+
+Two latent bugs fixed on the way: the exported pool-record PDF formatted dates
+with a hardcoded `en-NG`, wording them differently from every date on screen;
+and Food's detail screen munged its fulfilment method with `replaceAll` where
+the list beside it used `fulfilmentLabel`.
+
+Tests: `__tests__/app-hero-metrics.test.tsx` (8), 8 added to
+`src/features/ajo/rotation.test.ts`, `src/utils/dates.test.ts` (6). Validation
+on 2026-09-06: `bun run validate` passed — 71 suites, 816 tests. Six mutations
+confirmed the guards; two of them initially survived and the tests were
+strengthened until they failed. See `docs/DECISIONS.md` for what deliberately
+stayed separate.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

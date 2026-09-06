@@ -949,3 +949,54 @@ organiser is told the pool's state, a member is told their own.
 
 A pool with no members draws no progress bar. A bar over zero can only ever read
 empty, which looks like a stalled collection rather than a new one.
+
+## One component per visual pattern (2026-09-06)
+
+Bringing the remaining screens up to the new designs meant first stopping the
+duplication that made "update the design" a multi-file job. Before this, six
+screens drew their own brand hero, six their own medallion, five their own
+status pill, three their own metric row, and four their own date formatter.
+
+They had not merely been copied — they had _drifted_. The pills used three
+different font sizes; the metric rows disagreed on label casing; the medallions
+came in three sizes and two corner radii; and, most seriously, only some of the
+date formatters passed `timeZone: 'UTC'`, so the same deadline read differently
+depending on which screen you were looking at.
+
+The shared set is now:
+
+| Pattern                                | Component                                                  |
+| -------------------------------------- | ---------------------------------------------------------- |
+| Brand panel at the top of a screen     | `AppHero`                                                  |
+| Status pill                            | `AppBadge` (optional leading icon)                         |
+| Labelled facts across a card           | `AppMetricRow`                                             |
+| Headline counts in tiles               | `AppStatTiles`                                             |
+| Large tinted glyph                     | `AppMedallion`                                             |
+| Switching between panels of one record | `AppSegmented`                                             |
+| Dates                                  | `src/utils/dates` — `longDate`, `shortDate`, `dateAndTime` |
+
+A feature composes these and supplies only its own wording. `PoolHero` is the
+model: it decides how a collection's numbers are phrased and delegates the
+surface entirely.
+
+### What deliberately stayed separate
+
+- **`AppSegmented` is not `AppChipGroup`.** The chip group picks a value inside
+  a form and announces a radio group; the segmented control picks which panel is
+  on screen and announces a tab list.
+- **`AppStatTiles` is not `AppMetricRow`.** Tiles have their own bordered
+  surface, for a row that sits directly on the page. The metric row is flat, for
+  facts inside a card that already has a surface — a second box inside the first
+  reads as clutter.
+- **Notifications keep their own `dayLabel`.** "Today" and "Yesterday" are
+  relative to the reader's own calendar, so that one is local time on purpose.
+- **The unread dot and the registration document step** match the brand-fill
+  search but are not heroes, and were left alone.
+
+### Tone names, not colours
+
+Every shared component takes a tone (`success`, `warning`, `info`, `error`,
+`neutral`) rather than a pair of colours from the caller. The bill receipt's
+outcome map was the last place a screen chose success and error colours by
+hand. A palette change now lands everywhere at once, and no screen can invent a
+sixth shade of "warning".
