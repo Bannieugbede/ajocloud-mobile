@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+import { backTo } from '@/components/ui/app-header-back';
 import { useThemedStackOptions } from '@/hooks/use-themed-stack-options';
 
 export default function BillsLayout() {
@@ -7,7 +8,12 @@ export default function BillsLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      <Stack.Screen name="index" options={{ title: 'Pay a bill' }} />
+      {/* Reached from Home rather than from a tab, which switches navigator and
+          leaves no history, so back is declared. */}
+      <Stack.Screen
+        name="index"
+        options={{ title: 'Bills & Payments', ...backTo('/(tabs)/home') }}
+      />
       <Stack.Screen name="[categoryId]/index" options={{ title: 'Choose a biller' }} />
       <Stack.Screen name="[categoryId]/pay" options={{ title: 'Pay' }} />
       {/* Reached by replace once the payment exists: going back to a form that

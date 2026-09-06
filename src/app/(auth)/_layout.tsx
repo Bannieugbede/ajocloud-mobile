@@ -44,17 +44,35 @@ function BackButton() {
   const pathname = usePathname();
   const target = BACK_TARGETS[pathname.split('/').pop() ?? ''];
 
-  if (!target) return null;
+  // Real history wins over the declared target, which matters most for the
+  // identity screens: they are reached both as a registration step and from
+  // Profile, and the declared target is only right for the first of those.
+  if (!target) return navigation.canGoBack() ? <BackChevron colors={colors} /> : null;
 
+  return (
+    <BackChevron
+      colors={colors}
+      onPress={() => {
+        if (navigation.canGoBack()) router.back();
+        else router.replace(target);
+      }}
+    />
+  );
+}
+
+function BackChevron({
+  colors,
+  onPress = () => router.back(),
+}: {
+  colors: ReturnType<typeof useTheme>['colors'];
+  onPress?: () => void;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Go back"
       hitSlop={spacing.sm}
-      onPress={() => {
-        if (navigation.canGoBack()) router.back();
-        else router.replace(target);
-      }}
+      onPress={onPress}
       style={styles.back}
       testID="auth-back-button"
     >

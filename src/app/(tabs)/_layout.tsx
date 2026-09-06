@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { backTo } from '@/components/ui/app-header-back';
 import { useTheme } from '@/hooks/use-theme';
 import { fontFamilies, sizes } from '@/theme';
 
@@ -75,11 +76,17 @@ export default function TabsLayout() {
       {/* Reached from Profile and from a notification tap. A seventh tab would
           crowd the bar without earning its place next to the products. */}
       {/* headerShown is off for the whole navigator, because every tab root
-          draws its own. This one is pushed onto rather than switched to, so it
-          takes the native header back — and has to ask for it explicitly. */}
+          draws its own. This one is opened from Home and from Profile rather
+          than switched to, so it takes a header back — and since arriving here
+          from another tab leaves no history, the control has to be declared. */}
       <Tabs.Screen
         name="notifications"
-        options={{ href: null, title: 'Notifications', headerShown: true }}
+        options={{
+          href: null,
+          title: 'Notifications',
+          headerShown: true,
+          ...backTo('/(tabs)/home'),
+        }}
       />
       <Tabs.Screen
         name="profile"

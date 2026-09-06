@@ -766,3 +766,41 @@ draws its own header. Notifications is pushed onto rather than switched to, so
 naming it in `Tabs.Screen` was not enough — it had to ask for `headerShown: true`
 explicitly. `bills` and `pay` were unaffected: both have their own Stack layouts
 that supply headers of their own.
+
+## Screens reached from another tab need a declared back control (2026-09-06)
+
+Expo Router draws a native back button only when a screen was pushed onto the
+stack it belongs to. Switching tabs does not push. So Home → Bills, a pool →
+the shared payment flow, and Home or Profile → Notifications all arrived with no
+history and no back control, leaving the member only the tab bar — which does
+not return them where they came from.
+
+`AppHeaderBack` prefers real history and falls back to a declared screen when
+there is none, so the ordinary case still behaves like the platform's own back.
+`backTo(fallback)` supplies it as screen options along with
+`headerBackVisible: false`, because two chevrons on one header is worse than
+none: the member cannot tell which returns them where.
+
+The fallback names the screen that logically _contains_ this one, not the one
+the member happened to arrive from. Bills and the payment flow are both reachable
+from several places, and guessing the caller would be wrong more often than a
+stable parent.
+
+Post-submit screens — a receipt, a created group, a payment result — keep their
+back suppressed on purpose, because returning to a form that has already been
+charged invites a second payment. Each offers its own Done button instead, and a
+test asserts that so suppression cannot leave anyone stranded.
+
+## Identity verification serves two callers (2026-09-06)
+
+`/(auth)/verify-identity` is a registration step _and_ the destination of
+Profile's "KYC Verification" and "Bank Accounts" rows. Both exits were written
+for the first caller only: skipping went to `/(auth)/intent` and completing went
+there too, so a member who had been using the app for months was asked what they
+wanted to use it for, and the final step called `finish()` on a registration
+that was not happening.
+
+`step` on the registration store already distinguishes them — it is null for
+anyone not mid-registration — so no parameter has to be threaded through the
+four screens of the identity flow. A signed-in member now returns to Profile,
+where the badge they just earned is.
