@@ -2,8 +2,11 @@ import type { JoinedPool } from '@/api/endpoints/akawo-pools';
 
 import {
   collectionSummary,
+  deadlineLabel,
+  expectedTotalMinor,
   outstandingDues,
   poolIsLive,
+  progressBps,
   totalOutstandingMinor,
 } from './pool-summary';
 
@@ -133,5 +136,70 @@ describe('collectionSummary', () => {
         progressBps: 5625,
       }),
     ).toBe('4 of 8 paid');
+  });
+});
+
+describe('progressBps', () => {
+  it('reports the fraction collected in basis points', () => {
+    expect(progressBps('2250000', '4000000')).toBe(5625);
+  });
+
+  it('reports nothing for a pool that expects nothing', () => {
+    // Dividing by zero would be Infinity, and a pool with no members is not
+    // "complete" — there is nothing yet to complete.
+    expect(progressBps('0', '0')).toBe(0);
+    expect(progressBps('500000', '0')).toBe(0);
+  });
+
+  it('caps an overpaid pool at the full bar', () => {
+    expect(progressBps('5000000', '4000000')).toBe(10_000);
+  });
+
+  it('handles amounts beyond a safe integer without losing precision', () => {
+    // Minor units are strings precisely because they can exceed 2^53; doing
+    // this in floating point would round the answer.
+    expect(progressBps('90071992547409910', '180143985094819820')).toBe(5000);
+  });
+
+  it('reports nothing rather than throwing on a malformed amount', () => {
+    expect(progressBps('not-a-number', '4000000')).toBe(0);
+  });
+});
+
+describe('expectedTotalMinor', () => {
+  it('multiplies the shared amount by the member count', () => {
+    expect(expectedTotalMinor('500000', 8)).toBe('4000000');
+  });
+
+  it('expects nothing from a pool nobody has joined', () => {
+    expect(expectedTotalMinor('500000', 0)).toBe('0');
+  });
+
+  it('stays exact for amounts beyond a safe integer', () => {
+    expect(expectedTotalMinor('9007199254740993', 3)).toBe('27021597764222979');
+  });
+
+  it('returns zero rather than throwing on a malformed amount', () => {
+    expect(expectedTotalMinor('', 4)).toBe('0');
+  });
+});
+
+describe('deadlineLabel', () => {
+  it('words a real deadline as a date', () => {
+    expect(deadlineLabel('2026-09-15T00:00:00Z', 'en-NG')).toMatch(/2026/);
+  });
+
+  it('says a pool has no deadline rather than leaving a blank', () => {
+    expect(deadlineLabel(null)).toBe('No deadline');
+    expect(deadlineLabel('not-a-date')).toBe('No deadline');
+  });
+});
+
+describe('deadlineLabel timezone', () => {
+  it('reads an end-of-day deadline as the day it was set, not the next one', () => {
+    // Deadlines are stored as the last instant of a day in UTC. Formatted in
+    // local time east of Greenwich that instant belongs to the following date,
+    // which would show every member a deadline a day later than the real one.
+    expect(deadlineLabel('2026-09-13T23:59:59.999Z', 'en-NG')).toMatch(/^13 /);
   });
 });
