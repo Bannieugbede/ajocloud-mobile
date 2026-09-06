@@ -88,7 +88,7 @@ export default function ProfileRoute() {
       // only flow that can add one, so the row opens that rather than a
       // read-only list nobody could act on.
       onOpenBankAccounts={() => router.push('/(auth)/verify-identity')}
-      onOpenTransactions={() => router.push('/(tabs)/profile/wallets')}
+      onOpenTransactions={() => router.push('/(tabs)/profile/transactions')}
       onOpenAppearance={() => router.push('/(tabs)/profile/appearance')}
       onOpenFees={() => router.push('/(tabs)/profile/fees')}
       onOpenSupport={() => router.push('/(tabs)/profile/support')}
