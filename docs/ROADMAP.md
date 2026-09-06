@@ -25,7 +25,7 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 5 Home                      |                1/1 | COMPLETED   | Live APIs               | Ready            | 45 tests added      |
 | 6 Ajo                       |                3/3 | IN REVIEW   | List/detail live        | Ready            | List/detail tested  |
 | 7 Food plans                |                3/3 | IN REVIEW   | List/detail/plans live  | Ready            | 14 tests added      |
-| 8 Akawo                     |              13/13 | IN REVIEW   | Pools and goals live    | Ready            | 31 tests added      |
+| 8 Akawo                     |              13/13 | IN REVIEW   | Pools redesigned        | Ready            | 72 tests added      |
 | 9 Wallet/payments/activity  |              5/TBD | IN PROGRESS | Payment APIs missing    | Screens ready    | 8 tests added       |
 | 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started         |
 | 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started         |
@@ -372,6 +372,34 @@ resolved every route.
 Navigation: push for reversible steps (opening a pool, starting a payment,
 choosing a method); replace after creating a pool, joining one, and completing a
 payment, so a back gesture cannot resubmit a form or re-authorise a payment.
+
+### Redesign, 2026-09-06 (COMPLETED)
+
+The five pool screens were rebuilt to the supplied designs. Both detail views
+now share a `PoolHero` and switch between Overview and Members with
+`AppSegmented`; the organiser's Members panel carries the Paid/Pending/
+Processing tally and the PDF export; create gained a due-date picker and join a
+preview lead-in.
+
+New shared primitives: `AppSegmented`, `AppStatTiles`, `AppBadge` (extracted
+from a private duplicate in `pool-card.tsx`), and an optional leading `icon` on
+`AppButton`. New feature modules: `pool-hero.tsx`, `pool-member-row.tsx`,
+`pool-status.ts`, `create-pool-form.ts`.
+
+Two defects fixed on the way: pool deadlines were formatted in local time, so an
+end-of-day UTC deadline read a day late everywhere east of Greenwich; and
+`AppButton` lost its accessible name once its label was wrapped for the icon,
+which would have left every button in the app unnamed.
+
+Deviation from the mockups: the third members tile shows Processing, not
+"Partial" — the API has no part-paid state and inventing one would misreport
+what has been collected. See `docs/DECISIONS.md`.
+
+Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
+`src/features/akawo/pool-status.test.ts` (12),
+`create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.
+Validation on 2026-09-06: `bun run validate` passed — 66 suites, 753 tests.
+Five mutations confirmed the new guards fail when broken.
 
 Limitations: sharing from the manage screen omits the join code, because the
 backend stores only a digest and cannot return the plaintext again. Not

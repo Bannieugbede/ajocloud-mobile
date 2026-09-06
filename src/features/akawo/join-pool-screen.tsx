@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -7,8 +8,10 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { radius, spacing } from '@/theme';
+import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
+
+import { deadlineLabel } from './pool-summary';
 
 /**
  * Joining is two steps on one screen: look the code up, then confirm with the
@@ -51,14 +54,32 @@ export function JoinPoolScreen({
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
+        {!preview ? (
+          <View style={styles.intro}>
+            <View style={[styles.medallion, { backgroundColor: colors.primarySoft }]}>
+              <Ionicons
+                name="people-outline"
+                size={28}
+                color={colors.primary}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              />
+            </View>
+            <AppText style={{ color: colors.textMuted }}>
+              Enter the pool code shared by your organiser to see what you are being asked to pay
+              before you join.
+            </AppText>
+          </View>
+        ) : null}
+
         <AppInput
-          label="Join code"
+          label="POOL CODE"
           value={joinCode}
           onChangeText={(value) => {
             setJoinCode(value.toUpperCase());
             if (preview) onClearPreview();
           }}
-          placeholder="ABCD2345"
+          placeholder="AKW-XXXXX"
           autoCapitalize="characters"
           autoCorrect={false}
           editable={!preview}
@@ -66,7 +87,7 @@ export function JoinPoolScreen({
 
         {!preview ? (
           <AppButton
-            label="Find pool"
+            label="Find Pool"
             loading={looking}
             disabled={!codeReady}
             onPress={() => onLookup(joinCode.trim())}
@@ -84,7 +105,12 @@ export function JoinPoolScreen({
         {preview ? (
           <>
             <View style={[styles.summary, { backgroundColor: colors.primarySoft }]}>
-              <AppText weight="semibold">{preview.name}</AppText>
+              <AppText style={[styles.summaryLabel, { color: colors.primary }]}>
+                YOU ARE JOINING
+              </AppText>
+              <AppText weight="bold" style={styles.summaryName}>
+                {preview.name}
+              </AppText>
               {preview.purpose ? (
                 <AppText style={{ color: colors.textMuted }}>{preview.purpose}</AppText>
               ) : null}
@@ -96,10 +122,13 @@ export function JoinPoolScreen({
                 currency={preview.currency}
                 size="title"
               />
+              <AppText style={{ color: colors.textMuted }}>
+                Due {deadlineLabel(preview.dueAt)}
+              </AppText>
             </View>
 
             <AppInput
-              label="Your full name"
+              label="YOUR FULL NAME"
               value={fullName}
               onChangeText={setFullName}
               placeholder="Ada Okafor"
@@ -108,7 +137,7 @@ export function JoinPoolScreen({
             />
 
             <AppInput
-              label={preview.referenceLabel}
+              label={preview.referenceLabel.toUpperCase()}
               value={reference}
               onChangeText={setReference}
               placeholder={`Your ${preview.referenceLabel.toLowerCase()}`}
@@ -152,7 +181,17 @@ export function JoinPoolScreen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  summary: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },
+  container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
+  intro: { gap: spacing.md },
+  medallion: {
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    height: 64,
+    justifyContent: 'center',
+    width: 64,
+  },
+  summary: { borderRadius: radius.lg, gap: spacing.xs, padding: spacing.md },
+  summaryLabel: { fontSize: fontSizes.caption, letterSpacing: 1 },
+  summaryName: { fontSize: fontSizes.body },
   notice: { borderRadius: radius.md, padding: spacing.md },
 });

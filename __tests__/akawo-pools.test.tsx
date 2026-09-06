@@ -71,14 +71,14 @@ describe('JoinPoolScreen', () => {
       />,
     );
     // Nothing about the member is asked for until they can see what they are joining.
-    expect(view.queryByText('Your full name')).toBeNull();
+    expect(view.queryByText('YOUR FULL NAME')).toBeNull();
 
     // The lookup button is disabled until a plausible code is entered, so the
     // state change has to flush before the press can land.
     await act(async () => {
-      fireEvent.changeText(view.getByLabelText('Join code'), 'ABCD2345');
+      fireEvent.changeText(view.getByLabelText('POOL CODE'), 'ABCD2345');
     });
-    fireEvent.press(view.getByRole('button', { name: 'Find pool' }));
+    fireEvent.press(view.getByRole('button', { name: 'Find Pool' }));
     expect(onLookup).toHaveBeenCalledWith('ABCD2345');
   });
 
@@ -93,7 +93,7 @@ describe('JoinPoolScreen', () => {
         onClearPreview={jest.fn()}
       />,
     );
-    expect(view.getByLabelText('Matric number')).toBeTruthy();
+    expect(view.getByLabelText('MATRIC NUMBER')).toBeTruthy();
     expect(view.getByText('₦5,000.00')).toBeTruthy();
   });
 
@@ -157,7 +157,7 @@ describe('MemberPoolScreen', () => {
   it('offers payment while a due is outstanding and the pool is open', async () => {
     const onPay = jest.fn();
     const view = await render_(base, onPay);
-    fireEvent.press(view.getByRole('button', { name: 'Pay now' }));
+    fireEvent.press(view.getByRole('button', { name: 'Pay ₦5,000.00' }));
     expect(onPay).toHaveBeenCalledTimes(1);
   });
 
@@ -171,13 +171,13 @@ describe('MemberPoolScreen', () => {
         paidAt: '2026-09-02T00:00:00.000Z',
       },
     });
-    expect(view.queryByRole('button', { name: 'Pay now' })).toBeNull();
-    expect(view.getByText('YOU HAVE PAID')).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Pay ₦5,000.00' })).toBeNull();
+    expect(view.getByText('Your payment is complete')).toBeTruthy();
   });
 
   it('explains why payment is unavailable on a closed pool rather than hiding it', async () => {
     const view = await render_({ ...base, pool: { ...base.pool, status: 'CLOSED' } });
-    expect(view.queryByRole('button', { name: 'Pay now' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Pay ₦5,000.00' })).toBeNull();
     expect(view.getByText(/no longer accepting payments/i)).toBeTruthy();
   });
 });

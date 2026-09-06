@@ -15,16 +15,16 @@ export default function AkawoLayout() {
       <Stack.Screen name="goals" options={{ title: 'Savings goals' }} />
       <Stack.Screen name="create-goal" options={{ title: 'New goal' }} />
       <Stack.Screen name="[goalId]" options={{ title: 'Akawo Goal' }} />
-      <Stack.Screen name="pools/create" options={{ title: 'New pool' }} />
+      <Stack.Screen name="pools/create" options={{ title: 'Create Akawo Pool' }} />
       {/* Reached by replace after creating, so its back button returns to the
           pools list rather than the form that has already been submitted. */}
       <Stack.Screen
         name="pools/created"
         options={{ title: 'Pool created', headerBackVisible: false }}
       />
-      <Stack.Screen name="pools/join" options={{ title: 'Join a pool' }} />
-      <Stack.Screen name="pools/[poolId]/index" options={{ title: 'Pool' }} />
-      <Stack.Screen name="pools/[poolId]/manage" options={{ title: 'Manage pool' }} />
+      <Stack.Screen name="pools/join" options={{ title: 'Join Akawo Pool' }} />
+      <Stack.Screen name="pools/[poolId]/index" options={{ title: 'Akawo Pool' }} />
+      <Stack.Screen name="pools/[poolId]/manage" options={{ title: 'Manage Pool' }} />
     </Stack>
   );
 }

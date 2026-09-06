@@ -1,18 +1,26 @@
+import { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AkawoPoolMember, OrganiserPoolView } from '@/api/endpoints/akawo-pools';
-import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppDivider } from '@/components/ui/app-divider';
 import { AppIconButton } from '@/components/ui/app-icon-button';
-import { AppProgress } from '@/components/ui/app-progress';
+import { AppSegmented } from '@/components/ui/app-segmented';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
+import { AppStatTiles } from '@/components/ui/app-stat-tiles';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
-import { statusLabel } from '@/utils/status';
+import { formatMinorAmount } from '@/utils/money';
+
+import { PoolHero } from './pool-hero';
+import { PoolMemberRow } from './pool-member-row';
+import { activeMembers, tallyMembers } from './pool-status';
+import { deadlineLabel } from './pool-summary';
+
+type Panel = 'overview' | 'members';
 
 /**
  * The organiser's record. Shows every member, their reference, and whether they
@@ -51,6 +59,7 @@ export function OrganiserPoolScreen({
   onRemove: (member: AkawoPoolMember) => void;
 }) {
   const { colors } = useTheme();
+  const [panel, setPanel] = useState<Panel>('overview');
 
   if (loading) {
     return (
@@ -75,6 +84,8 @@ export function OrganiserPoolScreen({
 
   const isDraft = data.status === 'DRAFT';
   const isOpen = data.status === 'OPEN';
+  const members = activeMembers(data.members);
+  const tally = tallyMembers(data.members);
 
   const confirm = (title: string, message: string, action: () => void) =>
     Alert.alert(title, message, [
@@ -88,22 +99,17 @@ export function OrganiserPoolScreen({
       contentInsetAdjustmentBehavior="automatic"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={[styles.hero, { backgroundColor: colors.primary }]}>
-        <AppText style={styles.heroLabel}>COLLECTED</AppText>
-        <AppAmount
-          amountMinor={data.collectedMinor}
-          currency={data.currency}
-          size="heading"
-          onInverse
-        />
-        <AppText style={styles.heroLabel}>
-          {data.paidCount} of {data.memberCount} paid · {statusLabel(data.status)}
-        </AppText>
-      </View>
-
-      {data.memberCount > 0 ? (
-        <AppProgress progressBps={data.progressBps} label={`${data.name} collection`} />
-      ) : null}
+      <PoolHero
+        label="TOTAL COLLECTED"
+        collectedMinor={data.collectedMinor}
+        targetMinor={data.expectedMinor}
+        currency={data.currency}
+        dueLabel={deadlineLabel(data.dueAt)}
+        paidCount={data.paidCount}
+        memberCount={data.memberCount}
+        progressBps={data.progressBps}
+        testID="organiser-pool-hero"
+      />
 
       {isDraft ? (
         <View style={[styles.notice, { backgroundColor: colors.warningSoft }]}>
@@ -115,78 +121,119 @@ export function OrganiserPoolScreen({
         </View>
       ) : null}
 
-      <View style={styles.actions}>
-        {isOpen ? (
-          <AppButton
-            label="Share code"
-            variant="outline"
-            onPress={onShareCode}
-            style={styles.action}
-          />
-        ) : null}
-        <AppButton
-          label="Export record"
-          variant="outline"
-          onPress={onExport}
-          style={styles.action}
-          disabled={data.memberCount === 0}
-        />
-      </View>
+      <AppSegmented
+        label={data.name}
+        value={panel}
+        onChange={setPanel}
+        options={[
+          { value: 'overview', label: 'Overview' },
+          { value: 'members', label: `Members (${members.length})` },
+        ]}
+        testID="organiser-pool-tabs"
+      />
 
-      <AppText accessibilityRole="header" weight="semibold">
-        Members
-      </AppText>
+      {panel === 'overview' ? (
+        <>
+          <AppCard>
+            <AppText accessibilityRole="header" weight="semibold" style={styles.cardTitle}>
+              Pool Details
+            </AppText>
+            <DetailRow
+              label="Amount per member"
+              value={formatMinorAmount(data.amountMinor, data.currency)}
+            />
+            <DetailRow label="Due date" value={deadlineLabel(data.dueAt)} />
+            <DetailRow label="Total members" value={String(members.length)} />
+            <DetailRow label="Paid" value={`${tally.paid} members`} />
+            <DetailRow label="Pending" value={`${tally.pending} members`} />
+            <DetailRow label={data.referenceLabel} value="Collected when members join" />
+          </AppCard>
 
-      {data.members.length === 0 ? (
-        <AppEmptyState
-          icon="person-add-outline"
-          title="Nobody has joined yet"
-          description="Share the join code and members can add themselves — you do not have to add them one by one."
-          action="Share the join code"
-          onAction={onShareCode}
-        />
+          {data.purpose ? (
+            <AppCard>
+              <AppText accessibilityRole="header" weight="semibold" style={styles.cardTitle}>
+                Description
+              </AppText>
+              <AppText style={{ color: colors.textMuted }}>{data.purpose}</AppText>
+            </AppCard>
+          ) : null}
+
+          {isOpen ? (
+            <AppButton label="Share join code" variant="outline" onPress={onShareCode} />
+          ) : null}
+        </>
       ) : (
-        <AppCard>
-          {data.members.map((member, index) => (
-            <View key={member.id}>
-              {index > 0 ? <AppDivider /> : null}
-              <View style={styles.row}>
-                <View style={styles.rowText}>
-                  <AppText weight="medium">{member.fullName}</AppText>
-                  <AppText style={[styles.meta, { color: colors.textMuted }]}>
-                    {member.reference} · {member.due ? statusLabel(member.due.status) : 'No due'}
-                  </AppText>
+        <>
+          <AppStatTiles
+            testID="organiser-pool-tally"
+            stats={[
+              { label: 'Paid', value: String(tally.paid), tone: 'success' },
+              { label: 'Pending', value: String(tally.pending), tone: 'warning' },
+              // The API has no partial payment: a due is pending until it is
+              // settled in full. "Processing" is a payment already in flight,
+              // which is the state an organiser actually needs to tell apart.
+              { label: 'Processing', value: String(tally.processing), tone: 'info' },
+            ]}
+          />
+
+          <AppButton
+            label="Download PDF Report"
+            icon="download-outline"
+            variant="outline"
+            onPress={onExport}
+            disabled={members.length === 0}
+          />
+
+          {members.length === 0 ? (
+            <AppEmptyState
+              icon="person-add-outline"
+              title="Nobody has joined yet"
+              description="Share the join code and members can add themselves — you do not have to add them one by one."
+              action="Share the join code"
+              onAction={onShareCode}
+            />
+          ) : (
+            <AppCard>
+              {members.map((member, index) => (
+                <View key={member.id}>
+                  {index > 0 ? <AppDivider /> : null}
+                  <PoolMemberRow
+                    member={member}
+                    currency={data.currency}
+                    trailing={
+                      member.due?.status === 'PENDING' ? (
+                        <View style={styles.rowActions}>
+                          <AppIconButton
+                            icon="remove-circle-outline"
+                            label={`Waive ${member.fullName}`}
+                            onPress={() =>
+                              confirm(
+                                'Waive this member?',
+                                `${member.fullName} will no longer be expected to pay. This does not record a payment.`,
+                                () => onWaive(member),
+                              )
+                            }
+                          />
+                          <AppIconButton
+                            icon="person-remove-outline"
+                            label={`Remove ${member.fullName}`}
+                            onPress={() =>
+                              confirm(
+                                'Remove this member?',
+                                `${member.fullName} will be removed from the pool.`,
+                                () => onRemove(member),
+                              )
+                            }
+                          />
+                        </View>
+                      ) : null
+                    }
+                  />
                 </View>
-                {member.due?.status === 'PENDING' ? (
-                  <View style={styles.rowActions}>
-                    <AppIconButton
-                      icon="remove-circle-outline"
-                      label={`Waive ${member.fullName}`}
-                      onPress={() =>
-                        confirm(
-                          'Waive this member?',
-                          `${member.fullName} will no longer be expected to pay. This does not record a payment.`,
-                          () => onWaive(member),
-                        )
-                      }
-                    />
-                    <AppIconButton
-                      icon="person-remove-outline"
-                      label={`Remove ${member.fullName}`}
-                      onPress={() =>
-                        confirm(
-                          'Remove this member?',
-                          `${member.fullName} will be removed from the pool.`,
-                          () => onRemove(member),
-                        )
-                      }
-                    />
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </AppCard>
+              ))}
+            </AppCard>
+          )}
+        </>
       )}
 
       {isOpen || isDraft ? (
@@ -221,16 +268,30 @@ export function OrganiserPoolScreen({
   );
 }
 
+function DetailRow({ label, value }: { label: string; value: string }) {
+  const { colors } = useTheme();
+  return (
+    <View accessible accessibilityLabel={`${label}: ${value}`} style={styles.detail}>
+      <AppText style={{ color: colors.textMuted }}>{label}</AppText>
+      <AppText weight="semibold" style={styles.detailValue} numberOfLines={2}>
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  hero: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.lg },
-  heroLabel: { color: 'rgba(255,255,255,0.78)', fontSize: fontSizes.caption, letterSpacing: 1.1 },
-  notice: { borderRadius: radius.md, gap: spacing.sm, padding: spacing.md },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  action: { flex: 1 },
-  row: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
-  rowText: { flex: 1, gap: 2 },
+  container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
+  notice: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },
+  cardTitle: { fontSize: fontSizes.body },
+  detail: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+  },
+  detailValue: { flexShrink: 1, textAlign: 'right' },
   rowActions: { flexDirection: 'row' },
-  meta: { fontSize: fontSizes.caption },
   footer: { gap: spacing.sm, marginTop: spacing.md },
 });

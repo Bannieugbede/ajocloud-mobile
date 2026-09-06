@@ -804,3 +804,58 @@ that was not happening.
 anyone not mid-registration — so no parameter has to be threaded through the
 four screens of the identity flow. A signed-in member now returns to Profile,
 where the badge they just earned is.
+
+## The Akawo pool detail is one screen with two panels (2026-09-06)
+
+Both the organiser's and the member's view of a pool now open on the same
+collection hero and switch between an Overview and a Members panel. They had
+drifted into two unrelated layouts even though they answer the same question —
+how much is in, and who has paid — and the shared `PoolHero` and `AppSegmented`
+close that gap.
+
+`AppSegmented` is deliberately not `AppChipGroup`. The chip group picks a value
+inside a form and announces itself as a radio group; this picks which panel is
+on screen and announces a tab list. Reusing the chip group would have told a
+screen reader a value had been chosen when what actually happened is that the
+page changed.
+
+### What "Partial" became
+
+The mockups show a third tally beside Paid and Pending labelled "Partial". The
+API has no such state: `AkawoDue.status` is `PENDING | PROCESSING | PAID |
+WAIVED`, a due is settled in full or not at all, and there is no field carrying
+a part-payment. Inventing one would have meant showing an organiser an amount
+nobody had recorded.
+
+The tile shows **Processing** instead — a payment already in flight, which is a
+real state the API returns and the one an organiser genuinely needs to tell
+apart from someone who has not paid at all. If part-payment is wanted as a
+product, it is a change to what a due means and needs a backend ADR first.
+
+### Waived members are in no tally
+
+Paid, Pending and Processing deliberately exclude waived and removed members.
+The organiser has excused a waived member, so they are neither owing nor money
+collected; a removed member has left the collection entirely. Counting either
+would misstate what is still to come in. Both still appear in the list, so
+nobody vanishes without trace.
+
+### The member's target is derived, not fetched
+
+`MemberPoolView` returns `collectedMinor` and `memberCount` but no target, so
+the member's progress bar had no denominator. Every member of a pool pays the
+same amount — the rule the create form enforces — so `expectedTotalMinor`
+multiplies the two in `BigInt`. The organiser's endpoint still supplies its own
+`expectedMinor` and that is used unchanged where it exists.
+
+## Pool deadlines are read back in UTC (2026-09-06)
+
+A deadline is stored as the last instant of its day in UTC. Formatted in local
+time that instant belongs to the _next_ date for anyone east of Greenwich, so a
+pool due the 13th was displayed to every member in Lagos as the 14th — a day of
+grace nobody agreed to, on the screen that tells people when their money is
+late.
+
+`deadlineLabel` and `dueDatePreview` now format with `timeZone: 'UTC'`, the same
+frame the value is built and stored in, and a test pinned to `Africa/Lagos`
+fails if the option is removed.
