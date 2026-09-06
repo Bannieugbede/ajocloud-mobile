@@ -665,3 +665,57 @@ isolation with its own QueryClient and the two never met.
 key extends the summary key rather than replacing it, so one invalidation on the
 shared prefix still refreshes the inbox and the unread badge together after
 something is marked read.
+
+## Create and join an Ajo group (2026-09-06)
+
+The create form was four steps of plain text inputs, including a start date
+typed as `YYYY-MM-DD`. It is now a four-step wizard with a segmented progress
+bar, type cards, chips and a stepper — everything the design shows, in every
+place the backend can store it.
+
+**Duration replaces the start date.** The design asks how long the group runs
+for, which is what an admin is actually choosing; the group starts today and
+`endDate` is derived from duration and frequency. The backend needs both dates
+and a typed date that disagreed with the rotation length would create a group
+whose schedule does not fit. Start is normalised to midnight UTC, because a
+group created at 14:30 should not put every later cycle at 14:30.
+
+**A rotation shorter than its member count is warned about, not corrected.**
+Twenty positions on a twelve-month monthly rotation pays twelve people and
+leaves eight contributing towards a turn that never arrives. Both numbers are
+the admin's to choose, so the screen names the conflict and both ways out rather
+than silently changing one of them — but it does not block, because a group may
+legitimately be created before all its members have joined.
+
+**The Fees step is not built.** The design asks the admin to set an admin fee
+percentage and a defaulter fee. `CreateAjoGroupInput` has neither, `PenaltyRule`
+exists but is deliberately unused, and ADR-011 states that default handling
+"needs its own ADR, because forfeiting someone's contributions is a rule about
+their money and not an implementation detail". Collecting those numbers and
+discarding them would create a group on terms the admin was shown and does not
+have. The review step says instead that a group cannot set its own fee, and
+points at Platform Fees. Grace period is the one field of that step the backend
+does store (`gracePeriodMinutes`), so it moved to the Amounts step.
+
+**Joining verifies before committing.** The screen asks for the code alone,
+resolves it through `GET /ajo-groups/invitations/:code/group`, and names the
+group before asking how many positions to take. A code read aloud or forwarded
+is easy to get wrong, and joining the wrong rotation is a commitment of real
+money. The group id the old form asked members to type is now resolved for them.
+
+Codes stay in the backend's real format — 32 bytes of base64url — rather than
+the short `AJO-XXXXX` the design draws, because that is what the server issues.
+
+**Four new shared components.** `AppChipGroup`, `AppStepper`, `AppToggleRow` and
+`AppStepProgress` each appear more than once across these screens, and the chip
+and stepper keep a 48dp touch target through `hitSlop` rather than growing tall
+enough to dominate a form that has two rows of them.
+
+## Native headers on the tab screens' children (2026-09-06)
+
+Create, Join and the notification inbox use the navigator's header. The tab
+roots keep their custom ones — each names itself in its first line of content —
+but a screen pushed on top of a tab is a place you came from somewhere else, and
+the native header is what carries the back affordance and the platform's own
+gesture. The inbox states its unread summary in a line beneath the title
+instead, which a title bar has no room for.

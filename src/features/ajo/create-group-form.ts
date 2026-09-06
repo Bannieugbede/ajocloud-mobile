@@ -1,32 +1,60 @@
-import { majorToMinor } from '@/utils/money';
 import type { CreateAjoGroupInput } from '@/api/endpoints/ajo-groups';
+import { majorToMinor } from '@/utils/money';
 
 export type Frequency = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+export type ContributionMode = 'FIXED' | 'FLEXIBLE_UNIT';
 
 export type CreateGroupValues = {
   name: string;
-  amountMajor: string;
+  mode: ContributionMode;
   frequency: Frequency;
+  /** How many periods the rotation runs for, as a count of `frequency`. */
+  duration: number;
   maxSlots: string;
   requestedSlots: string;
-  startDate: string;
-  /** Blank means "up to the group's own capacity", which the backend defaults. */
-  maxSlotsPerMember: string;
+  /** Whether one member may hold more than one position. */
+  multipleSlots: boolean;
+  amountMajor: string;
+  /** Days a late contribution is tolerated before it counts as late. */
+  graceDays: number;
 };
 
+/**
+ * Twenty positions and a monthly rotation is a group nobody alive will see the
+ * end of, so the durations offered stop at a year. The cap is stated on the
+ * screen rather than silently enforced.
+ */
+export const MAX_DURATION = 12;
+
+export const DURATION_OPTIONS = [1, 2, 3, 4, 6, 8, 10, 12] as const;
+export const GRACE_DAY_OPTIONS = [1, 2, 3, 5, 7] as const;
+
+/** The default group: monthly, a year long, twenty positions. */
 export const initialCreateGroupValues: CreateGroupValues = {
   name: '',
-  amountMajor: '',
+  mode: 'FIXED',
   frequency: 'MONTHLY',
-  maxSlots: '',
+  duration: 12,
+  maxSlots: '20',
   requestedSlots: '1',
-  startDate: '',
-  maxSlotsPerMember: '',
+  multipleSlots: false,
+  amountMajor: '',
+  graceDays: 3,
 };
 
-/** The steps, in order. Advanced is last so it can be skipped. */
-export const CREATE_GROUP_STEPS = ['basics', 'slots', 'schedule', 'advanced'] as const;
+/** The steps, in order. */
+export const CREATE_GROUP_STEPS = ['basics', 'members', 'amounts', 'review'] as const;
 export type CreateGroupStep = (typeof CREATE_GROUP_STEPS)[number];
+
+export const STEP_LABELS: Record<CreateGroupStep, string> = {
+  basics: 'BASICS',
+  members: 'MEMBERS',
+  amounts: 'AMOUNTS',
+  review: 'REVIEW',
+};
+
+export const MIN_MEMBERS = 2;
+export const MAX_MEMBERS = 1_000;
 
 function positiveInt(value: string): number | null {
   const trimmed = value.trim();
@@ -35,24 +63,14 @@ function positiveInt(value: string): number | null {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-/** ISO date (YYYY-MM-DD) typed by the user, validated as a real calendar date. */
-export function parseDate(value: string): Date | null {
-  const trimmed = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
-  const date = new Date(`${trimmed}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  // Rejects 2026-02-31, which Date would silently roll into March.
-  return date.toISOString().slice(0, 10) === trimmed ? date : null;
+export function parseMembers(value: string): number | null {
+  return positiveInt(value);
 }
 
-/**
- * How many cycles a rotation runs.
- *
- * One per slot: every position is paid out exactly once, which is what makes it
- * a rotation rather than an open-ended savings pot.
- */
-export function cycleCount(maxSlots: number): number {
-  return maxSlots;
+/** Nudges the member count, clamped so the stepper cannot leave a valid range. */
+export function stepMembers(current: string, delta: number): string {
+  const parsed = positiveInt(current) ?? MIN_MEMBERS;
+  return String(Math.min(MAX_MEMBERS, Math.max(MIN_MEMBERS, parsed + delta)));
 }
 
 const FREQUENCY_DAYS: Record<Frequency, number> = {
@@ -62,22 +80,71 @@ const FREQUENCY_DAYS: Record<Frequency, number> = {
   MONTHLY: 30,
 };
 
+/** What one period of this frequency is called, for the duration chips. */
+export function durationUnit(frequency: Frequency): { one: string; many: string; short: string } {
+  switch (frequency) {
+    case 'DAILY':
+      return { one: 'day', many: 'days', short: 'd' };
+    case 'WEEKLY':
+      return { one: 'week', many: 'weeks', short: 'wk' };
+    case 'BIWEEKLY':
+      return { one: 'fortnight', many: 'fortnights', short: 'fn' };
+    default:
+      return { one: 'month', many: 'months', short: 'mo' };
+  }
+}
+
+export function durationLabel(duration: number, frequency: Frequency): string {
+  const unit = durationUnit(frequency);
+  return `${String(duration)} ${duration === 1 ? unit.one : unit.many}`;
+}
+
 /**
- * The end date implied by the start, frequency and slot count.
+ * The end date implied by the start, frequency and duration.
  *
- * Derived rather than asked for: the backend requires an endDate, but a user
- * choosing one that disagrees with the rotation length would produce a group
- * whose schedule does not fit. MONTHLY advances by calendar months so a
- * rotation starting on the 15th keeps landing on the 15th.
+ * Derived rather than asked for: the backend requires an endDate, and a date
+ * that disagreed with the rotation length would produce a group whose schedule
+ * does not fit. MONTHLY advances by calendar months, so a rotation starting on
+ * the 15th keeps landing on the 15th.
  */
-export function deriveEndDate(start: Date, frequency: Frequency, slots: number): Date {
+export function deriveEndDate(start: Date, frequency: Frequency, duration: number): Date {
   const end = new Date(start.getTime());
   if (frequency === 'MONTHLY') {
-    end.setUTCMonth(end.getUTCMonth() + slots);
+    end.setUTCMonth(end.getUTCMonth() + duration);
     return end;
   }
-  end.setUTCDate(end.getUTCDate() + FREQUENCY_DAYS[frequency] * slots);
+  end.setUTCDate(end.getUTCDate() + FREQUENCY_DAYS[frequency] * duration);
   return end;
+}
+
+/**
+ * Whether the rotation is long enough to pay every position once.
+ *
+ * Each position is paid out in its own cycle, so a group needs at least as many
+ * cycles as it has positions. Twenty members on a twelve-month monthly rotation
+ * cannot all be paid, and a group created that way would strand eight people
+ * who paid in and never received a payout — which is why this is surfaced
+ * rather than silently corrected.
+ */
+export function coversEveryPosition(duration: number, maxSlots: number): boolean {
+  return duration >= maxSlots;
+}
+
+export function coverageWarning(values: CreateGroupValues): string | null {
+  const slots = positiveInt(values.maxSlots);
+  if (slots === null) return null;
+  if (coversEveryPosition(values.duration, slots)) return null;
+  const unit = durationUnit(values.frequency);
+  return (
+    `${String(slots)} positions need ${String(slots)} ${unit.many}, but this group runs for ` +
+    `${durationLabel(values.duration, values.frequency)}. ` +
+    `Shorten it to ${String(values.duration)} positions, or run it for ${String(slots)} ${unit.many}.`
+  );
+}
+
+/** What each position receives when its turn comes: one contribution per slot. */
+export function payoutPerPositionMinor(amountMinor: string, maxSlots: number): string {
+  return (BigInt(amountMinor) * BigInt(maxSlots)).toString();
 }
 
 export type FieldErrors = Partial<Record<keyof CreateGroupValues, string>>;
@@ -85,8 +152,8 @@ export type FieldErrors = Partial<Record<keyof CreateGroupValues, string>>;
 /**
  * Validates one step's fields.
  *
- * Per-step rather than whole-form so a user is not shown errors for fields they
- * have not reached yet, and so "can I continue" is a question about this step.
+ * Per-step rather than whole-form, so nobody is shown an error for a field they
+ * have not reached and "can I continue" is a question about this step alone.
  */
 export function validateStep(step: CreateGroupStep, values: CreateGroupValues): FieldErrors {
   const errors: FieldErrors = {};
@@ -95,44 +162,29 @@ export function validateStep(step: CreateGroupStep, values: CreateGroupValues): 
     if (values.name.trim().length < 3) {
       errors.name = 'Give the group a name of at least 3 characters.';
     }
-    if (majorToMinor(values.amountMajor) === null) {
-      errors.amountMajor = 'Enter how much each position contributes, e.g. 10000.';
+    if (!DURATION_OPTIONS.includes(values.duration as (typeof DURATION_OPTIONS)[number])) {
+      errors.duration = 'Choose how long the group runs for.';
     }
   }
 
-  if (step === 'slots') {
-    const maxSlots = positiveInt(values.maxSlots);
-    const requested = positiveInt(values.requestedSlots);
-    if (maxSlots === null || maxSlots < 2 || maxSlots > 1000) {
-      errors.maxSlots = 'A rotation needs between 2 and 1000 positions.';
+  if (step === 'members') {
+    const maxSlots = parseMembers(values.maxSlots);
+    if (maxSlots === null || maxSlots < MIN_MEMBERS || maxSlots > MAX_MEMBERS) {
+      errors.maxSlots = `A rotation needs between ${String(MIN_MEMBERS)} and ${String(MAX_MEMBERS)} positions.`;
     }
+    const requested = positiveInt(values.requestedSlots);
     if (requested === null) {
       errors.requestedSlots = 'Choose how many positions you are taking.';
     } else if (maxSlots !== null && requested > maxSlots) {
       errors.requestedSlots = 'You cannot take more positions than the group has.';
+    } else if (!values.multipleSlots && requested > 1) {
+      errors.requestedSlots = 'Turn on multiple slots to take more than one position.';
     }
   }
 
-  if (step === 'schedule') {
-    if (parseDate(values.startDate) === null) {
-      errors.startDate = 'Enter a start date as YYYY-MM-DD.';
-    }
-  }
-
-  if (step === 'advanced') {
-    const maxSlots = positiveInt(values.maxSlots);
-    const perMember = values.maxSlotsPerMember.trim();
-    if (perMember !== '') {
-      const parsed = positiveInt(perMember);
-      if (parsed === null) {
-        errors.maxSlotsPerMember = 'Enter a whole number, or leave blank for no limit.';
-      } else if (maxSlots !== null && parsed > maxSlots) {
-        // The backend enforces this too, but catching it here explains the rule
-        // where the user can act on it rather than after submitting.
-        errors.maxSlotsPerMember = 'This cannot be more than the number of positions.';
-      } else if (parsed < (positiveInt(values.requestedSlots) ?? 1)) {
-        errors.maxSlotsPerMember = 'This cannot be fewer than the positions you are taking.';
-      }
+  if (step === 'amounts') {
+    if (majorToMinor(values.amountMajor) === null) {
+      errors.amountMajor = 'Enter how much each position contributes, e.g. 25000.';
     }
   }
 
@@ -149,28 +201,38 @@ export function hasErrors(errors: FieldErrors): boolean {
  * Returns null rather than a partial body if anything is invalid, so an
  * incomplete form cannot reach the API.
  */
-export function toCreateRequest(values: CreateGroupValues): CreateAjoGroupInput | null {
+export function toCreateRequest(
+  values: CreateGroupValues,
+  now: Date = new Date(),
+): CreateAjoGroupInput | null {
   for (const step of CREATE_GROUP_STEPS) {
     if (hasErrors(validateStep(step, values))) return null;
   }
   const amountMinor = majorToMinor(values.amountMajor);
-  const maxSlots = positiveInt(values.maxSlots);
+  const maxSlots = parseMembers(values.maxSlots);
   const requestedSlots = positiveInt(values.requestedSlots);
-  const start = parseDate(values.startDate);
-  if (amountMinor === null || maxSlots === null || requestedSlots === null || start === null) {
-    return null;
-  }
-  const perMember = positiveInt(values.maxSlotsPerMember.trim());
+  if (amountMinor === null || maxSlots === null || requestedSlots === null) return null;
+
+  // Starts today: the design asks for a duration rather than a date, and the
+  // rotation length is what the admin is actually choosing.
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+  );
+
   return {
     name: values.name.trim(),
+    contributionMode: values.mode,
     contributionFrequency: values.frequency,
     baseContributionMinor: amountMinor,
+    // A flexible group prices one unit; the base amount is that unit.
+    ...(values.mode === 'FLEXIBLE_UNIT' ? { contributionUnitMinor: amountMinor } : {}),
     maxSlots,
     requestedSlots,
+    // Omitted when one member may hold many, so the backend allows up to the
+    // group's own capacity rather than a number this screen would have to guess.
+    ...(values.multipleSlots ? {} : { maxSlotsPerMember: 1 }),
     startDate: start.toISOString(),
-    endDate: deriveEndDate(start, values.frequency, cycleCount(maxSlots)).toISOString(),
-    // Omitted entirely when blank: the backend then allows up to the group's own
-    // capacity, which a fixed number here could not express.
-    ...(perMember === null ? {} : { maxSlotsPerMember: perMember }),
+    endDate: deriveEndDate(start, values.frequency, values.duration).toISOString(),
+    gracePeriodMinutes: values.graceDays * 24 * 60,
   };
 }

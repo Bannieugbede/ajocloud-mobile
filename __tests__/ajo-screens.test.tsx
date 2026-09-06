@@ -2,7 +2,6 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 
 import type { AjoGroupDetail } from '@/api/endpoints/ajo-groups';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
-import { CreateGroupScreen } from '@/features/ajo/create-group-screen';
 import { GroupInvitationScreen } from '@/features/ajo/group-invitation-screen';
 import { SwapRequestScreen } from '@/features/ajo/swap-request-screen';
 
@@ -79,38 +78,9 @@ const cycles = [
   },
 ];
 
-describe('CreateGroupScreen', () => {
-  // Awaited inside the helper: returning the un-awaited render and awaiting it
-  // at the call site leaves React mid-render when the next act() opens.
-  const setup = async (onSubmit = jest.fn()) =>
-    await render(<CreateGroupScreen submitting={false} onSubmit={onSubmit} />);
-
-  it('does not advance past a step with an invalid field', async () => {
-    const view = await setup();
-    await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: 'Continue' }));
-    });
-    // Still on step 1: the name and amount were never filled in.
-    expect(view.getByText('Step 1 of 4')).toBeTruthy();
-    expect(view.getByText(/at least 3 characters/i)).toBeTruthy();
-  });
-
-  it('advances once the step is valid', async () => {
-    const view = await setup();
-    // Typing and pressing are separate acts: the Continue handler reads state
-    // the first act has to have flushed. React logs an overlapping-act warning
-    // for this pattern; the alternative - bare fireEvent - leaves React
-    // mid-update and breaks the tests that follow, so the warning is accepted.
-    await act(async () => {
-      fireEvent.changeText(view.getByLabelText('Group name'), 'Family Rotation');
-      fireEvent.changeText(view.getByLabelText('Contribution per position'), '10000');
-    });
-    await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: 'Continue' }));
-    });
-    expect(view.getByText('Step 2 of 4')).toBeTruthy();
-  });
-});
+// The create wizard's own suite is __tests__/ajo-create-join-screens.test.tsx,
+// which covers the rebuilt steps rather than the three-field form this file
+// used to exercise.
 
 describe('GroupInvitationScreen', () => {
   it('shows the code and warns it cannot be seen again', async () => {

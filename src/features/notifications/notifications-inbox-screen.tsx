@@ -1,11 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { InAppNotification } from '@/api/endpoints/notifications';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
@@ -60,40 +58,33 @@ export function NotificationsInboxScreen({
   onOpenSettings?: () => void;
 }) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const groups = groupByDay(notifications, now);
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
-      ]}
-      contentInsetAdjustmentBehavior="never"
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
       refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          progressViewOffset={insets.top}
-        />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }
     >
-      <AppScreenHeader
-        title="Notifications"
-        subtitle={loading ? 'Loading…' : unreadSummary(unreadCount, notifications.length)}
-        actions={
-          onOpenSettings
-            ? [
-                {
-                  icon: 'options-outline',
-                  label: 'Notification settings',
-                  onPress: onOpenSettings,
-                },
-              ]
-            : []
-        }
-      />
+      {/* The navigator draws the title; this line is the state beneath it,
+          which a title bar has no room for. */}
+      <View style={styles.summaryRow}>
+        <AppText style={{ color: colors.textMuted }}>
+          {loading ? 'Loading…' : unreadSummary(unreadCount, notifications.length)}
+        </AppText>
+        {onOpenSettings ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Notification settings"
+            onPress={onOpenSettings}
+            hitSlop={10}
+          >
+            <Ionicons name="options-outline" size={20} color={colors.text} />
+          </Pressable>
+        ) : null}
+      </View>
 
       {unreadCount > 0 ? (
         <AppButton
@@ -254,6 +245,12 @@ function categoryPalette(
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
+  summaryRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
   markAll: { alignSelf: 'flex-start' },
 
   group: { gap: spacing.sm },

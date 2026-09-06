@@ -86,6 +86,11 @@ export type CreateAjoGroupInput = {
   maxSlotsPerMember?: number;
   startDate: string;
   endDate: string;
+  /**
+   * How long a late contribution is tolerated before it counts as late. The
+   * backend stores minutes; the screen offers whole days.
+   */
+  gracePeriodMinutes?: number;
 };
 
 /** The invitation code is returned only here and cannot be fetched again. */
