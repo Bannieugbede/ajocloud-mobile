@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, type PressableProps } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { fontFamilies, fontSizes, radius, sizes, spacing } from '@/theme';
@@ -22,6 +23,12 @@ type AppButtonProps = PressableProps & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  /**
+   * A glyph before the label. Decorative only — it is hidden from screen
+   * readers, because the label already says what the button does and a button
+   * that announces "download icon, Download PDF Report" says it twice.
+   */
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
 };
 
 /** Restores a compact button's touch target to the full 48dp. */
@@ -32,6 +39,7 @@ export function AppButton({
   variant = 'primary',
   size = 'default',
   loading = false,
+  icon,
   disabled,
   style,
   ...props
@@ -54,6 +62,10 @@ export function AppButton({
   return (
     <Pressable
       accessibilityRole="button"
+      // Named explicitly rather than inferred from the child text: the label is
+      // wrapped in a row once an icon is present, and a nested Text no longer
+      // names its ancestor. Stating it keeps the name identical either way.
+      accessibilityLabel={label}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       disabled={disabled || loading}
       hitSlop={compact ? COMPACT_HIT_SLOP : undefined}
@@ -72,15 +84,26 @@ export function AppButton({
       {loading ? (
         <ActivityIndicator color={foreground} />
       ) : (
-        <AppText
-          numberOfLines={1}
-          style={[
-            { color: foreground, fontFamily: fontFamilies.semibold },
-            compact ? styles.compactLabel : null,
-          ]}
-        >
-          {label}
-        </AppText>
+        <View style={styles.content}>
+          {icon ? (
+            <Ionicons
+              name={icon}
+              size={compact ? 14 : 18}
+              color={foreground}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          ) : null}
+          <AppText
+            numberOfLines={1}
+            style={[
+              { color: foreground, fontFamily: fontFamilies.semibold },
+              compact ? styles.compactLabel : null,
+            ]}
+          >
+            {label}
+          </AppText>
+        </View>
       )}
     </Pressable>
   );
@@ -95,6 +118,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.lg,
   },
+  content: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   compact: { borderRadius: radius.pill, minHeight: 34, paddingHorizontal: spacing.md },
   compactLabel: { fontSize: fontSizes.caption },
 });
