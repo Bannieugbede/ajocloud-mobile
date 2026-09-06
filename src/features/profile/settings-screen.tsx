@@ -1,9 +1,10 @@
 import { ScrollView, StyleSheet } from 'react-native';
 
+import { AppBadge } from '@/components/ui/app-badge';
 import { AppListItem } from '@/components/ui/app-list-item';
-import { AppText } from '@/components/ui/app-text';
+import { AppSection } from '@/components/ui/app-section';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 /**
  * Account settings, behind the gear on Profile.
@@ -36,51 +37,56 @@ export function SettingsScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <AppText style={[styles.section, { color: colors.textMuted }]}>ACCOUNT</AppText>
-      <AppListItem
-        card
-        title="Edit profile"
-        description="Your name and contact details"
-        icon="person-outline"
-        onPress={onEditProfile}
-      />
-      <AppListItem
-        card
-        title="Security"
-        description="Password, PIN and devices"
-        icon="lock-closed-outline"
-        onPress={onOpenSecurity}
-      />
+      <AppSection title="ACCOUNT">
+        <AppListItem
+          card
+          title="Edit profile"
+          description="Your name and contact details"
+          icon="person-outline"
+          onPress={onEditProfile}
+        />
+        <AppListItem
+          card
+          title="Security"
+          description="Password, PIN and devices"
+          icon="lock-closed-outline"
+          onPress={onOpenSecurity}
+        />
+      </AppSection>
 
-      <AppText style={[styles.section, { color: colors.textMuted }]}>NOTIFICATIONS</AppText>
-      <AppListItem
-        card
-        title={unreadCount > 0 ? `Inbox (${String(unreadCount)} new)` : 'Inbox'}
-        description="Your updates and alerts"
-        icon="mail-outline"
-        onPress={onOpenInbox}
-      />
-      <AppListItem
-        card
-        title="Notification settings"
-        description="Choose what we tell you about"
-        icon="notifications-outline"
-        onPress={onOpenNotifications}
-      />
+      <AppSection title="NOTIFICATIONS">
+        <AppListItem
+          card
+          title="Inbox"
+          description="Your updates and alerts"
+          icon="mail-outline"
+          onPress={onOpenInbox}
+          trailing={
+            unreadCount > 0 ? <AppBadge label={`${unreadCount} new`} tone="info" /> : undefined
+          }
+        />
+        <AppListItem
+          card
+          title="Notification settings"
+          description="Choose what we tell you about"
+          icon="notifications-outline"
+          onPress={onOpenNotifications}
+        />
+      </AppSection>
 
-      <AppText style={[styles.section, { color: colors.textMuted }]}>LEGAL</AppText>
-      <AppListItem
-        card
-        title="Privacy and terms"
-        description="How we handle your data"
-        icon="document-text-outline"
-        onPress={onOpenLegal}
-      />
+      <AppSection title="LEGAL">
+        <AppListItem
+          card
+          title="Privacy and terms"
+          description="How we handle your data"
+          icon="document-text-outline"
+          onPress={onOpenLegal}
+        />
+      </AppSection>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.sm, padding: spacing.md, paddingBottom: spacing.xxl },
-  section: { fontSize: fontSizes.caption, letterSpacing: 1, marginTop: spacing.sm },
+  container: { gap: spacing.lg, padding: spacing.md, paddingBottom: spacing.xxl },
 });

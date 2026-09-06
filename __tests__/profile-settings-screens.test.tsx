@@ -29,13 +29,18 @@ describe('Settings', () => {
   });
 
   it('shows an unread count on the inbox row', async () => {
+    // Carried by a badge rather than the row's title, so the row still reads
+    // "Inbox" and the count is not buried inside the label a member scans for.
     const view = await render(<SettingsScreen {...props({ unreadCount: 3 })} />);
-    expect(view.getByText('Inbox (3 new)')).toBeTruthy();
+    expect(view.getByText('Inbox')).toBeTruthy();
+    expect(view.getByText('3 new')).toBeTruthy();
   });
 
   it('does not print a count when there is nothing unread', async () => {
+    // An empty badge trains people to ignore the one that means something.
     const view = await render(<SettingsScreen {...props()} />);
-    expect(view.queryByText('Inbox (0 new)')).toBeNull();
+    expect(view.getByText('Inbox')).toBeTruthy();
+    expect(view.queryByText(/\bnew\b/)).toBeNull();
   });
 
   it('opens each destination', async () => {

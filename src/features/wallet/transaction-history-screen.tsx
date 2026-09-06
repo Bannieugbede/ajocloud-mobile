@@ -1,10 +1,7 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { WalletTransaction } from '@/api/endpoints/wallets';
-import { AppBadge } from '@/components/ui/app-badge';
-import { AppCard } from '@/components/ui/app-card';
 import { AppSegmented } from '@/components/ui/app-segmented';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
@@ -12,18 +9,12 @@ import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
-import { statusLabel } from '@/utils/status';
 
+import { MovementRow } from './movement-row';
 import {
   MOVEMENT_FILTERS,
-  categoryIcon,
-  categoryOf,
   filterMovements,
-  isMoneyIn,
-  movementTimeLabel,
   settledTotals,
-  signedAmountLabel,
-  type MovementCategory,
   type MovementFilter,
 } from './transaction-history';
 
@@ -116,7 +107,7 @@ export function TransactionHistoryScreen({
       ) : null}
 
       {shown.map((movement) => (
-        <MovementRow key={movement.id} movement={movement} currency={currency} />
+        <MovementRow key={movement.id} movement={movement} currency={currency} boxed />
       ))}
     </ScrollView>
   );
@@ -151,89 +142,6 @@ function TotalTile({
         {formatted}
       </AppText>
     </View>
-  );
-}
-
-/** The tint behind a movement's glyph, so products are distinguishable at a glance. */
-function categoryTint(
-  category: MovementCategory,
-  colors: ReturnType<typeof useTheme>['colors'],
-): { background: string; foreground: string } {
-  switch (category) {
-    case 'wallet':
-    case 'transfer':
-      return { background: colors.primarySoft, foreground: colors.primary };
-    case 'ajo':
-    case 'akawo':
-      return { background: colors.successSoft, foreground: colors.success };
-    case 'food':
-    case 'bill':
-      return { background: colors.warningSoft, foreground: colors.warning };
-    default:
-      return { background: colors.surfaceMuted, foreground: colors.textMuted };
-  }
-}
-
-function MovementRow({ movement, currency }: { movement: WalletTransaction; currency: string }) {
-  const { colors } = useTheme();
-  const category = categoryOf(movement);
-  const tint = categoryTint(category, colors);
-  const moneyIn = isMoneyIn(movement);
-  const formatted = formatMinorAmount(movement.amountMinor, currency);
-  const signed = signedAmountLabel(movement, formatted);
-  const when = movementTimeLabel(movement);
-  const status = statusLabel(movement.transaction.status);
-  const settled = movement.transaction.status.toUpperCase() === 'SUCCESSFUL';
-
-  return (
-    <AppCard
-      // One element rather than five: read as fragments, an amount can be
-      // matched to the wrong row, which on a money screen is the worst failure.
-      style={styles.row}
-    >
-      <View
-        accessible
-        accessibilityLabel={`${movement.transaction.description}, ${signed}, ${status}, ${when}`}
-        style={styles.rowInner}
-      >
-        <View style={[styles.glyph, { backgroundColor: tint.background }]}>
-          <Ionicons
-            name={categoryIcon(category) as React.ComponentProps<typeof Ionicons>['name']}
-            size={20}
-            color={tint.foreground}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
-
-        <View style={styles.rowText}>
-          <AppText weight="semibold" numberOfLines={1}>
-            {movement.transaction.description}
-          </AppText>
-          <AppText style={[styles.meta, { color: colors.textMuted }]}>{when}</AppText>
-        </View>
-
-        <View style={styles.rowTrailing}>
-          <AppText
-            weight="bold"
-            numberOfLines={1}
-            style={{ color: moneyIn ? colors.success : colors.text }}
-          >
-            {signed}
-          </AppText>
-          {/* A failed or pending movement is called out; a settled one is the
-              norm and says so quietly rather than shouting a green pill. */}
-          {settled ? (
-            <AppText style={[styles.meta, { color: colors.success }]}>{status}</AppText>
-          ) : (
-            <AppBadge
-              label={status}
-              tone={movement.transaction.status.toUpperCase() === 'FAILED' ? 'error' : 'warning'}
-            />
-          )}
-        </View>
-      </View>
-    </AppCard>
   );
 }
 
