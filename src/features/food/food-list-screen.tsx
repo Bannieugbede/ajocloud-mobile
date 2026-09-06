@@ -8,6 +8,7 @@ import type {
   FoodProgramme,
   FoodSubscription,
 } from '@/api/endpoints/food-ajo';
+import { AppBadge } from '@/components/ui/app-badge';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
@@ -16,6 +17,7 @@ import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
+import { longDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
@@ -150,11 +152,7 @@ function SubscriptionCard({
         <AppText weight="semibold" style={styles.name} numberOfLines={2}>
           {subscription.group.name}
         </AppText>
-        <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
-          <AppText weight="semibold" style={[styles.badgeText, { color: colors.success }]}>
-            {statusLabel(subscription.status)}
-          </AppText>
-        </View>
+        <AppBadge label={statusLabel(subscription.status)} tone="success" />
       </View>
       <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
         {subscription.package.name}
@@ -163,7 +161,7 @@ function SubscriptionCard({
       </AppText>
       <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
         {subscription.group.distributionAt
-          ? `Distribution ${new Date(subscription.group.distributionAt).toLocaleDateString()}`
+          ? `Distribution ${longDate(subscription.group.distributionAt)}`
           : 'Distribution date to be confirmed'}
       </AppText>
     </AppCard>
@@ -230,7 +228,9 @@ function ProgrammeCard({ programme, onPress }: { programme: FoodProgramme; onPre
 
         <View style={styles.rowBetween}>
           <View style={styles.coordinatorLine}>
-            {programme.coordinatorVerified ? <VerifiedBadge /> : null}
+            {programme.coordinatorVerified ? (
+              <AppBadge label="Verified" tone="warning" icon="shield-checkmark-outline" />
+            ) : null}
             {programme.coordinatorName ? (
               <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
                 {programme.coordinatorName}
@@ -258,19 +258,6 @@ function ProgrammeCard({ programme, onPress }: { programme: FoodProgramme; onPre
         ) : null}
       </View>
     </AppCard>
-  );
-}
-
-/** Says the coordinator's identity has been verified, and means it. */
-function VerifiedBadge() {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.verified, { backgroundColor: colors.warningSoft }]}>
-      <Ionicons name="shield-checkmark-outline" size={11} color={colors.warning} />
-      <AppText weight="semibold" style={[styles.verifiedText, { color: colors.warning }]}>
-        Verified
-      </AppText>
-    </View>
   );
 }
 
@@ -312,18 +299,7 @@ const styles = StyleSheet.create({
   joinedText: { color: '#FFFFFF', fontSize: fontSizes.caption },
   programmeBody: { gap: spacing.sm, padding: spacing.md },
   coordinatorLine: { alignItems: 'center', flexDirection: 'row', flex: 1, gap: spacing.sm },
-  verified: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    flexDirection: 'row',
-    gap: 3,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  verifiedText: { fontSize: 10 },
   name: { flex: 1, fontSize: fontSizes.body },
-  badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
-  badgeText: { fontSize: fontSizes.caption },
   rowBetween: {
     alignItems: 'center',
     flexDirection: 'row',

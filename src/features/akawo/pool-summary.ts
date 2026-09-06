@@ -1,4 +1,5 @@
 import type { AkawoPool, JoinedPool, PoolTotals } from '@/api/endpoints/akawo-pools';
+import { longDate, shortDate } from '@/utils/dates';
 import { sumMinorAmounts } from '@/utils/money';
 
 /**
@@ -66,23 +67,18 @@ export function collectionSummary(pool: PoolTotals): string {
  * A pool's deadline as a member reads it. Not every pool has one — a collection
  * can run until the organiser closes it — so the absence is worded rather than
  * left blank.
- *
- * Formatted in UTC, the frame the deadline is stored in. A deadline is the last
- * instant of its day, and rendering that in local time pushes it onto the next
- * date for anyone east of Greenwich: a pool due the 13th would tell every
- * member in Lagos the 14th, a day of grace nobody agreed to.
  */
 export function deadlineLabel(dueAt: string | null, locale?: string): string {
-  if (!dueAt) return 'No deadline';
-  const parsed = Date.parse(dueAt);
-  return Number.isNaN(parsed)
-    ? 'No deadline'
-    : new Date(parsed).toLocaleDateString(locale, {
-        day: 'numeric',
-        month: 'short',
-        timeZone: 'UTC',
-        year: 'numeric',
-      });
+  const label = longDate(dueAt, locale);
+  // A pool's own wording for an absent date: "No deadline" says the collection
+  // runs until it is closed, where the generic "No date" says nothing.
+  return label === 'No date' ? 'No deadline' : label;
+}
+
+/** The same deadline on a card, where the year is not what decides anything. */
+export function shortDeadlineLabel(dueAt: string | null, locale?: string): string {
+  const label = shortDate(dueAt, locale);
+  return label === 'No date' ? 'No deadline' : label;
 }
 
 /**
@@ -128,23 +124,4 @@ export function expectedTotalMinor(amountMinor: string, memberCount: number): st
   } catch {
     return '0';
   }
-}
-
-/**
- * A deadline as a list reads it: "Aug 30", without the year.
- *
- * A card shows three facts side by side and the year is almost never the one
- * that decides anything — the detail screen carries the full date. Formatted in
- * UTC for the same reason as `deadlineLabel`.
- */
-export function shortDeadlineLabel(dueAt: string | null, locale?: string): string {
-  if (!dueAt) return 'No deadline';
-  const parsed = Date.parse(dueAt);
-  return Number.isNaN(parsed)
-    ? 'No deadline'
-    : new Date(parsed).toLocaleDateString(locale, {
-        day: 'numeric',
-        month: 'short',
-        timeZone: 'UTC',
-      });
 }

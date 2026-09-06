@@ -3,8 +3,11 @@ import {
   buildRotation,
   canLock,
   canRequestSwap,
+  currentRotationSequence,
   lockBlockedReason,
   outstandingContributions,
+  rotationStatusLabel,
+  rotationStatusTone,
 } from './rotation';
 
 const ME = 'user-me';
@@ -161,5 +164,66 @@ describe('lockBlockedReason', () => {
 
   it('allows locking once two positions are taken', () => {
     expect(lockBlockedReason(group)).toBeNull();
+  });
+});
+
+describe('rotation status wording', () => {
+  it('words a settled payout as paid out, whether or not it is current', () => {
+    expect(rotationStatusLabel('PAID', false)).toBe('Paid out');
+    expect(rotationStatusLabel('PAID', true)).toBe('Paid out');
+  });
+
+  it('distinguishes the live round from the ones still to come', () => {
+    // Every row would otherwise read "Upcoming", including the one whose money
+    // is due now — the only row that asks anything of anybody.
+    expect(rotationStatusLabel('PENDING', true)).toBe('Current');
+    expect(rotationStatusLabel('PENDING', false)).toBe('Upcoming');
+  });
+
+  it('calls out a payout that failed rather than leaving it as pending', () => {
+    expect(rotationStatusLabel('FAILED', false)).toBe('Failed');
+    expect(rotationStatusTone('FAILED', false)).toBe('error');
+  });
+
+  it('gives each state a tone that is never the only signal', () => {
+    expect(rotationStatusTone('PAID', false)).toBe('success');
+    expect(rotationStatusTone('PROCESSING', false)).toBe('info');
+    expect(rotationStatusTone('PENDING', true)).toBe('warning');
+    expect(rotationStatusTone('PENDING', false)).toBe('neutral');
+  });
+});
+
+describe('currentRotationSequence', () => {
+  function row(sequence: number, status: string) {
+    return {
+      sequence,
+      slotId: `s${sequence}`,
+      position: sequence,
+      holderName: 'Member',
+      payoutDueAt: '2026-09-15T00:00:00Z',
+      amountDueMinor: '100000',
+      amountPaidMinor: '0',
+      currency: 'NGN',
+      status,
+      isMine: false,
+    };
+  }
+
+  it('points at the earliest round still owing a payout', () => {
+    expect(currentRotationSequence([row(1, 'PAID'), row(2, 'PENDING'), row(3, 'PENDING')])).toBe(2);
+  });
+
+  it('does not assume the rows arrive in order', () => {
+    expect(currentRotationSequence([row(3, 'PENDING'), row(1, 'PAID'), row(2, 'PENDING')])).toBe(2);
+  });
+
+  it('marks nothing current once every round has paid out', () => {
+    // A finished rotation pointing at its last row forever would keep showing a
+    // completed group as though money were still due.
+    expect(currentRotationSequence([row(1, 'PAID'), row(2, 'PAID')])).toBeNull();
+  });
+
+  it('has no current round before the group is locked', () => {
+    expect(currentRotationSequence([])).toBeNull();
   });
 });

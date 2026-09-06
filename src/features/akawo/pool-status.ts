@@ -1,4 +1,5 @@
 import type { AkawoDue, AkawoPoolMember } from '@/api/endpoints/akawo-pools';
+import { dateAndTime } from '@/utils/dates';
 
 /**
  * How a pool's payments are counted and worded.
@@ -95,14 +96,7 @@ export function paidAmountMinor(due: AkawoDue | null): string {
   return due?.status === 'PAID' ? due.amountMinor : '0';
 }
 
-/** "Jul 10, 2025 · 10:34 AM" — when a payment landed, blank when it has not. */
+/** When a payment landed, or null when it has not. */
 export function paidAtLabel(due: AkawoDue | null, locale?: string): string | null {
-  if (due?.status !== 'PAID' || !due.paidAt) return null;
-  const parsed = Date.parse(due.paidAt);
-  if (Number.isNaN(parsed)) return null;
-
-  const date = new Date(parsed);
-  const day = date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-  const time = date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
-  return `${day} · ${time}`;
+  return due?.status === 'PAID' ? dateAndTime(due.paidAt, locale) : null;
 }

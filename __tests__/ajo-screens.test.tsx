@@ -120,7 +120,7 @@ describe('AjoDetailScreen', () => {
 
   it('names who receives each payout rather than showing a slot id', async () => {
     const view = await setup();
-    expect(view.getByText('Ada Admin (you)')).toBeTruthy();
+    expect(view.getByText('Ada Admin (You)')).toBeTruthy();
   });
 
   it('offers to pay the viewer’s own next contribution', async () => {

@@ -8,6 +8,7 @@ import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
+import { shortDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
@@ -249,7 +250,7 @@ function RecentRow({ payment, onPress }: { payment: BillPayment; onPress: () => 
           {payment.biller?.name ?? 'Bill payment'}
         </AppText>
         <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
-          {formatDate(payment.createdAt)}
+          {shortDate(payment.createdAt)}
           {payment.biller ? ` · ${payment.biller.category.name}` : ''}
         </AppText>
       </View>
@@ -269,12 +270,6 @@ function RecentRow({ payment, onPress }: { payment: BillPayment; onPress: () => 
       </View>
     </AppCard>
   );
-}
-
-function formatDate(value: string): string {
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return '';
-  return new Date(parsed).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
 const styles = StyleSheet.create({

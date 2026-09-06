@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -16,11 +17,18 @@ export type BadgeTone = 'success' | 'warning' | 'info' | 'neutral' | 'error';
 export function AppBadge({
   label,
   tone = 'neutral',
+  icon,
   style,
   testID,
 }: {
   label: string;
   tone?: BadgeTone;
+  /**
+   * A glyph before the label — a shield on "Verified", say. Decorative: the
+   * label already carries the meaning, so it is kept out of the accessibility
+   * tree rather than announced twice.
+   */
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }) {
@@ -35,6 +43,15 @@ export function AppBadge({
 
   return (
     <View style={[styles.badge, { backgroundColor: palette.background }, style]} testID={testID}>
+      {icon ? (
+        <Ionicons
+          name={icon}
+          size={11}
+          color={palette.text}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
+      ) : null}
       <AppText weight="semibold" style={[styles.text, { color: palette.text }]}>
         {label}
       </AppText>
@@ -43,6 +60,13 @@ export function AppBadge({
 }
 
 const styles = StyleSheet.create({
-  badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
+  badge: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
   text: { fontSize: fontSizes.caption },
 });

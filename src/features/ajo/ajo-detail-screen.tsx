@@ -1,22 +1,35 @@
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AjoCycle, AjoGroupDetail } from '@/api/endpoints/ajo-groups';
+import { AppAvatar } from '@/components/ui/app-avatar';
+import { AppBadge } from '@/components/ui/app-badge';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppDivider } from '@/components/ui/app-divider';
+import { AppHero } from '@/components/ui/app-hero';
+import { AppSegmented } from '@/components/ui/app-segmented';
+import { AppStatTiles } from '@/components/ui/app-stat-tiles';
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
+import { longDate, shortDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
+
 import {
   buildRotation,
   canLock,
   canRequestSwap,
+  currentRotationSequence,
   lockBlockedReason,
   outstandingContributions,
+  rotationStatusLabel,
+  rotationStatusTone,
 } from './rotation';
+
+type Panel = 'rotation' | 'members';
 
 export function AjoDetailScreen({
   group,
@@ -54,6 +67,7 @@ export function AjoDetailScreen({
   }) => void;
 }) {
   const { colors } = useTheme();
+  const [panel, setPanel] = useState<Panel>('rotation');
 
   if (loading) return <AppLoadingState label="Loading this Ajo group" />;
   if (error || !group) {
@@ -64,47 +78,60 @@ export function AjoDetailScreen({
   const outstanding = outstandingContributions(cycles ?? [], group, viewerUserId);
   const nextDue = outstanding[0];
   const lockBlocked = lockBlockedReason(group);
+  const currentSequence = currentRotationSequence(rotation);
+
+  const mySlots = rotation.filter((row) => row.isMine);
+  const myPosition = mySlots.length ? Math.min(...mySlots.map((row) => row.position)) : null;
 
   return (
     <ScrollView
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View style={[styles.hero, { backgroundColor: colors.primary }]}>
-        <AppText style={{ color: colors.textInverse }}>Contribution each round</AppText>
-        <AppText weight="bold" style={[styles.amount, { color: colors.textInverse }]}>
-          {formatMinorAmount(group.baseContributionMinor, group.currency)}
-        </AppText>
-        <AppText style={{ color: colors.textInverse }}>
-          {statusLabel(group.contributionFrequency)} · {statusLabel(group.status)}
-        </AppText>
-      </View>
+      <AppStatTiles
+        testID="ajo-group-stats"
+        stats={[
+          { label: 'Members', value: String(group.members.length) },
+          { label: 'My Slots', value: String(mySlots.length) },
+          {
+            label: 'Position',
+            value: myPosition === null ? '—' : `${myPosition}/${group.maxSlots}`,
+          },
+        ]}
+      />
 
-      <View style={styles.stats}>
-        {[
-          ['Members', group.members.length],
-          ['Positions', group.slots.length],
-          ['Capacity', group.maxSlots],
-        ].map(([label, value]) => (
-          <View
-            key={String(label)}
-            style={[
-              styles.stat,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
-            ]}
-          >
-            <AppText weight="bold">{value}</AppText>
-            <AppText style={{ color: colors.textMuted }}>{label}</AppText>
-          </View>
-        ))}
-      </View>
+      <AppHero
+        testID="ajo-group-hero"
+        label="CONTRIBUTION EACH ROUND"
+        amountMinor={group.baseContributionMinor}
+        currency={group.currency}
+        meta={`${statusLabel(group.contributionFrequency)} · ${statusLabel(group.status)}`}
+        progressBps={
+          rotation.length
+            ? Math.round(
+                (rotation.filter((row) => row.status.toUpperCase() === 'PAID').length /
+                  rotation.length) *
+                  10_000,
+              )
+            : undefined
+        }
+        progressLabel={`${group.name} rotation`}
+        footer={
+          currentSequence === null
+            ? undefined
+            : [`Round ${currentSequence}/${rotation.length}`, `${group.slots.length} positions`]
+        }
+      />
 
       {nextDue ? (
         <AppCard>
-          <AppText weight="semibold">Your next contribution</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            Round {nextDue.sequence} · due {nextDue.dueAt.slice(0, 10)}
-          </AppText>
+          <View style={styles.rowBetween}>
+            <AppText accessibilityRole="header" weight="semibold" style={styles.cardTitle}>
+              Your next contribution
+            </AppText>
+            <AppBadge label={`Round ${nextDue.sequence}`} tone="info" />
+          </View>
+          <AppText style={{ color: colors.textMuted }}>Due {longDate(nextDue.dueAt)}</AppText>
           <AppText weight="bold" style={styles.due}>
             {formatMinorAmount(nextDue.amountMinor, nextDue.currency)}
           </AppText>
@@ -125,7 +152,9 @@ export function AjoDetailScreen({
 
       {canLock(group, viewerUserId) ? (
         <AppCard>
-          <AppText weight="semibold">This rotation has not started</AppText>
+          <AppText accessibilityRole="header" weight="semibold" style={styles.cardTitle}>
+            This rotation has not started
+          </AppText>
           {/* The reason is shown instead of the button, so an administrator is
               told to invite people rather than tapping into a 422. */}
           <AppText style={{ color: colors.textMuted }}>
@@ -143,99 +172,154 @@ export function AjoDetailScreen({
         </AppCard>
       ) : null}
 
-      <AppText accessibilityRole="header" weight="semibold">
-        Rotation
-      </AppText>
-      {rotation.length === 0 ? (
-        <AppText style={{ color: colors.textMuted }}>
-          The order is set when the group is locked.
-        </AppText>
-      ) : (
-        rotation.map((entry) => (
-          <View key={`${entry.sequence}-${entry.slotId}`} style={styles.row}>
-            <View
-              style={[
-                styles.position,
-                { backgroundColor: entry.isMine ? colors.primary : colors.surfaceMuted },
-              ]}
-            >
-              <AppText
-                weight="bold"
-                style={{ color: entry.isMine ? colors.textInverse : colors.text }}
-              >
-                {entry.sequence}
-              </AppText>
-            </View>
-            <View style={styles.rowBody}>
-              <AppText weight={entry.isMine ? 'semibold' : 'regular'}>
-                {entry.isMine ? `${entry.holderName} (you)` : entry.holderName}
-              </AppText>
-              <AppText style={{ color: colors.textMuted }}>
-                {entry.payoutDueAt.slice(0, 10)} · {statusLabel(entry.status)}
-              </AppText>
-            </View>
-            <AppText weight="semibold">
-              {formatMinorAmount(entry.amountDueMinor, entry.currency)}
-            </AppText>
-          </View>
-        ))
-      )}
-
-      {canRequestSwap(group) ? (
-        <AppButton label="Ask to swap positions" variant="outline" onPress={onRequestSwap} />
-      ) : null}
-
-      <AppButton
-        label={
-          swapsAwaitingMe > 0
-            ? `Swap requests (${String(swapsAwaitingMe)} need you)`
-            : 'Swap requests'
-        }
-        variant={swapsAwaitingMe > 0 ? 'primary' : 'ghost'}
-        onPress={onViewSwaps}
+      <AppSegmented
+        label={group.name}
+        value={panel}
+        onChange={setPanel}
+        options={[
+          { value: 'rotation', label: 'Rotation' },
+          { value: 'members', label: `Members (${group.members.length})` },
+        ]}
+        testID="ajo-group-tabs"
       />
 
-      <AppDivider />
-
-      <AppText accessibilityRole="header" weight="semibold">
-        Members
-      </AppText>
-      {group.members.map((member) => (
-        <View key={member.id} style={styles.row}>
-          <View style={styles.rowBody}>
-            <AppText>{member.displayName}</AppText>
+      {panel === 'rotation' ? (
+        rotation.length === 0 ? (
+          <AppCard>
             <AppText style={{ color: colors.textMuted }}>
-              {member.role === 'GROUP_ADMIN' ? 'Group administrator' : 'Member'} ·{' '}
-              {member._count.slots} position{member._count.slots === 1 ? '' : 's'}
+              The order is set when the group is locked.
             </AppText>
-          </View>
-        </View>
-      ))}
+          </AppCard>
+        ) : (
+          <AppCard>
+            {rotation.map((entry, index) => {
+              const isCurrent = entry.sequence === currentSequence;
+              const label = rotationStatusLabel(entry.status, isCurrent);
+              const name = entry.isMine ? `${entry.holderName} (You)` : entry.holderName;
+
+              return (
+                <View key={`${entry.sequence}-${entry.slotId}`}>
+                  {index > 0 ? <AppDivider /> : null}
+                  <View
+                    accessible
+                    accessibilityLabel={`Position ${entry.position}, ${name}, ${label}, ${shortDate(
+                      entry.payoutDueAt,
+                    )}, ${formatMinorAmount(entry.amountDueMinor, entry.currency)}`}
+                    style={styles.row}
+                  >
+                    <View
+                      style={[
+                        styles.position,
+                        {
+                          backgroundColor: isCurrent ? colors.warningSoft : colors.surfaceMuted,
+                        },
+                      ]}
+                    >
+                      <AppText
+                        weight="bold"
+                        style={{ color: isCurrent ? colors.warning : colors.textMuted }}
+                      >
+                        {entry.position}
+                      </AppText>
+                    </View>
+
+                    <View style={styles.rowBody}>
+                      <AppText
+                        weight="semibold"
+                        numberOfLines={1}
+                        style={entry.isMine ? { color: colors.primary } : undefined}
+                      >
+                        {name}
+                      </AppText>
+                      <AppText style={[styles.meta, { color: colors.textMuted }]}>
+                        {shortDate(entry.payoutDueAt)}
+                      </AppText>
+                    </View>
+
+                    <View style={styles.rowTrailing}>
+                      <AppText weight="bold" numberOfLines={1}>
+                        {formatMinorAmount(entry.amountDueMinor, entry.currency)}
+                      </AppText>
+                      <AppBadge label={label} tone={rotationStatusTone(entry.status, isCurrent)} />
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </AppCard>
+        )
+      ) : (
+        <AppCard>
+          {group.members.map((member, index) => (
+            <View key={member.id}>
+              {index > 0 ? <AppDivider /> : null}
+              <View
+                accessible
+                accessibilityLabel={`${member.displayName}, ${
+                  member.role === 'GROUP_ADMIN' ? 'Group administrator' : 'Member'
+                }, ${member._count.slots} position${member._count.slots === 1 ? '' : 's'}`}
+                style={styles.row}
+              >
+                <AppAvatar name={member.displayName} size={40} />
+                <View style={styles.rowBody}>
+                  <AppText weight="semibold" numberOfLines={1}>
+                    {member.displayName}
+                  </AppText>
+                  <AppText style={[styles.meta, { color: colors.textMuted }]}>
+                    {member._count.slots} position{member._count.slots === 1 ? '' : 's'}
+                  </AppText>
+                </View>
+                {member.role === 'GROUP_ADMIN' ? <AppBadge label="Admin" tone="info" /> : null}
+              </View>
+            </View>
+          ))}
+        </AppCard>
+      )}
+
+      <View style={styles.actions}>
+        {canRequestSwap(group) ? (
+          <AppButton
+            label="Ask to swap positions"
+            icon="swap-horizontal-outline"
+            variant="outline"
+            onPress={onRequestSwap}
+          />
+        ) : null}
+
+        <AppButton
+          label={
+            swapsAwaitingMe > 0
+              ? `Swap requests (${String(swapsAwaitingMe)} need you)`
+              : 'Swap requests'
+          }
+          variant={swapsAwaitingMe > 0 ? 'primary' : 'ghost'}
+          onPress={onViewSwaps}
+        />
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  amount: { fontSize: fontSizes.heading },
-  container: { gap: spacing.md, padding: spacing.lg },
+  container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
+  cardTitle: { fontSize: fontSizes.body },
   due: { fontSize: fontSizes.title },
-  hero: { borderRadius: radius.lg, gap: spacing.xs, padding: spacing.lg },
+  rowBetween: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
   position: {
     alignItems: 'center',
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
   rowBody: { flex: 1, gap: 2 },
-  stat: {
-    alignItems: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  stats: { flexDirection: 'row', gap: spacing.sm },
+  rowTrailing: { alignItems: 'flex-end', gap: spacing.xs },
+  meta: { fontSize: fontSizes.caption },
+  actions: { gap: spacing.sm, marginTop: spacing.sm },
 });

@@ -2,24 +2,22 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
+import { AppBadge, type BadgeTone } from '@/components/ui/app-badge';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
+import { AppMetricRow } from '@/components/ui/app-metric-row';
+import { AppProgress } from '@/components/ui/app-progress';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
+import { shortDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
-import {
-  groupTone,
-  poolPerCycleMinor,
-  roundLabel,
-  roundProgressBps,
-  type GroupTone,
-} from './group-summary';
+import { groupTone, poolPerCycleMinor, roundLabel, roundProgressBps } from './group-summary';
 
 export type AjoListScreenProps = {
   groups?: AjoGroupSummary[];
@@ -62,8 +60,14 @@ export function AjoListScreen(props: AjoListScreenProps) {
             : `${active} active ${active === 1 ? 'group' : 'groups'}`
         }
       >
-        <AppButton label="Join" variant="outline" size="compact" onPress={props.onJoin} />
-        <AppButton label="Create" size="compact" onPress={props.onCreate} />
+        <AppButton
+          label="Join"
+          icon="person-add-outline"
+          variant="outline"
+          size="compact"
+          onPress={props.onJoin}
+        />
+        <AppButton label="Create" icon="add" size="compact" onPress={props.onCreate} />
       </AppScreenHeader>
 
       {props.loading ? (
@@ -123,16 +127,10 @@ function GroupCard({ group, onPress }: { group: AjoGroupSummary; onPress: () => 
             <AppText weight="bold" style={styles.name} numberOfLines={2}>
               {group.name}
             </AppText>
-            {variable ? (
-              <View style={[styles.chip, { backgroundColor: colors.warningSoft }]}>
-                {/* Flexible groups let members hold several slots, so the
-                    amount shown is this member's rather than everyone's.
-                    Saying so stops it reading as the group-wide figure. */}
-                <AppText weight="semibold" style={[styles.chipText, { color: colors.warning }]}>
-                  VARIABLE
-                </AppText>
-              </View>
-            ) : null}
+            {/* Flexible groups let members hold several slots, so the amount
+                shown is this member's rather than everyone's. Saying so stops
+                it reading as the group-wide figure. */}
+            {variable ? <AppBadge label="Variable" tone="warning" /> : null}
           </View>
           {group.adminName ? (
             <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
@@ -140,35 +138,28 @@ function GroupCard({ group, onPress }: { group: AjoGroupSummary; onPress: () => 
             </AppText>
           ) : null}
         </View>
-        <StatusBadge tone={tone} label={badgeLabel(group)} />
+        <AppBadge label={badgeLabel(group)} tone={BADGE_TONES[tone]} />
       </View>
 
-      <View style={styles.metrics}>
-        <Metric label="Members" value={String(group._count.members)} />
-        <Metric
-          label={variable ? 'My Amount' : 'Contribution'}
-          value={formatMinorAmount(group.baseContributionMinor, group.currency)}
-        />
-        <Metric label="Frequency" value={statusLabel(group.contributionFrequency)} />
-      </View>
+      <AppMetricRow
+        metrics={[
+          { label: 'Members', value: String(group._count.members) },
+          {
+            label: variable ? 'My Amount' : 'Contribution',
+            value: formatMinorAmount(group.baseContributionMinor, group.currency),
+          },
+          { label: 'Frequency', value: statusLabel(group.contributionFrequency) },
+        ]}
+      />
 
-      {/* A plain bar rather than AppProgress: the percentage it prints would
-          repeat the round count on the line beneath it. */}
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        style={[styles.track, { backgroundColor: colors.surfaceMuted }]}
-      >
-        <View
-          style={[
-            styles.trackFill,
-            {
-              backgroundColor: colors.primary,
-              width: `${Math.round(roundProgressBps(group) / 100)}%`,
-            },
-          ]}
-        />
-      </View>
+      {/* showValue is off: the percentage would repeat the round count on the
+          line beneath it. */}
+      <AppProgress
+        progressBps={roundProgressBps(group)}
+        label={`${group.name} rotation`}
+        showValue={false}
+        tone="success"
+      />
 
       <View style={styles.footer}>
         <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
@@ -176,7 +167,7 @@ function GroupCard({ group, onPress }: { group: AjoGroupSummary; onPress: () => 
         </AppText>
         {nextDue ? (
           <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-            Next: {formatDueDate(nextDue)}
+            Next: {shortDate(nextDue)}
           </AppText>
         ) : null}
       </View>
@@ -193,49 +184,17 @@ function GroupCard({ group, onPress }: { group: AjoGroupSummary; onPress: () => 
   );
 }
 
+/** Maps the group's own tone vocabulary onto the shared badge's. */
+const BADGE_TONES: Record<ReturnType<typeof groupTone>, BadgeTone> = {
+  active: 'success',
+  attention: 'warning',
+  neutral: 'neutral',
+};
+
 /** A group waiting on its members is what the design calls "PAYOUT READY". */
 function badgeLabel(group: AjoGroupSummary): string {
   if (group.status === 'LOCKED' || group.status === 'OPEN') return 'PAYOUT READY';
   return statusLabel(group.status).toUpperCase();
-}
-
-function formatDueDate(value: string): string {
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return '';
-  return new Date(parsed).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function StatusBadge({ tone, label }: { tone: GroupTone; label: string }) {
-  const { colors } = useTheme();
-  const palette = {
-    active: { text: colors.success, background: colors.successSoft },
-    attention: { text: colors.warning, background: colors.warningSoft },
-    neutral: { text: colors.textMuted, background: colors.surfaceMuted },
-  }[tone];
-
-  return (
-    <View style={[styles.badge, { backgroundColor: palette.background }]}>
-      <AppText weight="semibold" style={[styles.badgeText, { color: palette.text }]}>
-        {label}
-      </AppText>
-    </View>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.metric}>
-      <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>{label}</AppText>
-      <AppText weight="bold" numberOfLines={1}>
-        {value}
-      </AppText>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -252,16 +211,6 @@ const styles = StyleSheet.create({
   nameRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   name: { fontSize: fontSizes.body },
 
-  badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 4 },
-  badgeText: { fontSize: 10, letterSpacing: 0.5 },
-  chip: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  chipText: { fontSize: 10, letterSpacing: 0.5 },
-
-  metrics: { flexDirection: 'row', gap: spacing.md },
-  metric: { flex: 1, gap: 2 },
-
-  track: { borderRadius: radius.pill, height: 6, overflow: 'hidden', width: '100%' },
-  trackFill: { borderRadius: radius.pill, height: '100%' },
   footer: { flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
 
   pool: {

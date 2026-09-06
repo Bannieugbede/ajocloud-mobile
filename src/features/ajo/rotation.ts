@@ -132,3 +132,51 @@ export function lockBlockedReason(group: Pick<AjoGroupDetail, 'slots'>): string 
 export function canRequestSwap(group: Pick<AjoGroupDetail, 'status' | 'slots'>): boolean {
   return group.status === 'LOCKED' && group.slots.length > 1;
 }
+
+/**
+ * How a payout round reads, and how urgently.
+ *
+ * The same wording as the pool tallies: a status is never carried by colour
+ * alone, so every tone has a label beside it.
+ */
+export function rotationStatusLabel(status: string, isCurrent: boolean): string {
+  switch (status.toUpperCase()) {
+    case 'PAID':
+      return 'Paid out';
+    case 'PROCESSING':
+      return 'Processing';
+    case 'FAILED':
+      return 'Failed';
+    default:
+      return isCurrent ? 'Current' : 'Upcoming';
+  }
+}
+
+export function rotationStatusTone(
+  status: string,
+  isCurrent: boolean,
+): 'success' | 'warning' | 'info' | 'neutral' | 'error' {
+  switch (status.toUpperCase()) {
+    case 'PAID':
+      return 'success';
+    case 'PROCESSING':
+      return 'info';
+    case 'FAILED':
+      return 'error';
+    default:
+      return isCurrent ? 'warning' : 'neutral';
+  }
+}
+
+/**
+ * Which round is the live one: the first that has not been paid out.
+ *
+ * Returns null once every round has been paid, so a finished rotation marks
+ * nothing as current rather than pointing at its last row forever.
+ */
+export function currentRotationSequence(rows: readonly RotationRow[]): number | null {
+  const pending = rows
+    .filter((row) => row.status.toUpperCase() !== 'PAID')
+    .map((row) => row.sequence);
+  return pending.length ? Math.min(...pending) : null;
+}
