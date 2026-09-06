@@ -620,3 +620,48 @@ only once it has been looked at directly.
 
 The subtitle deliberately avoids "Nothing yet" when the feed is empty, because
 the empty state directly beneath it already says exactly that.
+
+## A crash screen that can be recovered from (2026-09-06)
+
+The error boundary rendered one fixed sentence — "Ajo Cloud could not start.
+Please close the app and try again." — with no control at all. One bad render
+bricked the app until the member force-quit it, and because the boundary sits
+above the theme provider it drew on a system-default background that matched
+nothing else in the app.
+
+`CrashScreen` offers a retry, and a full bundle reload once retrying in place
+has already failed: a crash during first render tends to repeat on a plain
+remount, so offering both at once would ask the member to guess which is the
+real recovery.
+
+**It is deliberately standalone.** It renders above the theme store, the query
+client and the navigator — any of which may be what failed — so it reads the
+colour scheme straight from the system, draws its own buttons rather than
+`AppButton`, and imports nothing that could throw on the way in. A crash screen
+that can itself crash leaves a white rectangle and no way out.
+
+**It never shows the error.** A stack trace carries whatever the code had in
+scope when it failed — a token, an account number, a PIN — and this is the one
+screen guaranteed to be seen by someone who cannot be asked for consent first.
+What the member gets instead is a short reference built from characters that
+cannot be misheard, which means something only when matched against a report the
+app sends itself. The reference is random rather than derived from the error: a
+hash would be stable, which sounds useful until two members quote the same code.
+
+It also says plainly that their money is safe. Someone whose banking app has
+just broken in front of them assumes the worst about their balance first, and
+saying nothing invites that.
+
+## Shared query keys for the notification feed (2026-09-06)
+
+Paging the inbox with `useInfiniteQuery` gave it a cached shape of
+`{ pages, pageParams }`, while Home and the Settings row kept a plain `useQuery`
+caching `{ items, unreadCount }` under the identical key. Whichever populated
+the entry first, the other read a shape it did not expect, and the app crashed
+on launch — through 627 passing tests, because every screen is rendered in
+isolation with its own QueryClient and the two never met.
+
+`src/api/query-keys.ts` now names both spellings next to each other. The paged
+key extends the summary key rather than replacing it, so one invalidation on the
+shared prefix still refreshes the inbox and the unread badge together after
+something is marked read.

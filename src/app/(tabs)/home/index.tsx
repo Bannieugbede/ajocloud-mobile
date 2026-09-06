@@ -6,6 +6,7 @@ import { getAjoGroup, getAjoSchedule, listAjoGroups } from '@/api/endpoints/ajo-
 import { listAkawoGoals } from '@/api/endpoints/akawo';
 import { listJoinedPools } from '@/api/endpoints/akawo-pools';
 import { getNotificationFeed } from '@/api/endpoints/notifications';
+import { queryKeys } from '@/api/query-keys';
 import { listBillPayments } from '@/api/endpoints/bill-payments';
 import { getReferralSummary } from '@/api/endpoints/referrals';
 import { getCurrentUser } from '@/api/endpoints/users';
@@ -42,7 +43,10 @@ export default function HomeRoute() {
     queryFn: listJoinedPools,
     retry: 1,
   });
-  const feed = useQuery({ queryKey: ['notification-feed'], queryFn: () => getNotificationFeed() });
+  const feed = useQuery({
+    queryKey: queryKeys.notifications.summary,
+    queryFn: () => getNotificationFeed(),
+  });
 
   // The wallet list carries no balance, so the summary is fetched for the
   // first one. A member has a single NGN wallet today; when that stops being

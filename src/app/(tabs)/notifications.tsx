@@ -8,6 +8,7 @@ import {
   markNotificationRead,
 } from '@/api/endpoints/notifications';
 import type { InAppNotification } from '@/api/endpoints/notifications';
+import { queryKeys } from '@/api/query-keys';
 import { NotificationsInboxScreen } from '@/features/notifications/notifications-inbox-screen';
 import { safeDeepLink } from '@/services/notification-handler';
 
@@ -21,14 +22,16 @@ export default function NotificationsRoute() {
   // has more updates than one response carries. Without this the older ones
   // were simply unreachable.
   const feed = useInfiniteQuery({
-    queryKey: ['notification-feed'],
+    queryKey: queryKeys.notifications.paged,
     queryFn: ({ pageParam }) => getNotificationFeed(pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ['notification-feed'] });
+    // Refreshes both the paged inbox and the plain count Home and Settings
+    // read, since marking something read changes what each of them shows.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
   };
   const markRead = useMutation({
     mutationFn: (id: string) => markNotificationRead(id),

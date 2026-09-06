@@ -2,12 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 
 import { getNotificationFeed } from '@/api/endpoints/notifications';
+import { queryKeys } from '@/api/query-keys';
 import { SettingsScreen } from '@/features/profile/settings-screen';
 
 export default function SettingsRoute() {
   // Read here too, so the inbox row carries its unread count without the user
   // having to open it to find out there is something waiting.
-  const feed = useQuery({ queryKey: ['notification-feed'], queryFn: () => getNotificationFeed() });
+  const feed = useQuery({
+    queryKey: queryKeys.notifications.summary,
+    queryFn: () => getNotificationFeed(),
+  });
 
   return (
     <SettingsScreen
