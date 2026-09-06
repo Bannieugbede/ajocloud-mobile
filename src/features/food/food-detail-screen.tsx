@@ -1,12 +1,15 @@
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import type { FoodProgramme, FoodSubscription } from '@/api/endpoints/food-ajo';
 import { AppButton } from '@/components/ui/app-button';
+import { AppHero } from '@/components/ui/app-hero';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 import type { AppError } from '@/types/errors';
+
+import { fulfilmentLabel } from './programme-summary';
 export function FoodDetailScreen({
   programme,
   subscription,
@@ -51,19 +54,11 @@ export function FoodDetailScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View style={[styles.hero, { backgroundColor: colors.primary }]}>
-        <AppText style={{ color: colors.textInverse }}>{programme.status} FOOD AJO</AppText>
-        <AppText
-          accessibilityRole="header"
-          weight="bold"
-          style={[styles.title, { color: colors.textInverse }]}
-        >
-          {programme.name}
-        </AppText>
-        <AppText style={{ color: colors.textInverse }}>
-          {programme.fulfilmentMethod.toLowerCase().replaceAll('_', ' ')}
-        </AppText>
-      </View>
+      <AppHero
+        label={`${statusLabel(programme.status).toUpperCase()} FOOD AJO`}
+        caption={programme.name}
+        meta={fulfilmentLabel(programme.fulfilmentMethod)}
+      />
       <View style={styles.stats}>
         {[
           ['Contribution', formatMinorAmount(programme.contributionMinor, programme.currency)],
@@ -165,8 +160,6 @@ export function FoodDetailScreen({
 }
 const styles = StyleSheet.create({
   container: { gap: spacing.lg, padding: spacing.lg },
-  hero: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.lg },
-  title: { fontSize: fontSizes.heading },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     alignItems: 'center',

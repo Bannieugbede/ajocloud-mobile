@@ -3,15 +3,15 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import type { PaymentIntent, PaymentMethod } from '@/api/endpoints/payments';
-import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppDivider } from '@/components/ui/app-divider';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppErrorState } from '@/components/ui/app-state';
+import { AppHero } from '@/components/ui/app-hero';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 
 const methods: {
@@ -97,17 +97,12 @@ export function PaymentMethodScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <View style={[styles.summary, { backgroundColor: colors.primary }]}>
-        <AppText style={styles.summaryLabel}>PAYING</AppText>
-        <AppAmount
-          amountMinor={intent.totalMinor}
-          currency={intent.currency}
-          size="heading"
-          onInverse
-        />
-        <AppText style={styles.summaryLabel}>{title}</AppText>
-        {subtitle ? <AppText style={styles.summaryLabel}>{subtitle}</AppText> : null}
-      </View>
+      <AppHero
+        label="PAYING"
+        amountMinor={intent.totalMinor}
+        currency={intent.currency}
+        meta={[title, subtitle].filter(Boolean).join(' · ')}
+      />
 
       {/* The fee is shown separately rather than folded into one number, so the
           user can see exactly what the platform charges. */}
@@ -188,12 +183,6 @@ export function PaymentMethodScreen({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
-  summary: { borderRadius: radius.lg, gap: spacing.xs, padding: spacing.lg },
-  summaryLabel: {
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: fontSizes.caption,
-    letterSpacing: 1.1,
-  },
   breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
   method: { borderWidth: 2 },
   disabled: { opacity: 0.5 },
