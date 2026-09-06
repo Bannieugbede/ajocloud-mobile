@@ -13,7 +13,7 @@ import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
-import { formatMinorAmount } from '@/utils/money';
+import { formatMinorAmount, minorToMajor } from '@/utils/money';
 import {
   amountError,
   canAfford,
@@ -35,6 +35,8 @@ export function PayBillScreen({
   biller,
   product,
   categoryName,
+  initialReference = '',
+  initialAmountMinor,
   validation,
   walletAvailableMinor,
   validating,
@@ -48,6 +50,9 @@ export function PayBillScreen({
   biller: BillBiller;
   product: BillProduct | null;
   categoryName?: string;
+  /** Carried from the biller screen, where both were already chosen. */
+  initialReference?: string;
+  initialAmountMinor?: string;
   validation: BillCustomerValidation | null;
   walletAvailableMinor: string | null;
   validating: boolean;
@@ -60,8 +65,10 @@ export function PayBillScreen({
   onPay: (input: { customerReference: string; amountMinor: string }) => void;
 }) {
   const { colors } = useTheme();
-  const [reference, setReference] = useState('');
-  const [amountMajor, setAmountMajor] = useState('');
+  const [reference, setReference] = useState(initialReference);
+  const [amountMajor, setAmountMajor] = useState(
+    initialAmountMinor ? minorToMajor(initialAmountMinor) : '',
+  );
   const [touched, setTouched] = useState(false);
 
   const label = referenceLabel(categoryName);

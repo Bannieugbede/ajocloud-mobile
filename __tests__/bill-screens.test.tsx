@@ -56,30 +56,97 @@ const payment: BillPayment = {
 };
 
 describe('BillerListScreen', () => {
-  it('shows a fixed product at its exact price', async () => {
-    const view = await render(
+  const twoProducts: BillBiller = { ...biller, products: [fixedProduct, openProduct] };
+
+  const setup = async (props: Partial<Parameters<typeof BillerListScreen>[0]> = {}) =>
+    await render(
       <BillerListScreen
+        categoryName="Electricity"
         billers={[biller]}
         loading={false}
         error={false}
         onRetry={jest.fn()}
-        onSelect={jest.fn()}
+        onContinue={jest.fn()}
+        {...props}
       />,
     );
-    expect(view.getByText('₦500.00')).toBeTruthy();
+
+  it('lists the providers as a single choice', async () => {
+    const view = await setup();
+    expect(view.getByLabelText('MTN Airtime')).toBeTruthy();
   });
 
-  it('describes an unbounded product as any amount', async () => {
-    const view = await render(
-      <BillerListScreen
-        billers={[{ ...biller, products: [openProduct] }]}
-        loading={false}
-        error={false}
-        onRetry={jest.fn()}
-        onSelect={jest.fn()}
-      />,
+  it('marks the chosen provider as selected, not merely coloured', async () => {
+    const view = await setup();
+    const row = view.getByLabelText('MTN Airtime');
+    await act(async () => fireEvent.press(row));
+    expect(row.props.accessibilityState.selected).toBe(true);
+  });
+
+  it('names the reference the way the payer’s own bill does', async () => {
+    // "Reference" is correct and useless; someone checking they are paying the
+    // right account needs the words printed on their bill.
+    const view = await setup();
+    expect(view.getByLabelText('Meter number')).toBeTruthy();
+  });
+
+  it('shows a fixed product at its exact price rather than asking for an amount', async () => {
+    const view = await setup();
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+    expect(view.getByText('₦500.00')).toBeTruthy();
+    expect(view.queryByLabelText('Amount (₦)')).toBeNull();
+  });
+
+  it('asks for an amount when the product does not fix one', async () => {
+    const view = await setup({ billers: [{ ...biller, products: [openProduct] }] });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+    expect(view.getByLabelText('Amount (₦)')).toBeTruthy();
+  });
+
+  it('offers the packages when a biller has more than one', async () => {
+    const view = await setup({ billers: [twoProducts] });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+    expect(view.getByLabelText('Airtime top-up. Any amount')).toBeTruthy();
+  });
+
+  it('will not continue before a provider and a reference are given', async () => {
+    // Disabled rather than erroring: nothing is wrong yet, the payer simply has
+    // not finished.
+    const onContinue = jest.fn();
+    const view = await setup({ onContinue });
+    await act(async () => fireEvent.press(view.getByText('Continue')));
+    expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  it('carries the provider, reference and amount to the confirmation', async () => {
+    const onContinue = jest.fn();
+    const view = await setup({ billers: [{ ...biller, products: [openProduct] }], onContinue });
+
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+    await act(async () => fireEvent.changeText(view.getByLabelText('Meter number'), '04223344556'));
+    await act(async () => fireEvent.changeText(view.getByLabelText('Amount (₦)'), '15000'));
+    await act(async () => fireEvent.press(view.getByText('Continue')));
+
+    expect(onContinue).toHaveBeenCalledWith(
+      expect.objectContaining({ customerReference: '04223344556', amountMinor: '1500000' }),
     );
-    expect(view.getByText('Any amount')).toBeTruthy();
+  });
+
+  it('preselects the provider and amount when a saved bill is repeated', async () => {
+    const view = await setup({
+      billers: [{ ...biller, products: [openProduct] }],
+      initialBillerId: 'b1',
+      initialAmountMinor: '1500000',
+    });
+    expect(view.getByLabelText('MTN Airtime').props.accessibilityState.selected).toBe(true);
+    expect(view.getByDisplayValue('15000')).toBeTruthy();
+  });
+
+  it('still asks for the reference when repeating, since it is only ever masked', async () => {
+    // The history holds "••2293", which is not a meter number. Asking again is
+    // also what stops a repeat quietly paying the wrong meter.
+    const view = await setup({ initialBillerId: 'b1', initialAmountMinor: '1500000' });
+    expect(view.getByLabelText('Meter number').props.value).toBe('');
   });
 });
 

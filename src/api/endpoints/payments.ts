@@ -25,7 +25,12 @@ export type PaymentIntentTarget =
   | { kind: 'AKAWO_POOL_DUE'; poolId: string; dueId: string }
   | { kind: 'AJO_CONTRIBUTION'; groupId: string; scheduleId: string }
   | { kind: 'FOOD_SUBSCRIPTION'; subscriptionId: string }
-  | { kind: 'WALLET_TOPUP' };
+  /**
+   * The one target the client names an amount for, because a top-up has no row
+   * to read one from. The server refuses an amount on every other kind, so this
+   * cannot be used to underpay a due that has its own.
+   */
+  | { kind: 'WALLET_TOPUP'; amountMinor: string };
 
 /**
  * `REQUIRES_CONFIRMATION` is the server's name for "not yet paid for".
@@ -76,6 +81,7 @@ function client() {
 function targetRequest(target: PaymentIntentTarget): {
   targetType: PaymentTargetType;
   targetId?: string;
+  amountMinor?: string;
 } {
   switch (target.kind) {
     case 'AKAWO_POOL_DUE':
@@ -85,15 +91,15 @@ function targetRequest(target: PaymentIntentTarget): {
     case 'FOOD_SUBSCRIPTION':
       return { targetType: 'FOOD_SUBSCRIPTION', targetId: target.subscriptionId };
     case 'WALLET_TOPUP':
-      // No target row to point at; the server refuses this until a funding
-      // contract defines where the amount comes from.
-      return { targetType: 'WALLET_TOPUP' };
+      // No target row to point at, so the amount travels with the request.
+      return { targetType: 'WALLET_TOPUP', amountMinor: target.amountMinor };
   }
 }
 
 /**
- * Creates an intent for a target. The amount comes from the server, not the
- * client, so a tampered request cannot underpay a due.
+ * Creates an intent for a target. The amount comes from the server for every
+ * target that has a row to read one from, so a tampered request cannot underpay
+ * a due; only a wallet top-up names its own.
  *
  * `idempotencyKey` is required: a retried tap must not create a second payment.
  * Repeating a key returns the original intent rather than an error.

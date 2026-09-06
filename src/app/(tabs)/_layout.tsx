@@ -74,7 +74,13 @@ export default function TabsLayout() {
       <Tabs.Screen name="pay" options={{ href: null }} />
       {/* Reached from Profile and from a notification tap. A seventh tab would
           crowd the bar without earning its place next to the products. */}
-      <Tabs.Screen name="notifications" options={{ href: null, title: 'Notifications' }} />
+      {/* headerShown is off for the whole navigator, because every tab root
+          draws its own. This one is pushed onto rather than switched to, so it
+          takes the native header back — and has to ask for it explicitly. */}
+      <Tabs.Screen
+        name="notifications"
+        options={{ href: null, title: 'Notifications', headerShown: true }}
+      />
       <Tabs.Screen
         name="profile"
         options={{

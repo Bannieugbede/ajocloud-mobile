@@ -49,3 +49,20 @@ export function majorToMinor(amountMajor: string): string | null {
   const minor = `${whole}${fraction.padEnd(2, '0')}`.replace(/^0+(?=\d)/, '');
   return minor === '' || /^0+$/.test(minor) ? null : minor;
 }
+
+/**
+ * The major-unit string a minor amount came from, for prefilling a field.
+ *
+ * The inverse of `majorToMinor`, and exact for the same reason: string
+ * arithmetic rather than division, which would round. A trailing ".00" is
+ * dropped, because "25000" is what someone would have typed and what they
+ * expect to see in the field they are about to edit.
+ */
+export function minorToMajor(amountMinor: string): string {
+  const trimmed = amountMinor.trim();
+  if (!/^\d+$/.test(trimmed)) return '';
+  const padded = trimmed.padStart(3, '0');
+  const whole = padded.slice(0, -2).replace(/^0+(?=\d)/, '');
+  const fraction = padded.slice(-2);
+  return fraction === '00' ? whole : `${whole}.${fraction}`;
+}

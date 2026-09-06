@@ -36,7 +36,17 @@ export default function WalletsRoute() {
             Reserved: {formatMinorAmount(summary.data.reservedMinor, summary.data.currency)}
           </AppText>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <AppButton label="Send" onPress={() => router.push('/(tabs)/profile/wallet/send')} />
+            {/* First, because sending and withdrawing both need a funded
+                wallet and this is the only way to fund one. */}
+            <AppButton
+              label="Add money"
+              onPress={() => router.push('/(tabs)/profile/wallet/fund')}
+            />
+            <AppButton
+              label="Send"
+              variant="outline"
+              onPress={() => router.push('/(tabs)/profile/wallet/send')}
+            />
             <AppButton
               label="Withdraw"
               variant="outline"

@@ -14,12 +14,15 @@ import { PayBillScreen } from '@/features/bills/pay-bill-screen';
 import type { AppError } from '@/types/errors';
 
 export default function PayBillRoute() {
-  const { categoryId, billerId, productId, categoryName } = useLocalSearchParams<{
-    categoryId: string;
-    billerId: string;
-    productId?: string;
-    categoryName?: string;
-  }>();
+  const { categoryId, billerId, productId, categoryName, customerReference, amountMinor } =
+    useLocalSearchParams<{
+      categoryId: string;
+      billerId: string;
+      productId?: string;
+      categoryName?: string;
+      customerReference?: string;
+      amountMinor?: string;
+    }>();
   const queryClient = useQueryClient();
 
   // One key per mounted flow, so a retried tap reuses the same payment rather
@@ -98,6 +101,8 @@ export default function PayBillRoute() {
       biller={biller}
       product={product}
       {...(categoryName ? { categoryName } : {})}
+      {...(customerReference ? { initialReference: customerReference } : {})}
+      {...(amountMinor ? { initialAmountMinor: amountMinor } : {})}
       validation={validation}
       walletAvailableMinor={summary.data?.availableMinor ?? null}
       validating={validate.isPending}

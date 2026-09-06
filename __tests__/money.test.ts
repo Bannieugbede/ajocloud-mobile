@@ -1,4 +1,4 @@
-import { formatMinorAmount, sumMinorAmounts } from '@/utils/money';
+import { formatMinorAmount, majorToMinor, minorToMajor, sumMinorAmounts } from '@/utils/money';
 
 describe('formatMinorAmount', () => {
   it('formats Naira minor units with grouping and two decimals', () => {
@@ -35,5 +35,37 @@ describe('sumMinorAmounts', () => {
     expect(sumMinorAmounts(['9007199254740993', '1'])).toBe('9007199254740994');
     expect(sumMinorAmounts([])).toBe('0');
     expect(sumMinorAmounts(['1000', 'bad'])).toBe('1000');
+  });
+});
+
+describe('minorToMajor', () => {
+  it('is the inverse of majorToMinor for whole amounts', () => {
+    expect(minorToMajor('2500000')).toBe('25000');
+    expect(minorToMajor('50000')).toBe('500');
+  });
+
+  it('keeps kobo when there are any', () => {
+    expect(minorToMajor('2500050')).toBe('25000.50');
+  });
+
+  it('drops a trailing .00, which nobody types', () => {
+    expect(minorToMajor('100')).toBe('1');
+  });
+
+  it('handles amounts smaller than one naira', () => {
+    expect(minorToMajor('5')).toBe('0.05');
+    expect(minorToMajor('50')).toBe('0.50');
+  });
+
+  it('round-trips through majorToMinor', () => {
+    // The pair has to agree, or prefilling a field would change the amount.
+    for (const minor of ['2500000', '50000', '2500050', '100', '5']) {
+      expect(majorToMinor(minorToMajor(minor))).toBe(minor);
+    }
+  });
+
+  it('returns nothing for a value that is not minor units', () => {
+    expect(minorToMajor('abc')).toBe('');
+    expect(minorToMajor('')).toBe('');
   });
 });

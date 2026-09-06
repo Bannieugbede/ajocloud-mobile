@@ -719,3 +719,50 @@ but a screen pushed on top of a tab is a place you came from somewhere else, and
 the native header is what carries the back affordance and the platform's own
 gesture. The inbox states its unread summary in a line beneath the title
 instead, which a title bar has no room for.
+
+## Bills and wallet funding (2026-09-06)
+
+**Saved Bills are derived, not curated.** There is no beneficiaries endpoint, so
+a saved bill is the most recent _settled_ payment to a distinct biller-and-
+reference pair. That is a better definition than a list someone maintains:
+nobody curates a list of their own bills, but everybody pays the same ones every
+month. Three months of DSTV is one bill to pay again, not three.
+
+Two details carry weight. A failed payment is never offered for repeat, because
+offering it would imply the last one worked. And the key includes the masked
+reference, so two meters in one household stay two bills — collapsing them on
+biller alone is exactly how a repeat pays the wrong meter.
+
+Repeating a bill prefills the provider and the amount but **not** the reference,
+because the history only ever holds a masked one. Asking again is both necessary
+and a safeguard.
+
+**Provider, reference and amount are one screen.** They are one decision — an
+electricity payment is a meter and a figure — and splitting them made the payer
+commit to a provider before seeing what it would cost. Continue does not pay: it
+carries the details to the confirmation, where the reference is validated
+against the biller and the verified account name is shown before money moves.
+
+**`referenceLabel` has one definition.** A second one briefly existed in
+`saved-bills.ts` with different wording, which would have labelled the same field
+"Smart Card" on one screen and "Smartcard number" on another. The established
+one in `bill-amount.ts` won and gained the categories the design adds.
+
+**Funding the wallet is the one payment the client names an amount for**, because
+a top-up has no target row to read one from. `MINIMUM_TOPUP_MINOR` mirrors the
+backend's `MINIMUM_DEPOSIT_MINOR` so the payer is told before committing rather
+than by a 422, and every quick-select amount clears it — a preset that produced
+an error would be worse than not offering it, since the payer did not type it
+and cannot see what is wrong. The deposit fee (ADR-009) is stated up front,
+because meeting it on the confirmation screen reads as a surprise charge.
+
+`minorToMajor` is new, and round-trips with `majorToMinor` under test: the pair
+has to agree or prefilling an amount field would change the amount.
+
+## The notifications header was never drawn (2026-09-06)
+
+`headerShown: false` is set on the whole tabs navigator, because every tab root
+draws its own header. Notifications is pushed onto rather than switched to, so
+naming it in `Tabs.Screen` was not enough — it had to ask for `headerShown: true`
+explicitly. `bills` and `pay` were unaffected: both have their own Stack layouts
+that supply headers of their own.
