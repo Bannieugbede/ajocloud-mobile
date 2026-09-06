@@ -1,7 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Linking } from 'react-native';
 
 import { createSupportInquiry, getCurrentUser } from '@/api/endpoints/users';
 import { SupportScreen } from '@/features/profile/support-screen';
+import { supportEmail, supportMailto } from '@/features/profile/support-faqs';
 import type { AppError } from '@/types/errors';
 
 export default function SupportRoute() {
@@ -20,13 +22,21 @@ export default function SupportRoute() {
     },
   });
 
+  const address = supportEmail();
+
   return (
     <SupportScreen
       submitting={send.isPending}
       error={send.error as AppError | null}
       sent={send.isSuccess}
+      supportAddress={address}
       onSubmit={(input) => send.mutate(input)}
       onStartAnother={() => send.reset()}
+      onEmailSupport={() => {
+        // Nothing to fall back to if no mail app can open the link: the address
+        // is already on screen for anyone who would rather copy it.
+        if (address) void Linking.openURL(supportMailto(address)).catch(() => {});
+      }}
     />
   );
 }

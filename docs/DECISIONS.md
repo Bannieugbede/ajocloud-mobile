@@ -859,3 +859,64 @@ late.
 `deadlineLabel` and `dueDatePreview` now format with `timeZone: 'UTC'`, the same
 frame the value is built and stored in, and a test pinned to `Africa/Lagos`
 fails if the option is removed.
+
+## Support does not promise a chat it does not have (2026-09-06)
+
+The Help & Support design shows two channels: "Live Chat — Avg. reply: 2 min"
+and "Call Us — Mon–Fri, 8am–6pm". Neither exists. There is one support endpoint,
+`createSupportInquiry`, which files a message that is answered by email, and
+there is no phone number anywhere in the app's configuration.
+
+Both tiles are built, but they say what actually happens: "Message us — we reply
+by email", and an "Email support" tile that opens the address from
+`EXPO_PUBLIC_SUPPORT_EMAIL`. Where no address is configured, the tile renders as
+plain text rather than a button, so it never looks like a channel that will
+open.
+
+A promised two-minute reply that is really an email is the kind of detail
+someone plans around when a payment has gone wrong. A test asserts the words
+"Live Chat" and "2 min" appear nowhere on the screen, so the promise cannot come
+back by accident. Adding either channel later means adding the channel first.
+
+### FAQs are static
+
+Seven answers, held in `support-faqs.ts` rather than fetched. They are product
+facts, not data, and a member reading them has often opened the screen precisely
+because something is not working — an endpoint would be unavailable exactly when
+it was needed.
+
+The admin-fee answer states that nothing is currently charged and points at the
+Platform Fees screen, per ADR-009. It quotes no figure, because a fee stated in
+two places is a fee that will eventually disagree with itself.
+
+## Transaction History is its own screen (2026-09-06)
+
+Profile's "Transaction History" row opened `/(tabs)/profile/wallets` — the
+wallet balance screen, with an unstyled list of recent activity below it. The
+row promised a history and delivered a balance.
+
+It now opens a real history built on `getWalletTransactions`, with the wallet
+screen left as it was: it is still where funding, sending and withdrawing
+return to, and it answers a different question ("what have I got?" rather than
+"where did it go?").
+
+### The totals count only settled movements
+
+Total In and Total Out sum movements whose status is `SUCCESSFUL`. A pending
+credit has not arrived and a failed one never will, so including either would
+tell someone they have been paid when the money is not there. Unsettled
+movements still appear in the list, badged, because hiding them would be worse —
+that is where someone looks for a payment that has not landed.
+
+The totals also describe the whole account rather than the current filter.
+Recomputing them per filter would show "Total Out: ₦0.00" while Money In is
+selected, which is not true of the wallet.
+
+### Categories are read from the description
+
+The ledger returns free text, not a typed category, so `categoryOf` matches on
+it to choose an icon. Food is tested before Ajo deliberately: "Food Ajo"
+contains "Ajo", and without the ordering every food package would be filed as a
+rotating-savings contribution. Anything unrecognised is `other` and lists
+normally — a movement that cannot be categorised is still the member's money and
+must never be hidden.

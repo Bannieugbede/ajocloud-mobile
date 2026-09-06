@@ -395,6 +395,35 @@ Deviation from the mockups: the third members tile shows Processing, not
 "Partial" — the API has no part-paid state and inventing one would misreport
 what has been collected. See `docs/DECISIONS.md`.
 
+## Help & Support and Transaction History (COMPLETED, 2026-09-06)
+
+Both built to the supplied designs.
+
+Support gained contact tiles, a renamed Send Message action and an expanding FAQ
+list (`src/features/profile/support-faqs.ts`, seven static answers). Transaction
+History is a new screen and route — `src/features/wallet/transaction-history.ts`
+and `-screen.tsx`, `src/app/(tabs)/profile/transactions.tsx` — on the existing
+`getWalletTransactions` endpoint, with Total In/Total Out, an All/Money In/Money
+Out filter and per-product row icons.
+
+Fixed on the way: Profile's "Transaction History" row opened the wallet balance
+screen, not a history.
+
+Deviations from the mockups, both in `docs/DECISIONS.md`: the "Live Chat — avg.
+reply 2 min" and "Call Us" tiles describe channels that do not exist (there is
+one support endpoint, answered by email, and no phone number in configuration),
+so the tiles say what actually happens; and the totals count only settled
+movements, so a pending credit is listed but not counted as received.
+
+Tests: `__tests__/transaction-history-screen.test.tsx` (8),
+`__tests__/support-screen.test.tsx` (9),
+`src/features/wallet/transaction-history.test.ts` (17). Validation on
+2026-09-06: `bun run validate` passed — 69 suites, 787 tests. Three mutations
+confirmed the guards fail when broken.
+
+Not yet built: a real chat channel and a support phone number, both of which
+need the channel to exist before the UI can offer it.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

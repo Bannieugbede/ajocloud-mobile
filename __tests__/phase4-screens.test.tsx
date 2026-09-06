@@ -196,6 +196,7 @@ describe('SupportScreen', () => {
         sent={false}
         onSubmit={onSubmit}
         onStartAnother={jest.fn()}
+        onEmailSupport={jest.fn()}
       />,
     );
     await act(async () => {
@@ -203,14 +204,20 @@ describe('SupportScreen', () => {
       fireEvent.changeText(view.getByLabelText('Message'), 'short');
     });
     await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: 'Send message' }));
+      fireEvent.press(view.getByRole('button', { name: 'Send Message' }));
     });
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('confirms once sent rather than leaving the form filled in', async () => {
     const view = await render(
-      <SupportScreen submitting={false} sent onSubmit={jest.fn()} onStartAnother={jest.fn()} />,
+      <SupportScreen
+        submitting={false}
+        sent
+        onSubmit={jest.fn()}
+        onStartAnother={jest.fn()}
+        onEmailSupport={jest.fn()}
+      />,
     );
     expect(view.getByText(/we have your message/i)).toBeTruthy();
   });
