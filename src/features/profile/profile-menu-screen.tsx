@@ -9,7 +9,6 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppDivider } from '@/components/ui/app-divider';
 import { AppListItem } from '@/components/ui/app-list-item';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
@@ -18,11 +17,12 @@ import { fontSizes, radius, sizes, spacing, type ThemePreference } from '@/theme
 
 import { outstandingKycSteps, tierLabel } from './kyc-summary';
 
-const APPEARANCE_OPTIONS: readonly { value: ThemePreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-];
+/** What the Dark Mode row says beneath its title. */
+function appearanceDescription(preference: ThemePreference): string {
+  if (preference === 'dark') return 'On';
+  if (preference === 'light') return 'Off';
+  return 'Following your phone';
+}
 
 export type ProfileMenuScreenProps = {
   user?: CurrentUser;
@@ -36,19 +36,15 @@ export type ProfileMenuScreenProps = {
   signingOut: boolean;
   /** Which appearance the member chose, not the mode currently resolved. */
   themePreference: ThemePreference;
-  onChangeTheme: (preference: ThemePreference) => void;
   onCopyReferralCode: (code: string) => void;
   onShareReferralCode: (code: string) => void;
-  onEditProfile: () => void;
-  onOpenSecurity: () => void;
-  onOpenNotifications: () => void;
-  onOpenInbox: () => void;
-  /** Shown on the inbox row so an unread update is visible without opening it. */
-  unreadCount: number;
+  /** The gear, which opens the settings the design keeps off this screen. */
+  onOpenSettings: () => void;
   onOpenBankAccounts: () => void;
   onOpenTransactions: () => void;
+  onOpenAppearance: () => void;
+  onOpenFees: () => void;
   onOpenSupport: () => void;
-  onOpenLegal: () => void;
   onCompleteKyc: () => void;
   onSignOut: () => void;
 };
@@ -76,13 +72,13 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
           {
             icon: 'settings-outline',
             label: 'Settings',
-            onPress: props.onOpenSecurity,
+            onPress: props.onOpenSettings,
           },
         ]}
       />
 
       <View style={styles.header}>
-        <AppAvatar name={name || 'Member'} size={72} />
+        <AppAvatar name={name || 'Member'} size={72} shape="rounded" tone="solid" />
         <View style={styles.identity}>
           <View style={styles.nameRow}>
             <AppText accessibilityRole="header" weight="bold" style={styles.name}>
@@ -112,7 +108,6 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
             label="Rewards"
             amountMinor={props.referrals?.totalRewardMinor ?? '0'}
             currency={props.currency}
-            accent
           />
         </View>
       </View>
@@ -136,24 +131,28 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
       ) : null}
 
       <AppListItem
+        card
         title="Bank Accounts"
         description="Manage the accounts you withdraw to"
         icon="card-outline"
         onPress={props.onOpenBankAccounts}
       />
       <AppListItem
+        card
         title="Transaction History"
         description="View all transactions"
         icon="stats-chart-outline"
         onPress={props.onOpenTransactions}
       />
       <AppListItem
+        card
         title="KYC Verification"
         description={
           verified ? 'Fully verified' : outstanding.length ? 'Not finished' : 'Not started'
         }
         icon="shield-checkmark-outline"
         onPress={props.onCompleteKyc}
+        showChevron={!verified}
         trailing={
           verified ? (
             <View style={[styles.pill, { backgroundColor: colors.successSoft }]}>
@@ -164,41 +163,37 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
           ) : undefined
         }
       />
-
-      <AppearanceRow preference={props.themePreference} onChange={props.onChangeTheme} />
-
       <AppListItem
-        title={
-          props.unreadCount > 0
-            ? `Notifications (${String(props.unreadCount)} new)`
-            : 'Notifications'
-        }
-        description="Your updates and alerts"
-        icon="mail-outline"
-        onPress={props.onOpenInbox}
+        card
+        title="Dark Mode"
+        description={appearanceDescription(props.themePreference)}
+        icon="moon-outline"
+        onPress={props.onOpenAppearance}
       />
-      <AppListItem title="Edit profile" icon="person-outline" onPress={props.onEditProfile} />
-      <AppListItem title="Security" icon="lock-closed-outline" onPress={props.onOpenSecurity} />
       <AppListItem
-        title="Notification settings"
-        icon="notifications-outline"
-        onPress={props.onOpenNotifications}
+        card
+        title="Platform Fees"
+        description="View fee schedule"
+        icon="card-outline"
+        onPress={props.onOpenFees}
       />
-      <AppListItem title="Get help" icon="help-buoy-outline" onPress={props.onOpenSupport} />
       <AppListItem
-        title="Privacy and terms"
-        icon="document-text-outline"
-        onPress={props.onOpenLegal}
+        card
+        title="Help & Support"
+        description="Chat with support"
+        icon="call-outline"
+        onPress={props.onOpenSupport}
       />
 
-      <AppDivider />
-
-      <AppButton
-        label="Sign out"
-        variant="outline"
+      <AppListItem
+        card
+        centered
+        destructive
+        title={props.signingOut ? 'Signing out…' : 'Sign Out'}
+        icon="close"
         onPress={props.onSignOut}
-        loading={props.signingOut}
         disabled={props.signingOut}
+        style={styles.signOut}
       />
     </ScrollView>
   );
@@ -312,62 +307,6 @@ function ReferralCard({
   );
 }
 
-function AppearanceRow({
-  preference,
-  onChange,
-}: {
-  preference: ThemePreference;
-  onChange: (preference: ThemePreference) => void;
-}) {
-  const { colors } = useTheme();
-  return (
-    <AppCard style={styles.appearance}>
-      <View style={styles.appearanceHeader}>
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-          style={[styles.icon, { backgroundColor: colors.primarySoft }]}
-        >
-          <Ionicons name="moon-outline" size={18} color={colors.primary} />
-        </View>
-        <View style={styles.appearanceText}>
-          <AppText weight="semibold">Appearance</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            {/* "System" is the default and follows the phone, which is what
-                most people expect without having to choose. */}
-            Follow your phone, or pick a mode
-          </AppText>
-        </View>
-      </View>
-      <View
-        accessibilityRole="radiogroup"
-        style={[styles.segments, { backgroundColor: colors.surfaceMuted }]}
-      >
-        {APPEARANCE_OPTIONS.map((option) => {
-          const selected = option.value === preference;
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              accessibilityLabel={`${option.label} appearance`}
-              onPress={() => onChange(option.value)}
-              style={[styles.segment, selected ? { backgroundColor: colors.primary } : null]}
-            >
-              <AppText
-                weight={selected ? 'semibold' : 'regular'}
-                style={{ color: selected ? colors.textInverse : colors.text }}
-              >
-                {option.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
-    </AppCard>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { gap: spacing.sm, padding: spacing.md, paddingBottom: spacing.xxl },
   header: {
@@ -441,6 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
 
+  signOut: { marginTop: spacing.sm },
   pill: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   pillText: { fontSize: fontSizes.caption },
   rowBetween: {

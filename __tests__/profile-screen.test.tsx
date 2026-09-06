@@ -44,18 +44,14 @@ function props(overrides: Partial<ProfileMenuScreenProps> = {}): ProfileMenuScre
     loading: false,
     signingOut: false,
     themePreference: 'system',
-    onChangeTheme: jest.fn(),
     onCopyReferralCode: jest.fn(),
     onShareReferralCode: jest.fn(),
-    onEditProfile: jest.fn(),
-    onOpenSecurity: jest.fn(),
-    onOpenNotifications: jest.fn(),
-    onOpenInbox: jest.fn(),
-    unreadCount: 0,
+    onOpenSettings: jest.fn(),
     onOpenBankAccounts: jest.fn(),
     onOpenTransactions: jest.fn(),
+    onOpenAppearance: jest.fn(),
+    onOpenFees: jest.fn(),
     onOpenSupport: jest.fn(),
-    onOpenLegal: jest.fn(),
     onCompleteKyc: jest.fn(),
     onSignOut: jest.fn(),
     ...overrides,
@@ -149,25 +145,52 @@ it('names what verification still needs rather than showing a badge', async () =
   expect(view.queryByText('KYC Verified')).toBeNull();
 });
 
-describe('appearance', () => {
-  it('offers System, Light and Dark', async () => {
+describe('the Dark Mode row', () => {
+  it('says the phone is being followed while the preference is System', async () => {
+    // "System" is the default, and a row that said nothing would leave someone
+    // wondering why the app changed colour at dusk.
     const view = await render(<ProfileMenuScreen {...props()} />);
-    expect(view.getByLabelText('System appearance')).toBeTruthy();
-    expect(view.getByLabelText('Light appearance')).toBeTruthy();
-    expect(view.getByLabelText('Dark appearance')).toBeTruthy();
+    expect(view.getByText('Following your phone')).toBeTruthy();
   });
 
-  it('marks the current choice as selected, not merely coloured', async () => {
-    const view = await render(<ProfileMenuScreen {...props({ themePreference: 'dark' })} />);
-    expect(view.getByLabelText('Dark appearance').props.accessibilityState.selected).toBe(true);
-    expect(view.getByLabelText('System appearance').props.accessibilityState.selected).toBe(false);
+  it('says whether dark mode is on once a mode has been chosen', async () => {
+    const dark = await render(<ProfileMenuScreen {...props({ themePreference: 'dark' })} />);
+    expect(dark.getByText('On')).toBeTruthy();
+
+    const light = await render(<ProfileMenuScreen {...props({ themePreference: 'light' })} />);
+    expect(light.getByText('Off')).toBeTruthy();
   });
 
-  it('changes the preference', async () => {
-    const onChangeTheme = jest.fn();
-    const view = await render(<ProfileMenuScreen {...props({ onChangeTheme })} />);
-    await act(async () => fireEvent.press(view.getByLabelText('Dark appearance')));
-    expect(onChangeTheme).toHaveBeenCalledWith('dark');
+  it('opens the appearance screen rather than changing the theme in place', async () => {
+    const onOpenAppearance = jest.fn();
+    const view = await render(<ProfileMenuScreen {...props({ onOpenAppearance })} />);
+    await act(async () => fireEvent.press(view.getByText('Dark Mode')));
+    expect(onOpenAppearance).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the rows the design keeps on this screen', () => {
+  it('opens the fee schedule', async () => {
+    const onOpenFees = jest.fn();
+    const view = await render(<ProfileMenuScreen {...props({ onOpenFees })} />);
+    await act(async () => fireEvent.press(view.getByText('Platform Fees')));
+    expect(onOpenFees).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens support from the Help row', async () => {
+    const onOpenSupport = jest.fn();
+    const view = await render(<ProfileMenuScreen {...props({ onOpenSupport })} />);
+    await act(async () => fireEvent.press(view.getByText('Help & Support')));
+    expect(onOpenSupport).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens settings from the header gear', async () => {
+    // Edit profile, Security, Notifications and Legal live behind this, so a
+    // gear that did nothing would strand all four.
+    const onOpenSettings = jest.fn();
+    const view = await render(<ProfileMenuScreen {...props({ onOpenSettings })} />);
+    await act(async () => fireEvent.press(view.getByLabelText('Settings')));
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -183,7 +206,14 @@ it('opens bank accounts and transaction history', async () => {
   expect(onOpenTransactions).toHaveBeenCalledTimes(1);
 });
 
-it('shows an unread count on the notifications row', async () => {
-  const view = await render(<ProfileMenuScreen {...props({ unreadCount: 3 })} />);
-  expect(view.getByText('Notifications (3 new)')).toBeTruthy();
+it('signs out from the row at the bottom', async () => {
+  const onSignOut = jest.fn();
+  const view = await render(<ProfileMenuScreen {...props({ onSignOut })} />);
+  await act(async () => fireEvent.press(view.getByText('Sign Out')));
+  expect(onSignOut).toHaveBeenCalledTimes(1);
+});
+
+it('says it is signing out rather than looking unresponsive', async () => {
+  const view = await render(<ProfileMenuScreen {...props({ signingOut: true })} />);
+  expect(view.getByText('Signing out…')).toBeTruthy();
 });

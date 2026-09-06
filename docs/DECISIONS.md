@@ -535,3 +535,35 @@ exactly the height the smaller padding gives up, keeping every control at 48dp.
 A test asserts drawn height plus slop rather than the drawn height alone, and
 removing the slop fails it — the point being that a design note about density
 must never quietly cost reachability.
+
+## Profile matches the design; settings move behind the gear (2026-09-06)
+
+Profile is the member's own summary — who they are, what they hold, and the
+things they reach for often. Edit profile, Security, Notification settings and
+Privacy & terms are configuration, opened once and rarely again, so they now sit
+on a Settings screen behind the header gear rather than lengthening the screen
+they are least often wanted on. The gear previously opened Security, which was
+arbitrary. Nothing became unreachable, and a test asserts every moved row still
+has a way in.
+
+**Appearance keeps all three choices.** The design draws Dark Mode as a row with
+a chevron, which a two-state switch would have satisfied — at the cost of
+"System", the default and the one most people want, because it follows the phone
+at dusk without being asked. The full choice lives on the screen the chevron
+opens; the row says which is active.
+
+**Platform Fees states what is true rather than what looks complete.** The
+banded fee model is undecided and `feeMinor` is `"0"` on every payment the
+backend settles today, so the screen says Ajo Cloud is free to use and names
+each product explicitly. Inventing a plausible fee table on a financial screen
+would be worse than showing none: members would believe it. The figures live in
+`platform-fees.ts` so the summary line and the table are driven from one source
+and cannot contradict each other, and rates drop in there when the model lands
+without the screen changing.
+
+**`AppListItem` gained `card` and `centered`, `AppAvatar` gained `shape` and
+`tone`.** The design separates each menu row onto its own surface and gives the
+profile a solid rounded-square mark, which is what distinguishes "this is you"
+from the circular avatars used wherever another member appears in a list. Both
+went on the shared components rather than being styled at the call site, so the
+next screen that wants either gets it without repeating the decision.
