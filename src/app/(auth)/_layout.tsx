@@ -81,8 +81,33 @@ function BackChevron({
   );
 }
 
+/**
+ * The identity screens are reached two ways: as registration steps, and from
+ * Profile's "KYC Verification" and "Bank Accounts" rows.
+ *
+ * The brand mark is right while someone is still creating an account — there is
+ * no other context to give them. It is wrong once they are signed in and have
+ * tapped a named row to get here: the header then says "Ajo Cloud" where it
+ * should say what the screen is, which is the one thing the member needs it to
+ * say. These name themselves instead.
+ */
+const NAMED_SCREENS: Record<string, string> = {
+  'verify-identity': 'KYC Verification',
+  'personal-details': 'Personal Details',
+  'identity-document': 'Identity Document',
+  'bank-account': 'Bank Account',
+  'identity-complete': 'Verification Complete',
+};
+
 export default function AuthLayout() {
   const stackOptions = useThemedStackOptions();
+
+  /** A screen that names itself, rather than showing the brand mark. */
+  const named = (name: string) => ({
+    title: NAMED_SCREENS[name],
+    headerTitle: undefined,
+    headerTitleAlign: 'left' as const,
+  });
 
   return (
     <Stack
@@ -103,11 +128,11 @@ export default function AuthLayout() {
       <Stack.Screen name="create-pin" />
       <Stack.Screen name="confirm-pin" />
       <Stack.Screen name="biometrics" />
-      <Stack.Screen name="verify-identity" />
-      <Stack.Screen name="personal-details" />
-      <Stack.Screen name="identity-document" />
-      <Stack.Screen name="bank-account" />
-      <Stack.Screen name="identity-complete" />
+      <Stack.Screen name="verify-identity" options={named('verify-identity')} />
+      <Stack.Screen name="personal-details" options={named('personal-details')} />
+      <Stack.Screen name="identity-document" options={named('identity-document')} />
+      <Stack.Screen name="bank-account" options={named('bank-account')} />
+      <Stack.Screen name="identity-complete" options={named('identity-complete')} />
       <Stack.Screen name="intent" />
     </Stack>
   );
