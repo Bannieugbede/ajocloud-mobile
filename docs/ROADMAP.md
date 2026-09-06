@@ -468,6 +468,27 @@ confirmed the guards; two of them initially survived and the tests were
 strengthened until they failed. See `docs/DECISIONS.md` for what deliberately
 stayed separate.
 
+## Header titles and the Profile stack (COMPLETED, 2026-09-06)
+
+Fixed the headers reading "Ajo Cloud" instead of the screen name. The cause was
+the auth stack applying the brand mark to every screen in it, including the five
+identity screens that Profile's "KYC Verification" and "Bank Accounts" rows open.
+
+Rebuilt the wallet screen, which was the last one drawing itself from raw inline
+styles with no loading or error state. Its movement row moved to
+`src/features/wallet/movement-row.tsx` so the wallet and the history share one
+component. Settings and Security moved onto `AppSection`, and Security's
+hand-rolled switch row onto the existing `AppToggleRow`.
+
+New shared component: `AppSection`. New screen:
+`src/features/wallet/wallet-screen.tsx`.
+
+Tests: `__tests__/screen-titles.test.tsx` (44), `__tests__/wallet-screen.test.tsx`
+(8). Validation on 2026-09-06: `bun run validate` passed — 73 suites, 868 tests.
+Five mutations confirmed the guards; one initially survived, because
+`toBeUndefined` cannot tell an absent key from one explicitly set to undefined,
+and the assertion was tightened.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

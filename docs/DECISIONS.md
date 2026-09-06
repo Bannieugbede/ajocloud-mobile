@@ -1000,3 +1000,42 @@ Every shared component takes a tone (`success`, `warning`, `info`, `error`,
 outcome map was the last place a screen chose success and error colours by
 hand. A palette change now lands everywhere at once, and no screen can invent a
 sixth shade of "warning".
+
+## The identity screens name themselves (2026-09-06)
+
+The auth stack sets `headerTitle: () => <Logo />` in its `screenOptions`, which
+applies the brand mark to every screen in it. That is right for sign-in and
+registration — there is no other context to give someone before an account
+exists — but the five identity screens are also reached from Profile's "KYC
+Verification" and "Bank Accounts" rows.
+
+A signed-in member tapping a named row landed on a header reading "Ajo Cloud"
+rather than the name of the screen they had just asked for. Those five now carry
+their own titles.
+
+`headerTitle` has to be cleared _explicitly_ on each, not merely omitted: an
+element inherited from `screenOptions` beats a `title` string, so a title alone
+would still have rendered the mark.
+
+`__tests__/screen-titles.test.tsx` walks every stack and asserts each route file
+is declared with a title. That guards the wider version of the same bug: a route
+added without a `Stack.Screen` beside it silently falls back to `app.json`'s
+`name`, and nothing in a typecheck or a lint notices.
+
+## The wallet and the transaction history are different questions (2026-09-06)
+
+The wallet screen answers "what have I got?" — balance, the three actions, and
+just enough recent activity to confirm the last thing that happened. Transaction
+History answers "where did it go?" — every movement, filtered, with running
+totals. They were briefly the same screen, which is why Profile's "Transaction
+History" row used to open the wallet.
+
+The wallet shows five movements and a link. Printing the full history there
+would push the balance — the reason the screen exists — off the top.
+
+### Reserved funds are stated, not hidden
+
+A pending withdrawal moves money out of the available balance before it
+settles. Showing only the available figure makes the balance appear to drop with
+the money nowhere, which reads as a wallet that has lost track of someone's
+funds. The screen names the held amount and explains why it is held.
