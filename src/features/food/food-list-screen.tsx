@@ -106,8 +106,9 @@ export function FoodListScreen(props: FoodListScreenProps) {
       {!props.loading && !props.error && !props.programmes?.length ? (
         <AppEmptyState
           icon="basket-outline"
-          title="No programmes available"
-          description="Approved coordinator programmes will appear here."
+          tone="neutral"
+          title="No programmes yet"
+          description="Food programmes near you will appear here once a coordinator opens one."
         />
       ) : null}
 

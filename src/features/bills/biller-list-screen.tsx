@@ -56,8 +56,9 @@ export function BillerListScreen({
       {!loading && !error && !billers?.length ? (
         <AppEmptyState
           icon="business-outline"
+          tone="neutral"
           title="No billers here yet"
-          description="There is nothing to pay in this category right now."
+          description="There is nothing to pay in this category right now. Try another category."
         />
       ) : null}
 

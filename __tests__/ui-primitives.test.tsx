@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppCard } from '@/components/ui/app-card';
@@ -134,5 +134,81 @@ describe('AppSearch', () => {
       <AppSearch value="" onChangeText={jest.fn()} label="Search Ajo groups" />,
     );
     expect(view.queryByRole('button', { name: 'Clear search' })).toBeNull();
+  });
+});
+
+describe('the empty state', () => {
+  it('offers a way out of the empty screen when there is one', async () => {
+    // The Ajo list used to say "Groups you create or join will appear here"
+    // with nothing to press, while the header carried both buttons. An empty
+    // state that names an action and cannot perform it is a dead end.
+    const onAction = jest.fn();
+    const view = await render(
+      <AppEmptyState
+        title="No Ajo groups yet"
+        description="Start a circle with people you trust."
+        action="Create a group"
+        onAction={onAction}
+      />,
+    );
+
+    await act(async () => fireEvent.press(view.getByText('Create a group')));
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers a quieter second route alongside the main one', async () => {
+    const onAction = jest.fn();
+    const onSecondaryAction = jest.fn();
+    const view = await render(
+      <AppEmptyState
+        title="No Ajo groups yet"
+        description="Start a circle, or join one."
+        action="Create a group"
+        onAction={onAction}
+        secondaryAction="Join with a code"
+        onSecondaryAction={onSecondaryAction}
+      />,
+    );
+
+    await act(async () => fireEvent.press(view.getByText('Join with a code')));
+    expect(onSecondaryAction).toHaveBeenCalledTimes(1);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it('hides the second action unless both its label and handler are given', async () => {
+    // A half-configured secondary action would render a button that does
+    // nothing, which is worse than not offering it.
+    const view = await render(
+      <AppEmptyState
+        title="No groups"
+        description="Nothing here yet."
+        action="Create"
+        onAction={jest.fn()}
+        secondaryAction="Join"
+      />,
+    );
+
+    expect(view.queryByText('Join')).toBeNull();
+  });
+
+  it('renders without any action at all', async () => {
+    // Most empty states have nothing the member can do about them, and must
+    // still read as a finished screen rather than a broken one.
+    const view = await render(
+      <AppEmptyState tone="neutral" title="No billers here yet" description="Try another." />,
+    );
+
+    expect(view.getByText('No billers here yet')).toBeTruthy();
+  });
+
+  it('keeps the decorative icon out of the accessibility tree', async () => {
+    // The title and description already say what the state is; announcing the
+    // glyph as well would repeat it.
+    const view = await render(
+      <AppEmptyState title="No groups" description="Nothing here yet." testID="empty" />,
+    );
+
+    expect(view.getByTestId('empty')).toBeTruthy();
+    expect(view.queryByLabelText('file-tray-outline')).toBeNull();
   });
 });

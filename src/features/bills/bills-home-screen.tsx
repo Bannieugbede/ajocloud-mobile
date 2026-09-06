@@ -66,8 +66,9 @@ export function BillsHomeScreen({
       {!loading && !error && !categories?.length ? (
         <AppEmptyState
           icon="receipt-outline"
+          tone="neutral"
           title="Nothing to pay yet"
-          description="Bill payment categories will appear here once they are available."
+          description="Airtime, data, electricity and TV will appear here once they are available."
         />
       ) : null}
 

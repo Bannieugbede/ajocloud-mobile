@@ -110,7 +110,11 @@ export function PoolsListScreen(props: PoolsListScreenProps) {
         <AppEmptyState
           icon="people-circle-outline"
           title="No pools yet"
-          description="Create a pool to collect from a group, or join one with a code you were given."
+          description="Collect contributions from a group towards something shared, or join a pool with a code."
+          action="Create a pool"
+          onAction={props.onCreate}
+          secondaryAction="Join with a code"
+          onSecondaryAction={props.onJoin}
         />
       ) : null}
 

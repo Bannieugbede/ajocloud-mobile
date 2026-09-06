@@ -85,7 +85,11 @@ export function AjoListScreen(props: AjoListScreenProps) {
         <AppEmptyState
           icon="people-outline"
           title="No Ajo groups yet"
-          description="Groups you create or join will appear here."
+          description="Start a circle with people you trust, or join one with an invite code."
+          action="Create a group"
+          onAction={props.onCreate}
+          secondaryAction="Join with a code"
+          onSecondaryAction={props.onJoin}
         />
       ) : null}
 

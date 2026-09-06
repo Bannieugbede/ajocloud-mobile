@@ -567,3 +567,30 @@ profile a solid rounded-square mark, which is what distinguishes "this is you"
 from the circular avatars used wherever another member appears in a list. Both
 went on the shared components rather than being styled at the call site, so the
 next screen that wants either gets it without repeating the decision.
+
+## Empty states invite rather than report (2026-09-06)
+
+Every empty state was the same flat bordered box: a 28px grey glyph that read
+more like a broken image than an illustration, a semibold line, and a stretched
+outline button when there was an action at all. Worse, most had no action —
+the Ajo list said "Groups you create or join will appear here" with nothing to
+press, while the header above it carried both Create and Join.
+
+`AppEmptyState` now draws a tinted circular medallion, a title at the screen's
+own heading size, and a **primary** button rather than an outline one: if an
+empty state names an action, taking it is the obvious next thing to do.
+
+**Empty is not one situation, so there are three tones.** `invite` is a list
+nobody has added to yet and should look like an opportunity. `neutral` is a dead
+end the member cannot act on — no billers in this category, no food programmes
+opened near them — and drawing that as an invitation would be a false promise.
+`positive` is empty because everything is done. All three used to be the same
+grey box, so each read as a failure.
+
+Every call site that has an action now offers it, and the ones that genuinely
+have none say so plainly and stay neutral. `compact` exists for an empty section
+inside an otherwise populated screen, where the full treatment would dominate
+what surrounds it.
+
+The API stayed backwards compatible, so all sixteen call sites kept working
+while each was reviewed individually rather than being migrated in bulk.

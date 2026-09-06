@@ -141,7 +141,9 @@ export function OrganiserPoolScreen({
         <AppEmptyState
           icon="person-add-outline"
           title="Nobody has joined yet"
-          description="Share the join code so members can add themselves."
+          description="Share the join code and members can add themselves — you do not have to add them one by one."
+          action="Share the join code"
+          onAction={onShareCode}
         />
       ) : (
         <AppCard>
