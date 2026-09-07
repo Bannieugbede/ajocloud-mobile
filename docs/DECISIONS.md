@@ -1085,3 +1085,50 @@ five steps of their time to produce an error the form already knew about.
 Approval requires verified Tier 3 KYC, which is a separate journey through
 Profile. The review step says so, because finding out after a compliance review
 that you were never eligible is the worst way to learn it.
+
+## The Food detail screen, joined and not joined (2026-09-07)
+
+Both states are one screen. Everything above the fold is shared — the
+photograph, the coordinator and their verification, and the four facts that
+decide whether to join — because browsing a programme and being in one ask the
+same question first. What differs is the action at the bottom and, once joined,
+a second panel.
+
+`AppImageHero` is new and deliberately separate from `AppHero`: one is a
+photograph with the title laid over it, the other a brand-coloured panel for a
+figure. The scrim is a gradient rather than a flat overlay, because a photograph
+can be light or dark anywhere and only a gradient keeps white text legible
+without dimming the whole picture.
+
+The navigator header is off for this route — the artwork runs under the status
+bar, and a header on top would draw the name twice — so the screen supplies its
+own floating back control. It appears in the loading and error states too:
+without it, a programme that fails to load leaves only the tab bar.
+
+### "My Progress" is not built, and that is the point
+
+The design shows a progress bar at 60% under a "Payment Schedule" tab. There is
+no Food contribution model on the backend — no payment records, no schedule,
+nothing on `FoodSubscription` but status, quantity and fulfilment method. The
+percentage would have been invented.
+
+The tab ships stating what is known from the enrolment itself — package,
+portions, contribution amount and frequency, how they collect, next distribution
+— and says plainly that payments are not tracked yet. A test asserts no
+percentage appears there, so the figure cannot creep back in later without
+someone deciding to.
+
+What the backend needs is written down in `docs/BACKEND_REQUIREMENTS.md`.
+
+### The join button always says why it is disabled
+
+`joinBlockedReason` returns the reason or null, and the screen renders it under
+the button. Fullness is reported before status, because "every spot has been
+taken" is more useful than "not taking members", and an `ACTIVE` programme says
+buying has already started — which explains why a programme that looks live will
+not accept anyone.
+
+### A package choice appears only when there is a choice
+
+One package is the programme, not a decision. With several, the chosen one
+drives the hero image, the contents list and what is joined.

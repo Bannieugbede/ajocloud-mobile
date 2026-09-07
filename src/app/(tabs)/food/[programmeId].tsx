@@ -49,8 +49,13 @@ export default function FoodProgrammeRoute() {
       subscription={subscription}
       loading={programme.isPending}
       error={programme.isError}
+      refreshing={programme.isRefetching || subscriptions.isRefetching}
       submitting={subscribe.isPending || unsubscribe.isPending}
       actionError={(subscribe.error ?? unsubscribe.error) as AppError | null}
+      onRefresh={() => {
+        void programme.refetch();
+        void subscriptions.refetch();
+      }}
       onRetry={() => void programme.refetch()}
       onSubscribe={(packageId) => subscribe.mutate(packageId)}
       onUnsubscribe={() => unsubscribe.mutate()}

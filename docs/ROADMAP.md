@@ -516,6 +516,32 @@ Not yet built, and recorded in `docs/BACKEND_REQUIREMENTS.md`: resuming a saved
 draft (the client type keeps only status fields), document upload, and a screen
 for `MORE_INFORMATION_REQUIRED`.
 
+## Food programme detail, both states (COMPLETED, 2026-09-07)
+
+Rebuilt to the supplied designs: a photographic header with the coordinator and
+their verification badge, a 2x2 fact grid, package contents, and a Join action —
+plus, once joined, a "Joined" badge and a Details / Payment Schedule switch.
+
+New shared components: `AppImageHero` (a photograph with the title over it,
+distinct from `AppHero`'s brand panel) and `AppFloatBack` (a back control for a
+screen whose artwork runs under the status bar). `AppStatTiles` gained a
+`columns={2}` wrap and a `start` alignment.
+
+New logic in `programme-summary.ts`: `isEnrolled`, `acceptsNewMembers`,
+`joinBlockedReason`, `priceLabel`.
+
+Deviation from the design, recorded in `docs/DECISIONS.md`: the "My Progress"
+bar at 60% is not built. There is no Food contribution model on the backend at
+all, so the percentage would have been invented. The Payment Schedule tab ships
+stating the enrolment terms that are known and saying plainly that payments are
+not tracked yet; a test asserts no percentage appears there.
+
+Tests: `__tests__/food-detail-screen.test.tsx` (18), 12 added to
+`programme-summary.test.ts`. Validation on 2026-09-07: `bun run validate`
+passed — 76 suites, 925 tests. Four mutations confirmed the guards, including
+letting a full programme accept members and dropping the notice about untracked
+payments.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

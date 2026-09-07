@@ -1,8 +1,12 @@
 import {
+  acceptsNewMembers,
   coordinatorInvitation,
   enrolmentProgressBps,
   fulfilmentLabel,
+  isEnrolled,
+  joinBlockedReason,
   placesLeft,
+  priceLabel,
 } from './programme-summary';
 
 describe('placesLeft', () => {
@@ -100,5 +104,66 @@ describe('coordinatorInvitation', () => {
     ]);
     expect(invitation.canApply).toBe(false);
     expect(invitation.title).toMatch(/in review/i);
+  });
+});
+
+describe('isEnrolled', () => {
+  const at = (status: string) => ({ status }) as never;
+
+  it('counts a pending or active enrolment as joined', () => {
+    // A pending enrolment is a place taken: the member is in, even before the
+    // coordinator confirms.
+    expect(isEnrolled(at('PENDING'))).toBe(true);
+    expect(isEnrolled(at('ACTIVE'))).toBe(true);
+  });
+
+  it('lets someone rejoin after cancelling', () => {
+    expect(isEnrolled(at('CANCELLED'))).toBe(false);
+    expect(isEnrolled(null)).toBe(false);
+    expect(isEnrolled(undefined)).toBe(false);
+  });
+});
+
+describe('acceptsNewMembers and joinBlockedReason', () => {
+  const programme = (status: string, capacity: number, taken: number) =>
+    ({ status, enrolmentCapacity: capacity, _count: { subscriptions: taken } }) as never;
+
+  it('takes members while a programme is open and has room', () => {
+    expect(acceptsNewMembers(programme('OPEN', 30, 28))).toBe(true);
+    expect(joinBlockedReason(programme('OPEN', 30, 28))).toBeNull();
+  });
+
+  it('closes once every spot is taken', () => {
+    expect(acceptsNewMembers(programme('OPEN', 30, 30))).toBe(false);
+    expect(joinBlockedReason(programme('OPEN', 30, 30))).toMatch(/taken/);
+  });
+
+  it('explains that buying has already started rather than saying only "closed"', () => {
+    // ACTIVE means the coordinator has begun buying, so a late joiner would not
+    // be in what was ordered — worth saying, since the programme looks live.
+    expect(acceptsNewMembers(programme('ACTIVE', 30, 10))).toBe(false);
+    expect(joinBlockedReason(programme('ACTIVE', 30, 10))).toMatch(/Buying has already started/);
+  });
+
+  it('reports fullness before status, since that is the more useful reason', () => {
+    expect(joinBlockedReason(programme('ACTIVE', 30, 30))).toMatch(/taken/);
+  });
+
+  it('always has a reason whenever it refuses', () => {
+    for (const status of ['DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED']) {
+      const entry = programme(status, 30, 1);
+      expect(acceptsNewMembers(entry)).toBe(false);
+      expect(joinBlockedReason(entry)).toBeTruthy();
+    }
+  });
+});
+
+describe('priceLabel', () => {
+  it('says the amount and how often it is paid', () => {
+    const label = priceLabel(
+      { contributionMinor: '3500000', currency: 'NGN', contributionFrequency: 'MONTHLY' },
+      (minor, currency) => `${currency} ${minor}`,
+    );
+    expect(label).toBe('NGN 3500000 / Monthly');
   });
 });

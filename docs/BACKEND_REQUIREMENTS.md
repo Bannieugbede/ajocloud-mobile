@@ -236,3 +236,34 @@ rather than losing five steps of typing.
   call.
 - **`MORE_INFORMATION_REQUIRED`.** The backend can ask for more information; the
   app has no screen that surfaces the request or lets someone respond.
+
+## Food contributions and the payment schedule (2026-09-07)
+
+The Food detail design shows a "Payment Schedule" tab and a "My Progress" bar at
+60%. Neither can be built from what exists.
+
+There is **no Food contribution model at all**: `prisma/models/food-ajo.prisma`
+has `FoodAjoGroup`, `FoodPackage`, `FoodPackageItem`, `FoodSubscription`,
+`FoodDistribution`, and the coordinator-application models — and nothing that
+records a member paying anything. `FoodSubscription` carries `status`,
+`quantity` and `fulfilmentMethod`; no amount, no schedule, no payments.
+
+So a progress percentage would be a number nobody has computed, printed on a
+screen about someone's money. The tab is built and states the enrolment terms
+that _are_ known — package, portions, contribution amount and frequency,
+fulfilment method, next distribution — and says plainly that individual payments
+are not tracked yet.
+
+What would be needed to build the design as drawn:
+
+- A contribution schedule per subscription: how many instalments, of what
+  amount, due when. `FoodAjoGroup` has `contributionMinor`,
+  `contributionFrequency`, `startsAt` and `endsAt`, so the schedule is derivable
+  — but derived on the client it would be a guess about money, and the backend
+  is where that belongs.
+- A payment record per instalment, posted through the ledger like every other
+  contribution, so "paid" means an entry exists rather than a flag.
+- `GET /api/v1/food-ajo/programmes/:programmeId/schedule` (or the rows on the
+  subscription) returning both.
+
+Until then the honest version ships. See `docs/DECISIONS.md`.

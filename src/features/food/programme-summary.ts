@@ -1,4 +1,8 @@
-import type { FoodCoordinatorApplication, FoodProgramme } from '@/api/endpoints/food-ajo';
+import type {
+  FoodCoordinatorApplication,
+  FoodProgramme,
+  FoodSubscription,
+} from '@/api/endpoints/food-ajo';
 
 /**
  * What the Food tab says about a programme, derived rather than rendered
@@ -97,4 +101,50 @@ export function coordinatorInvitation(
         canApply: false,
       };
   }
+}
+
+/** Whether a member's enrolment still stands. A cancelled one lets them rejoin. */
+export function isEnrolled(subscription: FoodSubscription | null | undefined): boolean {
+  return subscription?.status === 'PENDING' || subscription?.status === 'ACTIVE';
+}
+
+/**
+ * Whether a programme is still taking members.
+ *
+ * `ACTIVE` means buying has started, so a late joiner would not be in what was
+ * ordered — the programme is running, but not open.
+ */
+export function acceptsNewMembers(
+  programme: Pick<FoodProgramme, 'status' | 'enrolmentCapacity' | '_count'>,
+): boolean {
+  return programme.status === 'OPEN' && placesLeft(programme) > 0;
+}
+
+/**
+ * Why a programme cannot be joined, or null when it can.
+ *
+ * A disabled button with no reason beside it is the thing people complain
+ * about, so the reason is always available to render.
+ */
+export function joinBlockedReason(
+  programme: Pick<FoodProgramme, 'status' | 'enrolmentCapacity' | '_count'>,
+): string | null {
+  if (placesLeft(programme) <= 0) return 'Every spot in this programme has been taken.';
+  if (programme.status === 'OPEN') return null;
+  if (programme.status === 'ACTIVE') {
+    return 'Buying has already started for this programme, so it is no longer taking members.';
+  }
+  return 'This programme is not taking new members.';
+}
+
+/** The price per portion, worded with how often it is contributed. */
+export function priceLabel(
+  programme: Pick<FoodProgramme, 'contributionMinor' | 'currency' | 'contributionFrequency'>,
+  format: (amountMinor: string, currency: string) => string,
+): string {
+  const amount = format(programme.contributionMinor, programme.currency);
+  const frequency = programme.contributionFrequency
+    .toLowerCase()
+    .replace(/^./, (character) => character.toUpperCase());
+  return `${amount} / ${frequency}`;
 }
