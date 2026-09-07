@@ -138,6 +138,24 @@ export function createCoordinatorApplication(
 }
 
 /**
+ * Rewrites an editable application — one still DRAFT, or sent back for more
+ * information. The backend refuses any other status.
+ *
+ * Needed because creating and submitting are two calls: when the second fails,
+ * the draft from the first survives, and the backend then refuses to create a
+ * second one. Recovering means updating that draft rather than making another.
+ */
+export function updateCoordinatorApplication(
+  applicationId: string,
+  body: CreateFoodCoordinatorApplication,
+): Promise<FoodCoordinatorApplication> {
+  return client().request(
+    `/api/v1/food-coordinator-applications/${encodeURIComponent(applicationId)}`,
+    { method: 'PATCH', body },
+  );
+}
+
+/**
  * Puts a draft into review.
  *
  * Separate from creating it because the backend keeps them separate: a draft

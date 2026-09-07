@@ -3,16 +3,28 @@ import { router } from 'expo-router';
 
 import {
   createCoordinatorApplication,
+  listMyCoordinatorApplications,
   submitCoordinatorApplication,
+  updateCoordinatorApplication,
 } from '@/api/endpoints/food-ajo';
 import { listBanks } from '@/api/endpoints/kyc';
-import { toApplicationRequest } from '@/features/food/coordinator-application-form';
+import {
+  resumableApplicationId,
+  toApplicationRequest,
+} from '@/features/food/coordinator-application-form';
 import { CoordinatorApplicationScreen } from '@/features/food/coordinator-application-screen';
 import type { AppError } from '@/types/errors';
 
 export default function CoordinatorApplicationRoute() {
   const queryClient = useQueryClient();
   const banks = useQuery({ queryKey: ['kyc', 'banks'], queryFn: listBanks });
+  // Read rather than assume: a previous attempt that created a draft and then
+  // failed to submit leaves one behind, and the backend refuses a second.
+  const applications = useQuery({
+    queryKey: ['food-coordinator-applications'],
+    queryFn: listMyCoordinatorApplications,
+    retry: 1,
+  });
 
   const apply = useMutation({
     mutationFn: async (values: Parameters<typeof toApplicationRequest>[0]) => {
@@ -22,11 +34,19 @@ export default function CoordinatorApplicationRoute() {
       // needs to assess it.
       if (!body) throw new Error('The application is not complete yet.');
 
-      const created = await createCoordinatorApplication(body);
+      // Submitting is a second call, so a failure there — a dropped connection,
+      // a refused request — leaves the draft from the first behind. Creating
+      // again would be refused with "an active application already exists",
+      // which strands the applicant on an error they cannot clear. Rewriting
+      // the draft they already have is the same intent, and it succeeds.
+      const draftId = resumableApplicationId(applications.data);
+      const application = draftId
+        ? await updateCoordinatorApplication(draftId, body)
+        : await createCoordinatorApplication(body);
       // Two calls because the backend keeps them separate: POST leaves a draft,
       // and only a submit starts the clock on a decision. A draft left behind
       // by a failed submit is recoverable; a silent non-submission is not.
-      return submitCoordinatorApplication(created.id);
+      return submitCoordinatorApplication(application.id);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['food-coordinator-applications'] });

@@ -230,3 +230,26 @@ export function toApplicationRequest(
     termsAccepted: values.termsAccepted,
   };
 }
+
+/**
+ * The application a fresh submission should rewrite rather than duplicate.
+ *
+ * Applying is two calls — create, then submit — so a submit that fails leaves
+ * a DRAFT behind. The backend then refuses to create another ("an active
+ * coordinator application already exists"), which would strand the applicant
+ * on an error no amount of retrying clears. Reusing that draft turns the retry
+ * into the thing they meant.
+ *
+ * Only genuinely editable statuses qualify: the backend accepts a PATCH for
+ * DRAFT and MORE_INFORMATION_REQUIRED alone, and rewriting one already in
+ * review would be an attempt to change an application under a reviewer's eyes.
+ */
+export function resumableApplicationId(
+  applications: readonly { id: string; status: string }[] | undefined,
+): string | null {
+  const editable = (applications ?? []).find(
+    (application) =>
+      application.status === 'DRAFT' || application.status === 'MORE_INFORMATION_REQUIRED',
+  );
+  return editable ? editable.id : null;
+}
