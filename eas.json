@@ -1,0 +1,48 @@
+{
+  "cli": {
+    "version": ">= 21.4.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.ajocloud.com",
+        "EXPO_PUBLIC_WEB_URL": "https://ajocloud.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@ajocloud.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://ajocloud.com/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://ajocloud.com/terms"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.ajocloud.com",
+        "EXPO_PUBLIC_WEB_URL": "https://ajocloud.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@ajocloud.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://ajocloud.com/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://ajocloud.com/terms"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.ajocloud.com",
+        "EXPO_PUBLIC_WEB_URL": "https://ajocloud.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@ajocloud.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://ajocloud.com/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://ajocloud.com/terms"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
