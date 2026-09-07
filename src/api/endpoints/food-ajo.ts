@@ -106,3 +106,48 @@ export function listMyCoordinatorApplications(): Promise<FoodCoordinatorApplicat
   if (!apiClient) throw new Error('API configuration is unavailable');
   return apiClient.request('/api/v1/food-coordinator-applications/me');
 }
+
+/**
+ * The four JSON objects the backend stores unvalidated, plus the settlement
+ * details it does check on submit.
+ *
+ * Nothing constrains the objects' shape server side, so the keys are the
+ * client's contract with whoever reviews the application. They are documented
+ * in `docs/BACKEND_REQUIREMENTS.md` and built by
+ * `src/features/food/coordinator-application-form.ts`.
+ *
+ * `settlementAccountMasked` is the only account field there is: a raw account
+ * number is never sent, stored, or logged.
+ */
+export type CreateFoodCoordinatorApplication = {
+  personalDetails: Record<string, unknown>;
+  businessDetails?: Record<string, unknown>;
+  operatingLocation: Record<string, unknown>;
+  fulfilmentLocations: Record<string, unknown>;
+  settlementBankCode: string;
+  settlementAccountMasked: string;
+  verificationConsent: boolean;
+  termsAccepted: boolean;
+};
+
+/** Creates the application as a DRAFT. It is not in review until submitted. */
+export function createCoordinatorApplication(
+  body: CreateFoodCoordinatorApplication,
+): Promise<FoodCoordinatorApplication> {
+  return client().request('/api/v1/food-coordinator-applications', { method: 'POST', body });
+}
+
+/**
+ * Puts a draft into review.
+ *
+ * Separate from creating it because the backend keeps them separate: a draft
+ * can be corrected, and only a submission starts the clock on a decision.
+ */
+export function submitCoordinatorApplication(
+  applicationId: string,
+): Promise<FoodCoordinatorApplication> {
+  return client().request(
+    `/api/v1/food-coordinator-applications/${encodeURIComponent(applicationId)}/submit`,
+    { method: 'POST' },
+  );
+}

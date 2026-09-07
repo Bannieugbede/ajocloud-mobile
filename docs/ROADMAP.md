@@ -489,6 +489,33 @@ Five mutations confirmed the guards; one initially survived, because
 `toBeUndefined` cannot tell an absent key from one explicitly set to undefined,
 and the assertion was tightened.
 
+## Food coordinator application form (COMPLETED, 2026-09-07)
+
+The Food tab's "Apply" button routed to Support, a stand-in from when no form
+existed. It now opens a five-step application — contact, business, location,
+settlement, review — on the backend's existing
+`food-coordinator-applications` module, creating a draft and submitting it.
+
+Files: `src/features/food/coordinator-application-form.ts`,
+`coordinator-application-screen.tsx`, `src/app/(tabs)/food/apply.tsx`, plus
+`createCoordinatorApplication` and `submitCoordinatorApplication` in
+`src/api/endpoints/food-ajo.ts`. `nigerian-states.ts` moved from
+`features/registration/` to `src/utils/`, since it is not registration-specific
+and this form needs it too.
+
+The account number is masked to its last four digits before the request body
+exists — `settlementAccountMasked` is the only account column the backend has.
+
+Tests: `coordinator-application-form.test.ts` (20),
+`__tests__/coordinator-application-screen.test.tsx` (11). Validation on
+2026-09-07: `bun run validate` passed — 75 suites, 899 tests. Four mutations
+confirmed the guards, including sending the raw account number and allowing a
+submit without consent.
+
+Not yet built, and recorded in `docs/BACKEND_REQUIREMENTS.md`: resuming a saved
+draft (the client type keeps only status fields), document upload, and a screen
+for `MORE_INFORMATION_REQUIRED`.
+
 Tests: `__tests__/akawo-pool-detail-screens.test.tsx` (10),
 `src/features/akawo/pool-status.test.ts` (12),
 `create-pool-form.test.ts` (10), plus 9 added to `pool-summary.test.ts`.

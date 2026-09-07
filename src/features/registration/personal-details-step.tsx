@@ -10,7 +10,7 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppSelect } from '@/components/ui/app-select';
 import type { AppError } from '@/types/errors';
 import { spacing } from '@/theme';
-import { GENDER_OPTIONS, NIGERIAN_STATES } from './nigerian-states';
+import { GENDER_OPTIONS, NIGERIAN_STATES } from '@/utils/nigerian-states';
 import { StepScreen } from './step-screen';
 
 /** Accepts what a user types, then checks it is a real, past, adult date. */

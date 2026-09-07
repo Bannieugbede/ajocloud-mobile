@@ -40,9 +40,7 @@ export default function FoodRoute() {
       onOpen={(id) =>
         router.push({ pathname: '/(tabs)/food/[programmeId]', params: { programmeId: id } })
       }
-      // There is no in-app application form yet, and inventing one would collect
-      // documents the screen cannot submit. Support can start the process.
-      onApplyAsCoordinator={() => router.push('/(tabs)/profile/support')}
+      onApplyAsCoordinator={() => router.push('/(tabs)/food/apply')}
     />
   );
 }

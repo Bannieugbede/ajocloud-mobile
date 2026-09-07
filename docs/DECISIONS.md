@@ -1039,3 +1039,49 @@ A pending withdrawal moves money out of the available balance before it
 settles. Showing only the available figure makes the balance appear to drop with
 the money nowhere, which reads as a wallet that has lost track of someone's
 funds. The screen names the held amount and explains why it is held.
+
+## The coordinator application is a real form (2026-09-07)
+
+The Food tab's "Apply" button routed to Support. That was a deliberate stand-in
+from when the screen was built — there was no form, and inventing one would have
+collected details nothing could submit — but the backend module has been there
+all along: create a draft, update it, submit it for review.
+
+It is now five steps: contact, business, location, settlement, review. One long
+form would ask someone for a phone number, a trading address, delivery areas and
+a bank account on one screen, and a validation failure at the bottom should not
+send them back through the top.
+
+### The step boundaries follow what the backend stores
+
+Each step fills one of the four JSON columns, so a step that validates maps to a
+column that is complete. The keys are documented in
+`docs/BACKEND_REQUIREMENTS.md`, because nothing server side constrains them and
+a reviewer reads them by name.
+
+### The business step is entirely optional
+
+An individual can coordinate. Requiring a CAC registration number would exclude
+exactly the people this product exists for. The one combination rejected is a
+registration number with no business name behind it, which is incoherent rather
+than merely sparse.
+
+### The account number is masked in the form, not at the boundary
+
+`settlementAccountMasked` is the only account column, so `toApplicationRequest`
+masks to the last four digits before the body exists. Masking later — in the
+client, in an interceptor — would mean the raw number briefly lived in an object
+that could be logged or retried. A test asserts the digits typed do not appear
+anywhere in the serialised request.
+
+### Consents are validated client-side even though the backend checks them
+
+`submit` returns 422 without `verificationConsentAt`, `termsAcceptedAt` and both
+settlement fields. Letting someone reach the button without them would spend
+five steps of their time to produce an error the form already knew about.
+
+### Tier 3 KYC is stated before applying, not discovered at rejection
+
+Approval requires verified Tier 3 KYC, which is a separate journey through
+Profile. The review step says so, because finding out after a compliance review
+that you were never eligible is the worst way to learn it.

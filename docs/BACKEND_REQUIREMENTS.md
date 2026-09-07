@@ -186,3 +186,53 @@ client consumes every route. Two client-side notes:
   user leaves the screen.
 - The organiser record is rendered to PDF on the client. The backend deliberately
   returns rows rather than a document.
+
+## Food coordinator application (2026-09-07)
+
+`POST /api/v1/food-coordinator-applications` takes four JSON columns that the
+backend stores without validating their shape: `personalDetails`,
+`businessDetails`, `operatingLocation`, `fulfilmentLocations`. Nothing server
+side says what belongs in them, so the keys below are the client's contract with
+whoever reviews an application. A client that invents its own keys produces
+applications a reviewer cannot assess.
+
+They are built by `src/features/food/coordinator-application-form.ts`:
+
+| Column                | Keys                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| `personalDetails`     | `businessContactName`, `contactPhone`                                                       |
+| `businessDetails`     | `businessName`, `registrationNumber` — **omitted entirely** when neither is given           |
+| `operatingLocation`   | `addressLine`, `city`, `state`                                                              |
+| `fulfilmentLocations` | `method` (`PICKUP` \| `DELIVERY` \| `DELIVERY_OR_PICKUP`), `areas` when delivery is offered |
+
+`businessContactName` follows the seed data, which already used that key.
+
+An absent `businessDetails` means "applying as an individual". An empty object
+would mean "a business whose details we failed to collect", which is a different
+thing and would waste a reviewer's time.
+
+### Settlement details are masked before they are sent
+
+The column is `settlementAccountMasked` and there is no unmasked counterpart, so
+the client masks to the last four digits (`******6789`) before the request is
+built. The raw number never enters a request body, a log, or a retried mutation.
+
+### Two calls, not one
+
+`POST` creates a `DRAFT`; `POST /:id/submit` puts it into review. The client does
+both in sequence because a member tapping "Submit application" means to apply —
+but they stay separate calls, so a submit that fails leaves a recoverable draft
+rather than losing five steps of typing.
+
+### Not yet built
+
+- **Resuming a draft.** `GET /me` returns applications but the mobile type keeps
+  only `id`, `status`, `createdAt` and `submittedAt`, so a draft cannot be
+  reloaded into the form. Someone whose submit fails currently starts again.
+  Needs the list endpoint's fields carried through the client type, then
+  `PATCH /:id` wired to the existing update endpoint.
+- **Document upload.** `FoodCoordinatorDocument` exists in the schema, and the
+  review flow expects documents, but there is no upload endpoint the client can
+  call.
+- **`MORE_INFORMATION_REQUIRED`.** The backend can ask for more information; the
+  app has no screen that surfaces the request or lets someone respond.
