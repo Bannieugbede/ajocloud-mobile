@@ -23,6 +23,20 @@ export type AppInitialization = {
   updateAvailable: boolean;
 };
 
+/**
+ * Why a launch decided what it decided.
+ *
+ * Session loss is reported as "it asks me to log in again", which is the same
+ * sentence whether the token was never stored, was stored and vanished, or was
+ * stored and refused. Those have different causes and different fixes, so the
+ * one launch that can tell them apart says which it was. Never logs a token,
+ * only whether one was present and what became of it.
+ */
+function reportStartup(stage: string, detail?: Record<string, unknown>): void {
+  if (!__DEV__) return;
+  console.log(`[startup] ${stage}`, detail ?? {});
+}
+
 export async function initializeApp(): Promise<AppInitialization> {
   const [session, network] = await Promise.all([
     restoreSession(),
@@ -40,6 +54,15 @@ export async function initializeApp(): Promise<AppInitialization> {
   let initialRoute: InitialRoute = signedOutRoute;
 
   const state = session ? await sessionState(session, isOnline) : 'none';
+  reportStartup('session restored', {
+    found: session !== null,
+    state,
+    isOnline,
+    // Whether the stored access token had already lapsed. A session that is
+    // found but expired is a refresh problem; one that is never found at all is
+    // a storage problem, and they are fixed in different places.
+    accessTokenExpired: session ? Date.parse(session.expiresAt) <= Date.now() : null,
+  });
 
   if (state !== 'none' && state !== 'expired') {
     if (!isOnline) {
@@ -55,10 +78,12 @@ export async function initializeApp(): Promise<AppInitialization> {
           // with its progress discarded.
           initialRoute = '/(auth)/verify-email';
         } else {
+          reportStartup('cleared: account not active', { status: user.status });
           await clearSession();
         }
       } catch (error) {
         if (isAuthorizationFailure(error)) {
+          reportStartup('cleared: server refused the session');
           await clearSession();
           return { initialRoute: signedOutRoute, isOnline, updateAvailable: false };
         }
@@ -68,6 +93,7 @@ export async function initializeApp(): Promise<AppInitialization> {
       }
     }
   } else if (state === 'expired') {
+    reportStartup('cleared: refresh token refused');
     await clearSession();
   }
 
@@ -78,6 +104,7 @@ export async function initializeApp(): Promise<AppInitialization> {
       .catch(() => false);
   }
 
+  reportStartup('resolved', { initialRoute });
   return { initialRoute, isOnline, updateAvailable };
 }
 
