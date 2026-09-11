@@ -3,12 +3,10 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { getAjoGroup, getAjoSchedule, listAjoGroups } from '@/api/endpoints/ajo-groups';
-import { listAkawoGoals } from '@/api/endpoints/akawo';
 import { listJoinedPools } from '@/api/endpoints/akawo-pools';
 import { getNotificationFeed } from '@/api/endpoints/notifications';
 import { queryKeys } from '@/api/query-keys';
 import { listBillPayments } from '@/api/endpoints/bill-payments';
-import { getReferralSummary } from '@/api/endpoints/referrals';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { HomeScreen } from '@/features/home/home-screen';
@@ -17,7 +15,6 @@ import {
   mergeUpcoming,
   poolDuesAsUpcoming,
   recentQuickPay,
-  totalAkawoSaved,
   type QuickPayItem,
   type UpcomingItem,
 } from '@/features/home/home-data';
@@ -33,8 +30,6 @@ export default function HomeRoute() {
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser });
   const wallets = useQuery({ queryKey: ['wallets'], queryFn: listWallets });
   const groups = useQuery({ queryKey: ['ajo-groups'], queryFn: listAjoGroups });
-  const goals = useQuery({ queryKey: ['akawo-goals'], queryFn: listAkawoGoals });
-  const referrals = useQuery({ queryKey: ['referral-summary'], queryFn: getReferralSummary });
   const payments = useQuery({ queryKey: ['bill-payments'], queryFn: listBillPayments });
   // Akawo pool dues belong on the same list as Ajo contributions: both are
   // money owed by a date, and splitting them would hide one behind a tab.
@@ -147,8 +142,6 @@ export default function HomeRoute() {
       user.refetch(),
       wallets.refetch(),
       groups.refetch(),
-      goals.refetch(),
-      referrals.refetch(),
       payments.refetch(),
       summary.refetch(),
       pools.refetch(),
@@ -185,8 +178,6 @@ export default function HomeRoute() {
       upcoming={allUpcoming}
       quickPay={quickPay}
       availableMinor={summary.data?.availableMinor}
-      savingsMinor={totalAkawoSaved(goals.data)}
-      rewardsMinor={referrals.data?.totalRewardMinor ?? '0'}
       currency={summary.data?.currency ?? 'NGN'}
       loading={primary.some((query) => query.isPending)}
       refreshing={primary.some((query) => query.isRefetching)}

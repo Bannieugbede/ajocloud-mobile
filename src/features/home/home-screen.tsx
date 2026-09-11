@@ -44,8 +44,6 @@ export type HomeScreenProps = {
   quickPay: QuickPayItem[];
   /** Spendable balance in minor units, or undefined while unknown. */
   availableMinor?: string;
-  savingsMinor: string;
-  rewardsMinor: string;
   currency: string;
   unreadCount: number;
   loading: boolean;
@@ -160,22 +158,6 @@ export function HomeScreen(props: HomeScreenProps) {
           {walletActions.map((action) => (
             <WalletActionButton key={action.label} action={action} />
           ))}
-        </View>
-
-        <View style={styles.tiles}>
-          <WalletTile
-            label="Savings"
-            amountMinor={props.savingsMinor}
-            currency={props.currency}
-            hidden={!props.balanceVisible}
-          />
-          <WalletTile
-            label="Rewards"
-            amountMinor={props.rewardsMinor}
-            currency={props.currency}
-            hidden={!props.balanceVisible}
-            accent
-          />
         </View>
       </Section>
 
@@ -307,51 +289,6 @@ function WalletCard(props: HomeScreenProps) {
 
       <AppText style={styles.walletCaption}>Available to spend</AppText>
     </View>
-  );
-}
-
-/**
- * A savings or rewards total, on its own card.
- *
- * These used to sit inside the hero. The hero now carries one figure — the
- * spendable balance — so the other two moved out rather than being dropped:
- * they are still the member's money, and a card on the page states them without
- * competing with the headline. They mask with the wallet, since hiding the
- * balance and leaving these legible would defeat the point of the toggle.
- */
-function WalletTile({
-  label,
-  amountMinor,
-  currency,
-  hidden,
-  accent = false,
-}: {
-  label: string;
-  amountMinor: string;
-  currency: string;
-  hidden: boolean;
-  accent?: boolean;
-}) {
-  const { colors } = useTheme();
-  return (
-    <AppCard style={styles.tile} testID={`home-tile-${label.toLowerCase()}`}>
-      <View
-        style={[
-          styles.tileIcon,
-          { backgroundColor: accent ? colors.secondarySoft : colors.primarySoft },
-        ]}
-      >
-        <Ionicons
-          name={accent ? 'gift-outline' : 'wallet-outline'}
-          size={18}
-          color={accent ? colors.secondary : colors.primary}
-        />
-      </View>
-      <View style={styles.tileText} accessible accessibilityLabel={`${label} balance`}>
-        <AppText style={[styles.tileLabel, { color: colors.textMuted }]}>{label}</AppText>
-        <AppAmount amountMinor={amountMinor} currency={currency} hidden={hidden} />
-      </View>
-    </AppCard>
   );
 }
 
@@ -667,17 +604,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   balanceUnavailable: { color: '#FFFFFF', fontSize: fontSizes.title },
-  tiles: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
-  tile: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: spacing.sm },
-  tileIcon: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  tileText: { flex: 1, gap: 2 },
-  tileLabel: { fontSize: fontSizes.caption },
 
   actions: { flexDirection: 'row', gap: spacing.sm },
   action: {

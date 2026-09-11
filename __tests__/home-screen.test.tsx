@@ -52,8 +52,6 @@ function props(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
     upcoming: [contribution],
     quickPay: [],
     availableMinor: '84732050',
-    savingsMinor: '23450000',
-    rewardsMinor: '0',
     currency: 'NGN',
     loading: false,
     refreshing: false,
@@ -78,24 +76,20 @@ function props(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
   };
 }
 
-it('shows the balance, savings and rewards the API returned', async () => {
+it('shows the wallet balance the API returned', async () => {
   const view = await render(<HomeScreen {...props()} />);
 
   expect(view.getByText('Ayo Cloud')).toBeTruthy();
   expect(view.getByText('₦847,320.50')).toBeTruthy();
-  expect(view.getByText('₦234,500.00')).toBeTruthy();
-  expect(view.getByText('Savings')).toBeTruthy();
-  expect(view.getByText('Rewards')).toBeTruthy();
 });
 
-it('masks every balance at once when hidden', async () => {
+it('masks the balance when hidden', async () => {
   const view = await render(<HomeScreen {...props({ balanceVisible: false })} />);
 
-  // The main balance and both tiles: hiding the wallet must not leave savings
-  // or rewards legible over the shoulder of whoever is watching.
+  // The hero carries the only balance on the screen, so the toggle has exactly
+  // one figure to hide and nothing is left legible behind it.
   expect(view.queryByText('₦847,320.50')).toBeNull();
-  expect(view.queryByText('₦234,500.00')).toBeNull();
-  expect(view.getAllByLabelText('Balance hidden')).toHaveLength(3);
+  expect(view.getAllByLabelText('Balance hidden')).toHaveLength(1);
 });
 
 it('says the balance is unavailable rather than showing zero', async () => {
@@ -201,18 +195,14 @@ describe('hero and quick actions', () => {
     expect(view.getByText('Available to spend')).toBeTruthy();
   });
 
-  it('leaves the hero one figure, with savings and rewards below it', async () => {
-    // The hero states the spendable balance and nothing else. Savings and
-    // rewards are still the member's money, so they moved down the page rather
-    // than off it, and they still mask with the wallet toggle.
+  it('shows one balance on the screen, and no savings or rewards figure', async () => {
+    // Home reports the spendable balance only. Savings live on the Akawo tab
+    // and rewards on the referrals screen, each next to what explains them.
     const view = await render(<HomeScreen {...props()} />);
 
     expect(view.getByTestId('home-wallet-balance')).toBeTruthy();
-    expect(view.getByTestId('home-tile-savings')).toBeTruthy();
-    expect(view.getByTestId('home-tile-rewards')).toBeTruthy();
-
-    const hidden = await render(<HomeScreen {...props({ balanceVisible: false })} />);
-    expect(hidden.getAllByLabelText('Balance hidden')).toHaveLength(3);
+    expect(view.queryByText('Savings')).toBeNull();
+    expect(view.queryByText('Rewards')).toBeNull();
   });
 
   it('keeps the actions under their own heading, outside the balance card', async () => {
