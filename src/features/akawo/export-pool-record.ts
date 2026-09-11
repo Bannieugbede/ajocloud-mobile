@@ -47,11 +47,11 @@ export function buildPoolRecordHtml(pool: OrganiserPoolView): string {
     <meta charset="utf-8" />
     <style>
       body { font-family: -apple-system, Roboto, sans-serif; color: #212B36; padding: 24px; }
-      h1 { color: #0D47A1; font-size: 20px; margin: 0 0 4px; }
+      h1 { color: #0D1B3D; font-size: 20px; margin: 0 0 4px; }
       .meta { color: #637280; font-size: 12px; margin: 0 0 16px; }
       .totals { background: #E3F6FA; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
       table { border-collapse: collapse; width: 100%; font-size: 12px; }
-      th { background: #0D47A1; color: #fff; text-align: left; padding: 8px; }
+      th { background: #0D1B3D; color: #fff; text-align: left; padding: 8px; }
       td { border-bottom: 1px solid #E3E8EF; padding: 8px; }
       tr:nth-child(even) td { background: #F7F9FC; }
     </style>

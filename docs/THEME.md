@@ -2,9 +2,10 @@
 
 ## Foundations
 
-Primary blue is `#0D47A1`; secondary teal is `#15B0B8`. These exact brand values anchor actions,
+Primary is navy `#0D1B3D`; secondary teal is `#15B0B8`. These exact brand values anchor actions,
 links, focus, and selected states. Generated scales in `src/theme/colors.ts` provide pressed and soft
-surfaces without replacing the anchors. The reference website's green/gold palette, shadows,
+surfaces without replacing the anchors. The primary is near-black, so its pressed state is a _lighter_
+step rather than a darker one — darkening it further would not be visible. The reference website's green/gold palette, shadows,
 borders, and fonts are explicitly excluded.
 
 Semantic tokens are: background, surface, surfaceElevated, surfaceMuted, primary, primaryPressed,

@@ -1,17 +1,20 @@
 export const brand = {
-  primary: '#0D47A1',
+  primary: '#0D1B3D',
   secondary: '#15B0B8',
 } as const;
 
 export const palette = {
   white: '#FFFFFF',
   black: '#07111F',
-  blue50: '#EAF2FF',
-  blue100: '#D5E5FF',
-  blue300: '#79A9EF',
+  blue50: '#ECEFF7',
+  blue100: '#D6DCEB',
+  blue300: '#7F8CB0',
   blue500: brand.primary,
-  blue600: '#0A3A86',
-  blue700: '#082E6C',
+  // The brand navy is near-black, so a pressed state cannot be a darker shade
+  // of it — the change would not be visible. Pressed goes lighter instead, and
+  // blue700 is kept as the deepest step for gradients that need one.
+  blue600: '#1B2B52',
+  blue700: '#070F26',
   teal50: '#E6F9FA',
   teal100: '#C8F0F2',
   teal400: brand.secondary,

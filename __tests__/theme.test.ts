@@ -10,7 +10,7 @@ describe('theme foundation', () => {
 
   it('provides every semantic token in both modes', () => {
     expect(Object.keys(themes.dark).sort()).toEqual(Object.keys(themes.light).sort());
-    expect(themes.light.primary).toBe('#0D47A1');
+    expect(themes.light.primary).toBe('#0D1B3D');
     expect(themes.dark.secondary).toBe('#15B0B8');
   });
 });
