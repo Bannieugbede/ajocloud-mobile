@@ -1132,3 +1132,34 @@ not accept anyone.
 
 One package is the programme, not a decision. With several, the chosen one
 drives the hero image, the contents list and what is joined.
+
+## Home hero (2026-09-11)
+
+### The hero carries one figure
+
+The redesign sample leads with a single large number. The old wallet card led
+with the balance and then stacked savings and rewards inside the same panel, so
+three figures competed for the position the eye lands on first.
+
+The hero now states the spendable balance and nothing else, at `display` size,
+captioned "Available to spend" — the balance is not everything the member owns,
+and a headline figure that could be read either way is worse than a smaller one
+that cannot. Savings and rewards moved onto cards below Quick Actions rather
+than off the screen: they are still the member's money. All three mask together
+on the privacy toggle, which a test pins at three hidden balances.
+
+### The growth pill in the sample was not built
+
+The sample shows "+12.4%" against "vs last month". Nothing in the API returns a
+previous-month balance, so the percentage would have been invented — on the one
+figure a member is most likely to act on. The pill is omitted until an endpoint
+supplies the comparison; the requirement is recorded in
+`docs/BACKEND_REQUIREMENTS.md`.
+
+### Actions are a section, not part of the card
+
+The four wallet actions were tiles on the brand fill inside the card. They now
+sit under a "Quick Actions" heading on the page, drawn in theme tokens like
+every other control, so the card holds balances and the section holds verbs. A
+locked action keeps its position in the row — reordering as funding comes and
+goes would move a target out from under whoever was reaching for it.

@@ -22,7 +22,7 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 2 Design system             |              16/19 | IN REVIEW   | N/A                     | Tokens ready     | 21 tests added      |
 | 3 Shell/navigation          |               7/15 | IN PROGRESS | Session/profile exists  | Five tabs ready  | Bootstrap tests     |
 | 4 Auth/onboarding           |       1/18 screens | IN REVIEW   | Verification APIs added | 18/18 referenced | 4 screens in review |
-| 5 Home                      |                1/1 | COMPLETED   | Live APIs               | Ready            | 45 tests added      |
+| 5 Home                      |                1/1 | COMPLETED   | Live APIs               | Hero redesigned  | 48 tests added      |
 | 6 Ajo                       |                3/3 | IN REVIEW   | List/detail live        | Ready            | List/detail tested  |
 | 7 Food plans                |                3/3 | IN REVIEW   | List/detail/plans live  | Ready            | 14 tests added      |
 | 8 Akawo                     |              13/13 | IN REVIEW   | Pools redesigned        | Ready            | 72 tests added      |
@@ -252,6 +252,17 @@ reference order: greeting, wallet, upcoming activity, Ajo preview, Akawo preview
 accounts, and Ajo groups use live existing APIs. Balance aggregation, upcoming activity, Akawo,
 notifications, and financial mutations remain backend-blocked and are shown as explicit unavailable
 states rather than prototype data.
+
+Session 2026-09-11: Home hero redesigned against a supplied visual sample. The wallet card became a
+gradient panel with a decorative watermark and a single display-size figure — the spendable balance —
+captioned so it is not mistaken for total worth. Quick Actions moved out of the card into their own
+labelled section of icon tiles, and savings/rewards moved below them onto cards; both still mask with
+the privacy toggle. Semantics, routes, and handlers are unchanged; `radius.xl` and `fontSizes.display`
+were added to the theme. Files: `src/features/home/home-screen.tsx`, `src/theme/spacing.ts`,
+`src/theme/typography.ts`, `src/components/ui/app-amount.tsx`, `__tests__/home-screen.test.tsx`.
+Tests: 946 pass (21 in the Home suite, 3 added). Validation: format, lint, typecheck, test,
+terminology all pass. Limitation: the sample's "+12.4% vs last month" delta is not built — no endpoint
+supplies month-over-month change, and the figure would have been invented.
 
 Deliver Home only after authenticated shell and dashboard aggregation/caching strategy exist. Sections:
 wallet with privacy toggle and fund/send/withdraw/history intents; upcoming due/payout activity; Ajo,

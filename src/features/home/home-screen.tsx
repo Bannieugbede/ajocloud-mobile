@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
 import type { CurrentUser } from '@/api/endpoints/users';
@@ -10,7 +12,7 @@ import { AppCard } from '@/components/ui/app-card';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, sizes, spacing } from '@/theme';
+import { fontSizes, palette, radius, sizes, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
@@ -151,7 +153,31 @@ export function HomeScreen(props: HomeScreenProps) {
         </View>
       ) : null}
 
-      <WalletCard {...props} actions={walletActions} />
+      <WalletCard {...props} />
+
+      <Section title="Quick Actions">
+        <View style={styles.actions}>
+          {walletActions.map((action) => (
+            <WalletActionButton key={action.label} action={action} />
+          ))}
+        </View>
+
+        <View style={styles.tiles}>
+          <WalletTile
+            label="Savings"
+            amountMinor={props.savingsMinor}
+            currency={props.currency}
+            hidden={!props.balanceVisible}
+          />
+          <WalletTile
+            label="Rewards"
+            amountMinor={props.rewardsMinor}
+            currency={props.currency}
+            hidden={!props.balanceVisible}
+            accent
+          />
+        </View>
+      </Section>
 
       <Section title="Pay Bills" action="See all" onAction={props.onOpenBills}>
         <View style={styles.shortcuts}>
@@ -205,13 +231,50 @@ export function HomeScreen(props: HomeScreenProps) {
   );
 }
 
-function WalletCard(props: HomeScreenProps & { actions: WalletAction[] }) {
-  const { colors } = useTheme();
+/**
+ * The mark printed faintly across the hero. Purely decorative — it is drawn
+ * behind the figures at low opacity and carries no information the text does
+ * not already give, so it is hidden from assistive technology.
+ */
+function WalletWatermark() {
   return (
-    <View style={[styles.wallet, { backgroundColor: colors.primary }]}>
+    <View
+      style={styles.watermark}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+    >
+      <Svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
+        <Path d="M50 8 L88 92 L68 92 L50 48 L32 92 L12 92 Z" fill="rgba(255,255,255,0.07)" />
+        <Path d="M50 56 L62 84 L38 84 Z" fill="rgba(255,255,255,0.05)" />
+      </Svg>
+    </View>
+  );
+}
+
+/**
+ * The hero: one figure, stated once, on the brand gradient.
+ *
+ * The gradient runs from the brand blue into its darker shade rather than
+ * sitting flat, and the watermark gives the card depth without adding a second
+ * thing to read. The wallet actions used to live inside this card; they now sit
+ * in their own labelled section beneath it, so the card holds balances and the
+ * section holds verbs.
+ */
+function WalletCard(props: HomeScreenProps) {
+  return (
+    <View style={styles.wallet}>
+      <LinearGradient
+        colors={[palette.blue500, palette.blue600, palette.blue700]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <WalletWatermark />
+
       <View style={styles.rowBetween}>
-        <AppText weight="semibold" style={styles.walletLabel}>
-          MAIN WALLET
+        <AppText weight="medium" style={styles.walletLabel}>
+          Main Wallet
         </AppText>
         <Pressable
           accessibilityRole="button"
@@ -221,8 +284,8 @@ function WalletCard(props: HomeScreenProps & { actions: WalletAction[] }) {
         >
           <Ionicons
             name={props.balanceVisible ? 'eye-outline' : 'eye-off-outline'}
-            size={22}
-            color={colors.textInverse}
+            size={20}
+            color="rgba(255,255,255,0.72)"
           />
         </Pressable>
       </View>
@@ -235,38 +298,27 @@ function WalletCard(props: HomeScreenProps & { actions: WalletAction[] }) {
         <AppAmount
           amountMinor={props.availableMinor}
           currency={props.currency}
-          size="heading"
+          size="display"
           onInverse
           hidden={!props.balanceVisible}
           testID="home-wallet-balance"
         />
       )}
 
-      <View style={styles.tiles}>
-        <WalletTile
-          label="SAVINGS"
-          amountMinor={props.savingsMinor}
-          currency={props.currency}
-          hidden={!props.balanceVisible}
-        />
-        <WalletTile
-          label="REWARDS"
-          amountMinor={props.rewardsMinor}
-          currency={props.currency}
-          hidden={!props.balanceVisible}
-          accent
-        />
-      </View>
-
-      <View style={styles.actions}>
-        {props.actions.map((action) => (
-          <WalletActionButton key={action.label} action={action} />
-        ))}
-      </View>
+      <AppText style={styles.walletCaption}>Available to spend</AppText>
     </View>
   );
 }
 
+/**
+ * A savings or rewards total, on its own card.
+ *
+ * These used to sit inside the hero. The hero now carries one figure — the
+ * spendable balance — so the other two moved out rather than being dropped:
+ * they are still the member's money, and a card on the page states them without
+ * competing with the headline. They mask with the wallet, since hiding the
+ * balance and leaving these legible would defeat the point of the toggle.
+ */
 function WalletTile({
   label,
   amountMinor,
@@ -282,21 +334,36 @@ function WalletTile({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={styles.tile} accessible accessibilityLabel={`${label.toLowerCase()} balance`}>
-      <AppText weight="semibold" style={styles.tileLabel}>
-        {label}
-      </AppText>
-      <AppAmount
-        amountMinor={amountMinor}
-        currency={currency}
-        hidden={hidden}
-        onInverse
-        style={accent ? { color: colors.secondary } : undefined}
-      />
-    </View>
+    <AppCard style={styles.tile} testID={`home-tile-${label.toLowerCase()}`}>
+      <View
+        style={[
+          styles.tileIcon,
+          { backgroundColor: accent ? colors.secondarySoft : colors.primarySoft },
+        ]}
+      >
+        <Ionicons
+          name={accent ? 'gift-outline' : 'wallet-outline'}
+          size={18}
+          color={accent ? colors.secondary : colors.primary}
+        />
+      </View>
+      <View style={styles.tileText} accessible accessibilityLabel={`${label} balance`}>
+        <AppText style={[styles.tileLabel, { color: colors.textMuted }]}>{label}</AppText>
+        <AppAmount amountMinor={amountMinor} currency={currency} hidden={hidden} />
+      </View>
+    </AppCard>
   );
 }
 
+/**
+ * One Quick Action: a rounded-square icon tile over its label.
+ *
+ * Now that the actions sit on the page rather than on the brand fill, they are
+ * drawn in theme tokens like the rest of the screen. A locked action keeps its
+ * place in the row — reordering the row as funding comes and goes would move a
+ * target out from under whoever was reaching for it — and states its reason in
+ * the accessible name rather than only dimming.
+ */
 function WalletActionButton({ action }: { action: WalletAction }) {
   const { colors } = useTheme();
   const locked = !action.onPress;
@@ -311,12 +378,19 @@ function WalletActionButton({ action }: { action: WalletAction }) {
       onPress={action.onPress}
       style={({ pressed }) => [styles.action, { opacity: locked ? 0.45 : pressed ? 0.7 : 1 }]}
     >
-      <Ionicons
-        name={locked ? 'lock-closed-outline' : action.icon}
-        color={colors.textInverse}
-        size={20}
-      />
-      <AppText weight="medium" style={styles.actionText}>
+      <View
+        style={[
+          styles.actionIcon,
+          { backgroundColor: colors.primarySoft, borderColor: colors.border },
+        ]}
+      >
+        <Ionicons
+          name={locked ? 'lock-closed-outline' : action.icon}
+          color={colors.primary}
+          size={22}
+        />
+      </View>
+      <AppText weight="medium" style={[styles.actionText, { color: colors.text }]}>
         {action.label}
       </AppText>
     </Pressable>
@@ -572,30 +646,57 @@ const styles = StyleSheet.create({
 
   notice: { borderRadius: radius.lg, gap: spacing.sm, padding: spacing.md },
 
-  wallet: { borderRadius: radius.lg, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
-  walletLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.caption, letterSpacing: 1.2 },
-  balanceUnavailable: { color: '#FFFFFF', fontSize: fontSizes.title },
-  tiles: { flexDirection: 'row', gap: spacing.sm },
-  tile: {
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: radius.md,
-    flex: 1,
+  wallet: {
+    borderRadius: radius.xl,
     gap: spacing.xs,
-    padding: spacing.md,
+    overflow: 'hidden',
+    padding: spacing.lg,
   },
-  tileLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.caption, letterSpacing: 1 },
+  watermark: {
+    bottom: -spacing.lg,
+    opacity: 0.9,
+    position: 'absolute',
+    right: -spacing.xl,
+    top: -spacing.lg,
+    width: '62%',
+  },
+  walletLabel: { color: 'rgba(255,255,255,0.78)', fontSize: fontSizes.body },
+  walletCaption: {
+    color: 'rgba(255,255,255,0.64)',
+    fontSize: fontSizes.caption,
+    marginBottom: spacing.xs,
+  },
+  balanceUnavailable: { color: '#FFFFFF', fontSize: fontSizes.title },
+  tiles: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  tile: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: spacing.sm },
+  tileIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  tileText: { flex: 1, gap: 2 },
+  tileLabel: { fontSize: fontSizes.caption },
+
   actions: { flexDirection: 'row', gap: spacing.sm },
   action: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: radius.md,
     flex: 1,
-    gap: spacing.xs,
-    justifyContent: 'center',
-    minHeight: sizes.touchTarget + 12,
-    padding: spacing.sm,
+    gap: spacing.sm,
+    justifyContent: 'flex-start',
+    minHeight: sizes.touchTarget,
+    paddingVertical: spacing.xs,
   },
-  actionText: { color: '#FFFFFF', fontSize: fontSizes.caption },
+  actionIcon: {
+    alignItems: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
+  },
+  actionText: { fontSize: fontSizes.caption, textAlign: 'center' },
 
   shortcuts: { flexDirection: 'row', gap: spacing.sm },
   shortcut: {

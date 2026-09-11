@@ -6,7 +6,7 @@ import { formatMinorAmount } from '@/utils/money';
 
 import { AppText } from './app-text';
 
-type AmountSize = 'caption' | 'body' | 'title' | 'heading' | 'label';
+type AmountSize = 'caption' | 'body' | 'title' | 'heading' | 'display' | 'label';
 
 /**
  * Renders a minor-unit balance. When `hidden` is set the digits are masked but
@@ -50,5 +50,6 @@ const styles = StyleSheet.create({
   body: { fontSize: fontSizes.body },
   title: { fontSize: fontSizes.title },
   heading: { fontSize: fontSizes.heading },
+  display: { fontSize: fontSizes.display },
   label: { fontSize: fontSizes.label },
 });

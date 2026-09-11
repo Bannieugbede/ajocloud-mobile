@@ -25,6 +25,11 @@
 - Upcoming contribution and payout activity is assembled client-side from `GET /ajo-groups`,
   `GET /ajo-groups/:id` and `GET /ajo-groups/:id/schedule`, one pair of requests per group and
   bounded to the first four. A composed dashboard feed would replace that fan-out.
+- Month-over-month change on the wallet balance is missing. The 2026-09-11 hero design shows a
+  growth pill ("+12.4% vs last month") beside the headline figure. Nothing returns a prior-period
+  balance, so the pill is not built rather than filled with an invented percentage. It needs a
+  prior-period closing balance, or the delta itself, on the wallet summary, with the period named
+  and a defined answer for wallets younger than one period.
 - Food distribution and Akawo schedule feeds remain outstanding.
 - Akawo goal summary/list/detail is implemented; contribution money movement is still absent.
 - Unread notification count and guarded notification destinations.

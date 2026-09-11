@@ -23,9 +23,11 @@ screens. Do not use a raw palette value from a screen when a semantic token exis
 
 Poppins is loaded at runtime in the root layout in weights 400 Regular, 500 Medium, 600 SemiBold,
 and 700 Bold. Components use the names in `fontFamilies`; avoid synthetic weights. Body text starts
-at 16sp, captions at 12sp, titles at 20sp, and headings at 28sp, but text containers must expand with
-font scaling. Spacing follows 4/8/16/24/32/48 and radii 8/12/18/pill. Interactive targets are at
-least 48dp.
+at 16sp, captions at 12sp, titles at 20sp, headings at 28sp, and display at 34sp, but text containers
+must expand with font scaling. Display is reserved for a screen's single headline figure, such as the
+Home wallet balance; a screen with two of them has no headline. Spacing follows 4/8/16/24/32/48 and
+radii 8/12/18/24/pill, where 24 is the largest panel radius and belongs to full-bleed hero cards.
+Interactive targets are at least 48dp.
 
 Shadows are reserved for hierarchy that borders/surface changes cannot express. Prefer subtle iOS
 shadow plus low Android elevation, never copy website shadows. Use one clear icon family per

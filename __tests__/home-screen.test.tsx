@@ -84,8 +84,8 @@ it('shows the balance, savings and rewards the API returned', async () => {
   expect(view.getByText('Ayo Cloud')).toBeTruthy();
   expect(view.getByText('₦847,320.50')).toBeTruthy();
   expect(view.getByText('₦234,500.00')).toBeTruthy();
-  expect(view.getByText('SAVINGS')).toBeTruthy();
-  expect(view.getByText('REWARDS')).toBeTruthy();
+  expect(view.getByText('Savings')).toBeTruthy();
+  expect(view.getByText('Rewards')).toBeTruthy();
 });
 
 it('masks every balance at once when hidden', async () => {
@@ -189,6 +189,40 @@ it('shows an Akawo pool due alongside Ajo obligations', async () => {
 it('states urgency in words, not only in colour', async () => {
   const view = await render(<HomeScreen {...props()} />);
   expect(view.getByText('Due soon')).toBeTruthy();
+});
+
+describe('hero and quick actions', () => {
+  it('names the wallet and what the headline figure means', async () => {
+    // The figure is the spendable balance, not everything the member owns, so
+    // the card says which of the two it is rather than leaving it to be guessed.
+    const view = await render(<HomeScreen {...props()} />);
+
+    expect(view.getByText('Main Wallet')).toBeTruthy();
+    expect(view.getByText('Available to spend')).toBeTruthy();
+  });
+
+  it('leaves the hero one figure, with savings and rewards below it', async () => {
+    // The hero states the spendable balance and nothing else. Savings and
+    // rewards are still the member's money, so they moved down the page rather
+    // than off it, and they still mask with the wallet toggle.
+    const view = await render(<HomeScreen {...props()} />);
+
+    expect(view.getByTestId('home-wallet-balance')).toBeTruthy();
+    expect(view.getByTestId('home-tile-savings')).toBeTruthy();
+    expect(view.getByTestId('home-tile-rewards')).toBeTruthy();
+
+    const hidden = await render(<HomeScreen {...props({ balanceVisible: false })} />);
+    expect(hidden.getAllByLabelText('Balance hidden')).toHaveLength(3);
+  });
+
+  it('keeps the actions under their own heading, outside the balance card', async () => {
+    const view = await render(<HomeScreen {...props()} />);
+
+    expect(view.getByRole('header', { name: 'Quick Actions' })).toBeTruthy();
+    expect(view.getByLabelText('Send')).toBeTruthy();
+    expect(view.getByLabelText('Withdraw')).toBeTruthy();
+    expect(view.getByLabelText('Bills')).toBeTruthy();
+  });
 });
 
 it('locks Fund with a reason while funding is unavailable', async () => {
