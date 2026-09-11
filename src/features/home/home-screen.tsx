@@ -315,18 +315,11 @@ function WalletActionButton({ action }: { action: WalletAction }) {
       onPress={action.onPress}
       style={({ pressed }) => [styles.action, { opacity: locked ? 0.45 : pressed ? 0.7 : 1 }]}
     >
-      <View
-        style={[
-          styles.actionIcon,
-          { backgroundColor: colors.primarySoft, borderColor: colors.border },
-        ]}
-      >
-        <Ionicons
-          name={locked ? 'lock-closed-outline' : action.icon}
-          color={colors.primary}
-          size={22}
-        />
-      </View>
+      <Ionicons
+        name={locked ? 'lock-closed-outline' : action.icon}
+        color={colors.primary}
+        size={26}
+      />
       <AppText weight="medium" style={[styles.actionText, { color: colors.text }]}>
         {action.label}
       </AppText>
@@ -606,26 +599,20 @@ const styles = StyleSheet.create({
   balanceUnavailable: { color: '#FFFFFF', fontSize: fontSizes.title },
 
   actions: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
     justifyContent: 'space-between',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
   action: {
     alignItems: 'center',
     flex: 1,
+    // The icon lost its tile, so the row keeps the 48dp target itself rather
+    // than inheriting one from a box that is no longer drawn.
     gap: spacing.sm,
-    justifyContent: 'flex-start',
-    minHeight: sizes.touchTarget,
-  },
-  actionIcon: {
-    alignItems: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    height: 48,
     justifyContent: 'center',
-    width: 48,
+    minHeight: sizes.touchTarget,
   },
   actionText: { fontSize: fontSizes.caption, textAlign: 'center' },
 
