@@ -205,6 +205,19 @@ describe('hero and quick actions', () => {
     expect(view.queryByText('Rewards')).toBeNull();
   });
 
+  it('offers all four actions together, with Fund live', async () => {
+    // Funding is built end to end — the route, the payment intent and the
+    // confirm step all exist — so Home offers it like the Wallets screen does
+    // rather than showing a lock the rest of the app does not.
+    const onFund = jest.fn();
+    const view = await render(<HomeScreen {...props({ onFund })} />);
+
+    for (const label of ['Fund', 'Send', 'Withdraw', 'Bills']) {
+      expect(view.getByLabelText(label)).toBeTruthy();
+    }
+    expect(view.queryByLabelText(/unavailable/)).toBeNull();
+  });
+
   it('keeps the actions under their own heading, outside the balance card', async () => {
     const view = await render(<HomeScreen {...props()} />);
 

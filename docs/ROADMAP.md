@@ -264,6 +264,14 @@ Tests: 946 pass (21 in the Home suite, 3 added). Validation: format, lint, typec
 terminology all pass. Limitation: the sample's "+12.4% vs last month" delta is not built — no endpoint
 supplies month-over-month change, and the figure would have been invented.
 
+Session 2026-09-11 (follow-up): savings and rewards removed from Home entirely — they live on the
+Akawo tab and the referrals screen beside what explains them, and the goals/referral queries that fed
+them were retired, so Home no longer fetches two payloads it does not render. Quick Actions now share
+one horizontal card. Fund was enabled: the route, intent target and confirm step all exist, and Home
+was the only surface still showing a lock. Brand primary changed to `#0D1B3D`; the palette's pressed
+step inverted to lighter because the new primary is near-black. Tests: 947 pass. Validation: full
+`bun run validate` passes.
+
 Deliver Home only after authenticated shell and dashboard aggregation/caching strategy exist. Sections:
 wallet with privacy toggle and fund/send/withdraw/history intents; upcoming due/payout activity; Ajo,
 food, and Akawo previews. Decide composed endpoint versus parallel queries and partial-error behavior.

@@ -154,11 +154,11 @@ export function HomeScreen(props: HomeScreenProps) {
       <WalletCard {...props} />
 
       <Section title="Quick Actions">
-        <View style={styles.actions}>
+        <AppCard style={styles.actions}>
           {walletActions.map((action) => (
             <WalletActionButton key={action.label} action={action} />
           ))}
-        </View>
+        </AppCard>
       </Section>
 
       <Section title="Pay Bills" action="See all" onAction={props.onOpenBills}>
@@ -247,7 +247,7 @@ function WalletCard(props: HomeScreenProps) {
   return (
     <View style={styles.wallet}>
       <LinearGradient
-        colors={[palette.blue500, palette.blue600, palette.blue700]}
+        colors={[palette.blue600, palette.blue500, palette.blue700]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -605,22 +605,27 @@ const styles = StyleSheet.create({
   },
   balanceUnavailable: { color: '#FFFFFF', fontSize: fontSizes.title },
 
-  actions: { flexDirection: 'row', gap: spacing.sm },
+  actions: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+  },
   action: {
     alignItems: 'center',
     flex: 1,
     gap: spacing.sm,
     justifyContent: 'flex-start',
     minHeight: sizes.touchTarget,
-    paddingVertical: spacing.xs,
   },
   actionIcon: {
     alignItems: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    height: 52,
+    height: 48,
     justifyContent: 'center',
-    width: 52,
+    width: 48,
   },
   actionText: { fontSize: fontSizes.caption, textAlign: 'center' },
 

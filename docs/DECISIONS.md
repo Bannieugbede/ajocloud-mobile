@@ -1156,10 +1156,35 @@ figure a member is most likely to act on. The pill is omitted until an endpoint
 supplies the comparison; the requirement is recorded in
 `docs/BACKEND_REQUIREMENTS.md`.
 
+### Fund is enabled on Home because the flow exists
+
+Home passed no `onFund`, so the screen fell back to a locked tile reading
+"Funding opens when card and transfer payments go live." Meanwhile
+`/(tabs)/profile/wallet/fund` was built, the Wallets screen offered it
+unlocked, and `WALLET_TOPUP` is a real payment target. Home was the only place
+still showing the lock.
+
+It now routes like every other action. The caveat behind the original wording
+is real — an external card or transfer top-up reaches `PROCESSING` and stays
+there until the Monnify webhook handler is written — but that is a limit of the
+payment method, surfaced inside the payment flow where the method is chosen,
+not a reason for Home to refuse to open the screen. Wallet-funded payments
+settle today.
+
 ### Actions are a section, not part of the card
 
 The four wallet actions were tiles on the brand fill inside the card. They now
 sit under a "Quick Actions" heading on the page, drawn in theme tokens like
-every other control, so the card holds balances and the section holds verbs. A
-locked action keeps its position in the row — reordering as funding comes and
-goes would move a target out from under whoever was reaching for it.
+every other control, so the card holds balances and the section holds verbs.
+The four share one horizontal card, which groups them as a single set of things
+to do rather than four floating targets. A locked action keeps its position in
+the row — reordering as availability changes would move a target out from under
+whoever was reaching for it.
+
+### The primary is navy, and pressed goes lighter
+
+The brand primary moved from `#0D47A1` to `#0D1B3D` (2026-09-11). The new value
+is near-black, which inverts one assumption in the scale: `primaryPressed` can
+no longer be a darker shade, because darkening near-black is not visible. It is
+now a lighter step (`#1B2B52`), and `blue700` is kept as the deepest step for
+gradients. White on the new primary measures 16.9:1.

@@ -198,6 +198,7 @@ export default function HomeRoute() {
       onOpenBills={() => router.push('/(tabs)/bills')}
       onOpenCategory={() => router.push('/(tabs)/bills')}
       onQuickPay={openQuickPay}
+      onFund={() => router.push('/(tabs)/profile/wallet/fund')}
       onSend={() => router.push('/(tabs)/profile/wallet/send')}
       onWithdraw={() => router.push('/(tabs)/profile/wallet/withdraw')}
     />
