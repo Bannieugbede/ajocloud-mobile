@@ -1222,3 +1222,32 @@ It does not yet do anything a member can see: the number is not surfaced on the
 programme, so there is no chat button to build. Collecting it now means the data
 exists when that endpoint does, rather than every vendor needing to be asked
 later.
+
+## Dark mode carries its own primary (2026-09-11)
+
+Changing the brand primary to the navy `#0D1B3D` broke dark mode. Both themes
+took `primary` from the shared `common` block, so the dark theme inherited a
+colour built for white backgrounds: 1.14:1 against the dark background and
+**1.03:1 against a card**. Every link, active tab tint and primary icon — 81
+usages — was drawn in a colour indistinguishable from the surface behind it.
+
+Dark mode now overrides `primary`, `primaryPressed`, `link` and `primarySoft`.
+The value is constrained from both sides, which is why it is mid-blue rather
+than the brightest legible one:
+
+- As a mark on a card it needs 3:1, which rules out anything darker.
+- It also fills buttons, and `textInverse` sits on that fill. That token has to
+  stay white, because the Home hero and `AppAmount onInverse` draw it on the
+  brand gradient, which is fixed dark in both themes. So the fill must stay dark
+  enough for white text at 4.5:1, which rules out anything lighter.
+
+`#4470C6` satisfies both (3.54:1 on a card, 4.8:1 for white on the fill).
+
+The backgrounds were also renudged from near-neutral slate to navy-tinted, so
+the dark theme reads as the same family as the brand rather than as a generic
+grey dark mode, and the header and tab bar now sit slightly darker than the
+cards instead of matching them — the chrome reads as chrome.
+
+A contrast test asserts each failing pair. It was confirmed to fail on the old
+value before being kept, so it is a regression test rather than a restatement of
+whatever the palette happens to say.

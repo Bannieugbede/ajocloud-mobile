@@ -48,31 +48,43 @@ export const themes = {
   },
   dark: {
     ...common,
-    primarySoft: '#132B50',
+    // The brand navy is a light-mode value. On a dark ground it measures 1.03:1
+    // against a card — an accent nobody can see — so dark mode carries its own
+    // lighter primary. It is deliberately not the lightest legible blue: the
+    // same token fills buttons, where `textInverse` white must stay readable on
+    // top, so this value answers to both (3.5:1 as a mark on a card, 4.8:1 for
+    // white text on the fill).
+    primary: '#4470C6',
+    primaryPressed: '#5A83D4',
+    primarySoft: '#18253F',
     secondarySoft: '#10383C',
     successSoft: '#133524',
     warningSoft: '#3D2E0B',
     errorSoft: '#421D22',
     infoSoft: '#123244',
-    background: '#080E18',
-    surface: '#111A28',
-    surfaceElevated: '#182334',
-    surfaceMuted: '#202C3D',
-    text: '#F4F7FB',
-    textMuted: '#B5C0CE',
-    textSubtle: '#8E9BAD',
-    border: '#2A3749',
-    borderStrong: '#405068',
-    divider: '#283649',
+    link: '#7AA0E8',
+    // Backgrounds are navy-tinted rather than the old near-neutral slate, so
+    // the dark theme reads as the same brand family as the light one. Each step
+    // up the stack is a visible lift without becoming grey.
+    background: '#0A1020',
+    surface: '#141C2E',
+    surfaceElevated: '#1C263B',
+    surfaceMuted: '#26324A',
+    text: '#F2F5FA',
+    textMuted: '#B9C4D4',
+    textSubtle: '#94A1B5',
+    border: '#2C3850',
+    borderStrong: '#44546F',
+    divider: '#2A3650',
     overlay: 'rgba(0, 0, 0, 0.60)',
     scrim: 'rgba(0, 0, 0, 0.78)',
-    inputBackground: '#111A28',
-    inputBorder: '#405068',
-    cardBackground: '#111A28',
-    headerBackground: '#111A28',
-    tabBarBackground: '#111A28',
-    disabled: '#354256',
-    placeholder: '#8E9BAD',
+    inputBackground: '#141C2E',
+    inputBorder: '#44546F',
+    cardBackground: '#141C2E',
+    headerBackground: '#0F1728',
+    tabBarBackground: '#0F1728',
+    disabled: '#37445C',
+    placeholder: '#94A1B5',
   },
 } as const;
 

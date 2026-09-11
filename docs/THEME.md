@@ -15,7 +15,12 @@ info/infoSoft, overlay, scrim, inputBackground, inputBorder, cardBackground, hea
 tabBarBackground, disabled, placeholder, link, and focus. Both modes expose the identical key set.
 
 Light mode uses near-white/slate surfaces with dark text. Dark mode uses navy surfaces rather than
-pure black, light text, stronger borders, and dark semantic soft fills. Native headers and status
+pure black, light text, stronger borders, and dark semantic soft fills. Dark mode overrides `primary`,
+`primaryPressed` and `link` rather than inheriting them: the brand navy is a light-mode value that
+measures 1.03:1 on a dark card, so inheriting it would make every accent, link and active tab
+invisible. The dark primary is chosen to satisfy two jobs at once — a 3:1 mark on a card, and a fill
+that white `textInverse` can sit on at 4.5:1 — because `textInverse` stays white in both modes for the
+brand-gradient surfaces. A test in `__tests__/theme.test.ts` asserts every one of those pairs. Native headers and status
 bars use resolved tokens. Nested stacks also set their scene background explicitly, while the root
 native view follows `background`, preventing white system-edge or transition gaps around dark
 screens. Do not use a raw palette value from a screen when a semantic token exists.
