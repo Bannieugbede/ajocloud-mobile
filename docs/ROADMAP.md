@@ -298,6 +298,16 @@ cursor-ready programme APIs. Capacity, contribution cadence, fulfilment, package
 price-lock state are live. Enrollment/payment remains visibly unavailable until subscription,
 contribution, fee, and activation contracts are completed.
 
+Session 2026-09-11: a Food product brief was supplied (discovery by distance, package categories,
+payment routine and upfront payment, two-sided payment ticking, vendor wallet, ₦1,000 vendor
+registration fee, WhatsApp contact, NIN/CAC vendor identity). Most of it is backend-blocked and is now
+specified endpoint by endpoint in `docs/BACKEND_REQUIREMENTS.md` — there is still no Food payment model
+of any kind, and no location on a programme, so neither "closest to me" nor "pay upfront" can be built
+without inventing data about money or distance. What was unblocked shipped: the coordinator application
+now collects a WhatsApp number and a NIN, on an either/or rule with CAC, with the NIN masked before the
+request is built. The ₦1,000 fee is specified as a seeded FeeDefinition charged on approval before a
+vendor's first programme, not as a constant in the app. Tests: 954 pass.
+
 Order: package list → detail → enrollment/payment confirmation → progress/contribution/distribution
 history. Confirm whether this is savings, commerce fulfillment, or both; item substitution, capacity,
 coordinator verification, schedule, refund/cancellation, fulfillment evidence, and payment semantics.

@@ -56,8 +56,11 @@ const choose = async (
 async function fillToLocation(view: Awaited<ReturnType<typeof setup>>) {
   await type(view, 'Full name', 'Ada Okafor');
   await type(view, 'Phone number', '08031234567');
+  await type(view, 'WhatsApp number', '08031234567');
   await press(view, 'Continue');
-  // Business is optional throughout, so it is walked past.
+  // A business is still optional, but an individual is identified by a NIN,
+  // so the step can no longer simply be walked past.
+  await type(view, 'NIN', '12345678901');
   await press(view, 'Continue');
 }
 
@@ -91,22 +94,35 @@ it('advances once a step is valid', async () => {
   const view = await setup();
   await type(view, 'Full name', 'Ada Okafor');
   await type(view, 'Phone number', '08031234567');
+  await type(view, 'WhatsApp number', '08031234567');
   await press(view, 'Continue');
   expect(view.getByText('STEP 2 OF 5: BUSINESS')).toBeTruthy();
 });
 
-it('lets an individual skip the business step entirely', async () => {
-  // Requiring a registration number would exclude exactly the people this
-  // product exists for.
+it('lets an individual past the business step on a NIN alone', async () => {
+  // Requiring a CAC number would exclude exactly the people this product
+  // exists for, so an individual gives a NIN instead and moves on.
   const view = await setup();
   await fillToLocation(view);
   expect(view.getByText('STEP 3 OF 5: LOCATION')).toBeTruthy();
+});
+
+it('will not pass the business step with neither CAC nor NIN', async () => {
+  // Somebody handling other people's food money has to be identifiable.
+  const view = await setup();
+  await type(view, 'Full name', 'Ada Okafor');
+  await type(view, 'Phone number', '08031234567');
+  await type(view, 'WhatsApp number', '08031234567');
+  await press(view, 'Continue');
+  await press(view, 'Continue');
+  expect(view.getByText('STEP 2 OF 5: BUSINESS')).toBeTruthy();
 });
 
 it('keeps what was typed when stepping back', async () => {
   const view = await setup();
   await type(view, 'Full name', 'Ada Okafor');
   await type(view, 'Phone number', '08031234567');
+  await type(view, 'WhatsApp number', '08031234567');
   await press(view, 'Continue');
   await press(view, 'Back');
   expect(view.getByDisplayValue('Ada Okafor')).toBeTruthy();

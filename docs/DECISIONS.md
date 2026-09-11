@@ -1188,3 +1188,37 @@ is near-black, which inverts one assumption in the scale: `primaryPressed` can
 no longer be a darker shade, because darkening near-black is not visible. It is
 now a lighter step (`#1B2B52`), and `blue700` is kept as the deepest step for
 gradients. White on the new primary measures 16.9:1.
+
+## Food vendor identity and contact (2026-09-11)
+
+### An individual coordinator gives a NIN, a business gives CAC
+
+The business step was entirely optional: an applicant could pass it without
+typing anything, because requiring a CAC number would exclude the individual
+traders this product exists for.
+
+That left a gap. Somebody applying to take other people's food money could
+reach review identified by a name and a phone number alone. The step is still
+optional in the sense that matters — no one is forced to register a business —
+but it is now an either/or: a registration number, or a NIN. A registered
+business is not asked for both, because the CAC number already identifies it.
+
+The NIN is masked to its last four digits before the request is built, exactly
+like the settlement account, and a test asserts the typed number appears nowhere
+in the payload. A reviewer needs to recognise an identity, not read it back.
+
+This is recognition, not verification. Real verification means pointing the
+existing KYC identity flow at coordinator applications and storing a reference
+instead of digits — the application model already has `identityVerificationRef`
+and `identityVerifiedAt` columns waiting for it.
+
+### The WhatsApp number is collected separately from the phone number
+
+Many traders answer calls on one line and WhatsApp on another, so reusing
+`contactPhone` as the WhatsApp destination would send buyers to a number nobody
+reads. It is a separate required field, sent as `personalDetails.whatsappPhone`.
+
+It does not yet do anything a member can see: the number is not surfaced on the
+programme, so there is no chat button to build. Collecting it now means the data
+exists when that endpoint does, rather than every vendor needing to be asked
+later.

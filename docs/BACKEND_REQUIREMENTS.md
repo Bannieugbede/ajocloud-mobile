@@ -272,3 +272,132 @@ What would be needed to build the design as drawn:
   subscription) returning both.
 
 Until then the honest version ships. See `docs/DECISIONS.md`.
+
+## Food Ajo product spec (2026-09-11)
+
+A product brief was supplied covering discovery by location, vendor onboarding,
+payment ticking, vendor wallets and a vendor registration fee. Most of it has no
+backend behind it today. What follows is the contract the mobile client needs,
+written so the backend team can build against it. Nothing in this section is
+implemented on the client except where marked **built**.
+
+### 1. Discovery — "food ajo closest to them"
+
+`FoodAjoGroup` has no location at all. The coordinator's trading address is on
+their _application_ (`operatingLocation`, free-form JSON), which is a different
+record, not exposed on the programme, and not coordinates.
+
+Required:
+
+- Latitude/longitude on `FoodAjoGroup`, or a `FoodAjoLocation` relation when a
+  programme serves several pickup points. Free-text address alone cannot answer
+  "closest".
+- `GET /api/v1/food-ajo/programmes?lat=&lng=&radiusKm=&sort=distance`, returning
+  a `distanceKm` per item so the client displays the distance it sorted by
+  rather than recomputing it.
+- A defined answer for members who decline location permission. The client will
+  fall back to unsorted browsing; it must not silently show an arbitrary order
+  labelled "closest".
+- Whether distance is to a pickup point or to the coordinator's base, since for
+  a delivery programme those differ.
+
+### 2. Packages and categories
+
+Packages exist (`FoodPackage`, `FoodPackageItem`, with name, image, description,
+price and items) and the client already lists them — **built**.
+
+Missing: a _category_ for a package. The brief distinguishes "packages or
+categories of food packages". Needs either a `category` field on `FoodPackage`
+or a `FoodPackageCategory` model, plus whether categories are platform-defined
+(a fixed list the client can group and filter by) or vendor-defined (free text,
+groupable but not filterable across vendors). The client cannot choose this.
+
+### 3. Payment routine and paying upfront
+
+`contributionFrequency` (DAILY/WEEKLY/MONTHLY) and `contributionMinor` exist and
+are displayed — **built**.
+
+"Users can pay upfront at all time" is not buildable. There is no Food payment
+model whatsoever (see the 2026-09-07 section above): no schedule, no instalment,
+no payment record. Required before any of it ships:
+
+- `FoodContributionSchedule` per subscription: instalment count, amount, due
+  date, status.
+- `FoodContribution` per payment, posted through the ledger, so "paid" means a
+  ledger entry exists rather than a boolean somebody set.
+- `POST /api/v1/food-ajo/subscriptions/:id/pay` taking an instalment id **or** a
+  "pay the outstanding balance" intent, routed through the existing shared
+  payment intent contract rather than a new payment path.
+- Explicit rules for paying ahead: whether an upfront payment settles the next
+  instalment, the whole schedule, or an arbitrary amount held as credit. Each
+  produces a different receipt and a different refund story.
+
+### 4. Payment ticking, both sides
+
+"Automatically ticks for the user and the admin" needs no new client concept —
+it is the schedule above, read by two audiences — but it does need:
+
+- The member's own schedule on the subscription.
+- A vendor-scoped view: `GET /api/v1/food-ajo/programmes/:id/subscribers`
+  returning each member, their package, amount paid to date and outstanding
+  balance. This is the "both user and vendor can see the total amount paid by a
+  particular user" requirement, and it is the only endpoint that satisfies it.
+- Authorization: the vendor sees their own programme's subscribers and nobody
+  else's. A member sees only themselves.
+
+### 5. Vendor wallet
+
+"Money goes to the vendor wallet" is a settlement decision the client cannot
+make. `Wallet` exists and coordinators have settlement bank details on their
+application, which implies payout to a bank, not a wallet balance.
+
+The backend must decide and document: does a Food payment credit the
+coordinator's in-app `Wallet` immediately, or accrue and settle to the bank
+account on a schedule? Whether funds are held until distribution is confirmed
+matters most — releasing a member's money before their food arrives makes a
+dispute unrecoverable. The client shows whatever the ledger reports; it must not
+invent a "vendor balance" of its own.
+
+### 6. Vendor registration fee — ₦1,000
+
+Charged **on approval, before the vendor's first programme can be published**
+(product decision, 2026-09-11). Applying stays free, so a rejected applicant is
+never charged and no refund path is needed.
+
+- Seed a `FeeDefinition`: code `FOOD_VENDOR_REGISTRATION`, `calculationType`
+  FLAT, `amountMinor` `"100000"`, currency NGN, `payerType` coordinator,
+  `chargeEvent` on coordinator approval, `refundable` false. It belongs in the
+  existing fee engine, versioned and seeded — never a constant in the app, which
+  would put the price of a thing in a build artefact.
+- The approval transition should leave the vendor in a state the client can
+  read: approved, fee outstanding. Needs a status or a flag distinguishing
+  "approved" from "approved and paid", plus an endpoint to pay it through the
+  shared payment intent contract (a `FOOD_VENDOR_REGISTRATION` target).
+- Confirm whether an unpaid vendor may create a DRAFT programme and merely not
+  publish it, or cannot create one at all.
+
+### 7. WhatsApp contact — partly built
+
+The client now collects a WhatsApp number on the coordinator application and
+sends it as `personalDetails.whatsappPhone` — **built**. It is not yet on the
+programme, so a member browsing cannot message a vendor.
+
+Needs `whatsappPhone` surfaced on `FoodProgramme` (from the approved
+application, or its own field if a vendor runs programmes on different lines).
+The client will open `https://wa.me/<international format>`; the number must be
+stored or returned in a form that converts, and the deep link validated like
+every other external URL.
+
+### 8. Vendor identity — partly built
+
+The application collects CAC (`businessDetails.registrationNumber`) and now NIN
+(`personalDetails.ninMasked`, masked to the last four digits like the settlement
+account) — **built**, on the either/or rule that a registered business gives CAC
+and an individual gives NIN.
+
+The masked NIN is enough for a reviewer to recognise, not to verify. Real
+verification needs the identity flow that already exists for members
+(`IdentityKind` NIN/VNIN in KYC) applied to coordinator applications, which
+would replace the typed number with a verification reference — the application
+already has `identityVerificationRef` and `identityVerifiedAt` columns waiting
+for exactly that.

@@ -24,6 +24,7 @@ import {
   hasErrors,
   initialCoordinatorApplicationValues,
   maskAccountNumber,
+  maskIdentityNumber,
   validateStep,
   type CoordinatorApplicationValues,
   type CoordinatorStep,
@@ -123,9 +124,18 @@ export function CoordinatorApplicationScreen({
                 keyboardType="phone-pad"
                 error={errors.contactPhone}
               />
+              <AppInput
+                label="WhatsApp number"
+                value={values.whatsappPhone}
+                onChangeText={set('whatsappPhone')}
+                placeholder="08031234567"
+                keyboardType="phone-pad"
+                error={errors.whatsappPhone}
+              />
               <AppText style={[styles.hint, { color: colors.textSubtle }]}>
-                Members buying a package will see this name and use this number to reach you about
-                their food.
+                Members buying a package will see this name and use these numbers to reach you about
+                their food. The WhatsApp number is the one the app opens a chat with, so it can
+                differ from the line you take calls on.
               </AppText>
             </AppCard>
           </AppSection>
@@ -135,7 +145,9 @@ export function CoordinatorApplicationScreen({
           <AppSection title="YOUR BUSINESS">
             <AppCard style={styles.form}>
               <AppText style={{ color: colors.textMuted }}>
-                Optional. Leave both blank if you coordinate as an individual.
+                If you trade as a registered business, give its CAC number. If you coordinate as an
+                individual, give your NIN instead — we need one or the other to verify who is
+                handling members&rsquo; food money.
               </AppText>
               <AppInput
                 label="Business name"
@@ -152,6 +164,15 @@ export function CoordinatorApplicationScreen({
                 placeholder="RC123456"
                 autoCapitalize="characters"
                 autoCorrect={false}
+              />
+              <AppInput
+                label="NIN"
+                value={values.nin}
+                onChangeText={set('nin')}
+                placeholder="12345678901"
+                keyboardType="number-pad"
+                autoCorrect={false}
+                error={errors.nin}
               />
             </AppCard>
           </AppSection>
@@ -245,11 +266,15 @@ export function CoordinatorApplicationScreen({
               <AppCard style={styles.form}>
                 <ReviewRow label="Name" value={values.contactName} />
                 <ReviewRow label="Phone" value={values.contactPhone} />
+                <ReviewRow label="WhatsApp" value={values.whatsappPhone} />
                 {values.businessName.trim() ? (
                   <ReviewRow label="Business" value={values.businessName} />
                 ) : (
                   <ReviewRow label="Business" value="Applying as an individual" />
                 )}
+                {values.nin.trim() ? (
+                  <ReviewRow label="NIN" value={maskIdentityNumber(values.nin)} />
+                ) : null}
                 <ReviewRow
                   label="Address"
                   value={`${values.addressLine}, ${values.city}, ${values.state}`}

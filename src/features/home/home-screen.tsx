@@ -315,11 +315,7 @@ function WalletActionButton({ action }: { action: WalletAction }) {
       onPress={action.onPress}
       style={({ pressed }) => [styles.action, { opacity: locked ? 0.45 : pressed ? 0.7 : 1 }]}
     >
-      <Ionicons
-        name={locked ? 'lock-closed-outline' : action.icon}
-        color={colors.primary}
-        size={26}
-      />
+      <Ionicons name={locked ? 'lock-closed-outline' : action.icon} color={colors.text} size={26} />
       <AppText weight="medium" style={[styles.actionText, { color: colors.text }]}>
         {action.label}
       </AppText>

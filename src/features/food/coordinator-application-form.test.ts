@@ -16,6 +16,8 @@ function complete(
     ...initialCoordinatorApplicationValues,
     contactName: 'Ada Okafor',
     contactPhone: '08031234567',
+    whatsappPhone: '08031234567',
+    nin: '12345678901',
     addressLine: '14 Awolowo Road',
     city: 'Ikeja',
     state: 'Lagos',
@@ -58,12 +60,45 @@ describe('validateStep', () => {
     }
   });
 
-  it('lets an individual coordinate without a business', () => {
+  it('lets an individual coordinate without a business, on a NIN', () => {
     // Requiring a registration number would exclude exactly the people this
-    // product exists for.
+    // product exists for — but somebody handling other people's food money has
+    // to be identifiable, so the individual route runs on a NIN instead.
     expect(
-      validateStep('business', complete({ businessName: '', businessRegistrationNumber: '' })),
+      validateStep(
+        'business',
+        complete({ businessName: '', businessRegistrationNumber: '', nin: '12345678901' }),
+      ),
     ).toEqual({});
+  });
+
+  it('refuses an individual with neither CAC nor NIN', () => {
+    const errors = validateStep(
+      'business',
+      complete({ businessName: '', businessRegistrationNumber: '', nin: '' }),
+    );
+    expect(errors.nin).toBeTruthy();
+  });
+
+  it('does not demand a NIN from a registered business', () => {
+    // The CAC number identifies the business; asking for both is asking twice.
+    expect(
+      validateStep(
+        'business',
+        complete({ businessName: 'Okafor Foods', businessRegistrationNumber: 'RC123456', nin: '' }),
+      ),
+    ).toEqual({});
+  });
+
+  it('rejects a NIN that is not eleven digits', () => {
+    expect(validateStep('business', complete({ nin: '12345' })).nin).toBeTruthy();
+  });
+
+  it('requires a WhatsApp number members can be sent to', () => {
+    expect(validateStep('contact', complete({ whatsappPhone: '' })).whatsappPhone).toBeTruthy();
+    expect(
+      validateStep('contact', complete({ whatsappPhone: '12345' })).whatsappPhone,
+    ).toBeTruthy();
   });
 
   it('refuses a registration number with no business behind it', () => {
@@ -124,6 +159,8 @@ describe('toApplicationRequest', () => {
     expect(request?.personalDetails).toEqual({
       businessContactName: 'Ada Okafor',
       contactPhone: '08031234567',
+      whatsappPhone: '08031234567',
+      ninMasked: '*******8901',
     });
     expect(request?.operatingLocation).toEqual({
       addressLine: '14 Awolowo Road',
@@ -131,6 +168,22 @@ describe('toApplicationRequest', () => {
       state: 'Lagos',
     });
     expect(request?.fulfilmentLocations).toEqual({ method: 'PICKUP' });
+  });
+
+  it('never sends the NIN that was typed', () => {
+    // Same rule as the settlement account: a reviewer recognises the identity,
+    // they do not read it back. The raw number must not reach a request body,
+    // a log, or a retry the client stored.
+    const request = toApplicationRequest(complete({ nin: '12345678901' }));
+    expect(JSON.stringify(request)).not.toContain('12345678901');
+    expect(request?.personalDetails.ninMasked).toBe('*******8901');
+  });
+
+  it('omits the NIN when a CAC number identifies the business', () => {
+    const request = toApplicationRequest(
+      complete({ businessName: 'Okafor Foods', businessRegistrationNumber: 'RC123456', nin: '' }),
+    );
+    expect(request?.personalDetails).not.toHaveProperty('ninMasked');
   });
 
   it('omits businessDetails entirely for an individual', () => {

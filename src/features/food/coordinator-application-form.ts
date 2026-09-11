@@ -21,6 +21,17 @@ export type CoordinatorApplicationValues = {
   /** personalDetails */
   contactName: string;
   contactPhone: string;
+  /**
+   * The number members are sent to on WhatsApp. Separate from `contactPhone`:
+   * plenty of traders run WhatsApp on a different line from the one they answer
+   * calls on, and sending a buyer to the wrong one is a dead end.
+   */
+  whatsappPhone: string;
+  /**
+   * NIN, for an applicant trading as an individual. A business supplies CAC
+   * instead — the pair is an either/or, enforced on the business step.
+   */
+  nin: string;
   /** businessDetails — optional throughout: an individual may coordinate. */
   businessName: string;
   businessRegistrationNumber: string;
@@ -42,6 +53,8 @@ export type CoordinatorApplicationValues = {
 export const initialCoordinatorApplicationValues: CoordinatorApplicationValues = {
   contactName: '',
   contactPhone: '',
+  whatsappPhone: '',
+  nin: '',
   businessName: '',
   businessRegistrationNumber: '',
   addressLine: '',
@@ -90,6 +103,24 @@ function phoneLooksReal(value: string): boolean {
   return /^(\+?234|0)?\d{10}$/.test(digits);
 }
 
+/** The NIN is eleven digits. */
+export function ninLooksReal(value: string): boolean {
+  return /^\d{11}$/.test(value.trim());
+}
+
+/**
+ * The last four digits of an identity number, the rest masked.
+ *
+ * The NIN is treated exactly like the settlement account: a reviewer needs to
+ * recognise it, not read it back, so the raw number never enters a request
+ * body, a log, or a retried mutation.
+ */
+export function maskIdentityNumber(value: string): string {
+  const digits = value.trim();
+  if (digits.length <= 4) return digits;
+  return `${'*'.repeat(digits.length - 4)}${digits.slice(-4)}`;
+}
+
 /** NUBAN account numbers are ten digits. */
 export function accountNumberLooksReal(value: string): boolean {
   return /^\d{10}$/.test(value.trim());
@@ -122,14 +153,24 @@ export function validateStep(
     if (!phoneLooksReal(values.contactPhone)) {
       errors.contactPhone = 'Enter a phone number members can reach you on.';
     }
+    if (!phoneLooksReal(values.whatsappPhone)) {
+      errors.whatsappPhone = 'Enter the WhatsApp number members should message.';
+    }
   }
 
   if (step === 'business') {
-    // Deliberately no required field: an individual can coordinate, and demanding
-    // a registration number would exclude exactly the people this product is for.
-    // A registration number without a name is the one incoherent combination.
-    if (values.businessRegistrationNumber.trim() && !values.businessName.trim()) {
+    // An individual can coordinate, so CAC is not required — but somebody
+    // handling other people's food money has to be identifiable, so an
+    // applicant without a registration number supplies a NIN instead.
+    const registered = values.businessRegistrationNumber.trim();
+    if (registered && !values.businessName.trim()) {
       errors.businessName = 'Add the business name this number belongs to.';
+    }
+    if (!registered && !ninLooksReal(values.nin)) {
+      errors.nin = 'Enter your 11-digit NIN, or your CAC number if you have one.';
+    }
+    if (values.nin.trim() && !ninLooksReal(values.nin)) {
+      errors.nin = 'A NIN is 11 digits.';
     }
   }
 
@@ -202,6 +243,11 @@ export function toApplicationRequest(
     personalDetails: {
       businessContactName: values.contactName.trim(),
       contactPhone: values.contactPhone.trim(),
+      whatsappPhone: values.whatsappPhone.trim(),
+      // Masked like the settlement account: a reviewer confirms the identity,
+      // they do not need the number itself. Omitted when a CAC number was
+      // given, since the business is identified by its registration instead.
+      ...(values.nin.trim() ? { ninMasked: maskIdentityNumber(values.nin) } : {}),
     },
     // Omitted entirely rather than sent empty: an absent object says "individual
     // coordinator", where {} says "a business whose details we failed to collect".
