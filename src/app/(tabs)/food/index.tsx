@@ -41,6 +41,14 @@ export default function FoodRoute() {
         router.push({ pathname: '/(tabs)/food/[programmeId]', params: { programmeId: id } })
       }
       onApplyAsCoordinator={() => router.push('/(tabs)/food/apply')}
+      // Creating a programme is a coordinator's action, and coordinating is
+      // what the application grants. Someone who has not been approved is sent
+      // to apply rather than to a form the backend would refuse.
+      onCreate={() => router.push('/(tabs)/food/apply')}
+      // There is no join-by-code for Food: a programme is joined by opening it
+      // and subscribing to a package, so this goes to the list rather than
+      // inventing a code entry screen for a code nobody issues.
+      onJoin={() => router.push('/(tabs)/food')}
     />
   );
 }

@@ -401,3 +401,18 @@ verification needs the identity flow that already exists for members
 would replace the typed number with a verification reference — the application
 already has `identityVerificationRef` and `identityVerifiedAt` columns waiting
 for exactly that.
+
+## Food tab Start actions (2026-09-12)
+
+The Food tab now offers "Create" and "Join" from a Start button. Neither has a
+destination built for it yet:
+
+- **Create** routes to the coordinator application. `POST
+/api/v1/food-ajo/programmes` exists, but there is no mobile form behind it,
+  and no client-readable signal that a member is an approved coordinator
+  permitted to use it. Needs the approved-coordinator state on the user (see the
+  vendor registration fee section), then a create-programme screen.
+- **Join** routes to the Packages list, because Food has no join-by-code. If a
+  programme should be shareable by code the way an Ajo group is, it needs a code
+  on `FoodAjoGroup` and a lookup endpoint; otherwise the action is redundant and
+  should be dropped from the sheet rather than left pointing at the list.

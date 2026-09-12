@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,15 +9,17 @@ import type {
   FoodProgramme,
   FoodSubscription,
 } from '@/api/endpoints/food-ajo';
+import { AppActionSheet } from '@/components/ui/app-action-sheet';
 import { AppBadge } from '@/components/ui/app-badge';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppScreenHeader } from '@/components/ui/app-screen-header';
+import { AppFab } from '@/components/ui/app-fab';
+import { AppSegmented } from '@/components/ui/app-segmented';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing } from '@/theme';
+import { fontSizes, radius, sizes, spacing } from '@/theme';
 import { longDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
@@ -34,101 +37,167 @@ export type FoodListScreenProps = {
   onRetry: () => void;
   onOpen: (id: string) => void;
   onApplyAsCoordinator: () => void;
+  /** Starts a new programme, for a member who coordinates one. */
+  onCreate: () => void;
+  /** Joins an existing programme by its code. */
+  onJoin: () => void;
 };
+
+/** Which half of the tab is on screen. */
+type FoodTab = 'packages' | 'active';
+
+const TABS = [
+  { value: 'packages', label: 'Packages' },
+  { value: 'active', label: 'Active' },
+] as const satisfies readonly { value: FoodTab; label: string }[];
 
 export function FoodListScreen(props: FoodListScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const [tab, setTab] = useState<FoodTab>('packages');
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const joinedIds = new Set((props.subscriptions ?? []).map((entry) => entry.groupId));
   const browsable = (props.programmes ?? []).filter((programme) => !joinedIds.has(programme.id));
   const invitation = coordinatorInvitation(props.applications);
+  const active = props.subscriptions ?? [];
+  const showingPackages = tab === 'packages';
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
-      ]}
-      contentInsetAdjustmentBehavior="never"
-      refreshControl={
-        <RefreshControl
-          refreshing={props.refreshing}
-          onRefresh={props.onRefresh}
-          tintColor={colors.primary}
-          progressViewOffset={insets.top}
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            paddingTop: insets.top + spacing.sm,
+            // Clears the floating button, so the last card is never left
+            // underneath it.
+            paddingBottom: spacing.xxl + sizes.touchTarget,
+          },
+        ]}
+        contentInsetAdjustmentBehavior="never"
+        refreshControl={
+          <RefreshControl
+            refreshing={props.refreshing}
+            onRefresh={props.onRefresh}
+            tintColor={colors.primary}
+            progressViewOffset={insets.top}
+          />
+        }
+      >
+        <AppSegmented
+          label="Food Ajo"
+          options={TABS}
+          value={tab}
+          onChange={setTab}
+          testID="food-tabs"
         />
-      }
-    >
-      <AppScreenHeader title="Food Ajo" subtitle="Community bulk buying and distribution" />
 
-      <View style={[styles.coordinator, { backgroundColor: colors.warningSoft }]}>
-        <View style={[styles.coordinatorIcon, { backgroundColor: colors.surface }]}>
-          <Ionicons name="star-outline" size={20} color={colors.warning} />
-        </View>
-        <View style={styles.coordinatorText}>
-          <AppText weight="semibold">{invitation.title}</AppText>
-          <AppText style={{ color: colors.textMuted }}>{invitation.description}</AppText>
-        </View>
-        {invitation.canApply ? (
-          <AppButton label="Apply" variant="outline" onPress={props.onApplyAsCoordinator} />
+        {/* The coordinator invitation belongs with the programmes to browse,
+            not with the plans someone already holds. */}
+        {showingPackages ? (
+          <View style={[styles.coordinator, { backgroundColor: colors.warningSoft }]}>
+            <View style={[styles.coordinatorIcon, { backgroundColor: colors.surface }]}>
+              <Ionicons name="star-outline" size={20} color={colors.warning} />
+            </View>
+            <View style={styles.coordinatorText}>
+              <AppText weight="semibold">{invitation.title}</AppText>
+              <AppText style={{ color: colors.textMuted }}>{invitation.description}</AppText>
+            </View>
+            {invitation.canApply ? (
+              <AppButton label="Apply" variant="outline" onPress={props.onApplyAsCoordinator} />
+            ) : null}
+          </View>
         ) : null}
-      </View>
 
-      {props.loading ? (
-        <>
-          <AppSkeletonCard testID="food-skeleton" />
-          <AppSkeletonCard />
-        </>
-      ) : null}
+        {props.loading ? (
+          <>
+            <AppSkeletonCard testID="food-skeleton" />
+            <AppSkeletonCard />
+          </>
+        ) : null}
 
-      {props.error ? (
-        <AppErrorState
-          title="Could not load Food Ajo"
-          description="Programmes could not be refreshed. Check your connection and try again."
-          onRetry={props.onRetry}
-        />
-      ) : null}
+        {/* The error belongs on both tabs: one request failing leaves neither
+            list trustworthy, and saying so only on Packages would let Active
+            look merely empty. */}
+        {props.error ? (
+          <AppErrorState
+            title="Could not load Food Ajo"
+            description="Programmes could not be refreshed. Check your connection and try again."
+            onRetry={props.onRetry}
+          />
+        ) : null}
 
-      {props.subscriptions?.length ? (
-        <View style={styles.section}>
-          <AppText accessibilityRole="header" weight="semibold" style={styles.sectionTitle}>
-            My Active Plans
-          </AppText>
-          {props.subscriptions.map((subscription) => (
-            <SubscriptionCard
-              key={subscription.id}
-              subscription={subscription}
-              onPress={() => props.onOpen(subscription.groupId)}
-            />
-          ))}
-        </View>
-      ) : null}
+        {showingPackages ? (
+          <>
+            {browsable.map((programme) => (
+              <ProgrammeCard
+                key={programme.id}
+                programme={programme}
+                onPress={() => props.onOpen(programme.id)}
+              />
+            ))}
 
-      {!props.loading && !props.error && !props.programmes?.length ? (
-        <AppEmptyState
-          icon="basket-outline"
-          tone="neutral"
-          title="No programmes yet"
-          description="Food programmes near you will appear here once a coordinator opens one."
-        />
-      ) : null}
+            {!props.loading && !props.error && !browsable.length ? (
+              <AppEmptyState
+                icon="basket-outline"
+                tone="neutral"
+                title="No programmes to join"
+                description="Food programmes near you will appear here once a coordinator opens one."
+              />
+            ) : null}
+          </>
+        ) : (
+          <>
+            {active.map((subscription) => (
+              <SubscriptionCard
+                key={subscription.id}
+                subscription={subscription}
+                onPress={() => props.onOpen(subscription.groupId)}
+              />
+            ))}
 
-      {browsable.length ? (
-        <View style={styles.section}>
-          <AppText accessibilityRole="header" weight="semibold" style={styles.sectionTitle}>
-            Browse Packages
-          </AppText>
-          {browsable.map((programme) => (
-            <ProgrammeCard
-              key={programme.id}
-              programme={programme}
-              onPress={() => props.onOpen(programme.id)}
-            />
-          ))}
-        </View>
-      ) : null}
-    </ScrollView>
+            {!props.loading && !props.error && !active.length ? (
+              <AppEmptyState
+                icon="basket-outline"
+                tone="neutral"
+                title="No active plans"
+                description="A programme you join appears here, with what you have paid towards it."
+              />
+            ) : null}
+          </>
+        )}
+      </ScrollView>
+
+      <AppFab
+        label="Start"
+        onPress={() => setSheetOpen(true)}
+        bottomOffset={spacing.md}
+        testID="food-start-fab"
+      />
+
+      <AppActionSheet
+        visible={sheetOpen}
+        title="Start a Food Ajo"
+        onClose={() => setSheetOpen(false)}
+        actions={[
+          {
+            label: 'Create',
+            description: 'Open a programme and buy in bulk for a group',
+            icon: 'add-circle-outline',
+            onPress: props.onCreate,
+          },
+          {
+            label: 'Join',
+            description: 'Enter the code a coordinator shared with you',
+            icon: 'enter-outline',
+            onPress: props.onJoin,
+          },
+        ]}
+        testID="food-start-sheet"
+      />
+    </View>
   );
 }
 
@@ -262,6 +331,7 @@ function ProgrammeCard({ programme, onPress }: { programme: FoodProgramme; onPre
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
 
   coordinator: {

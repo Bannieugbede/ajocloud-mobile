@@ -308,6 +308,13 @@ now collects a WhatsApp number and a NIN, on an either/or rule with CAC, with th
 request is built. The ₦1,000 fee is specified as a seeded FeeDefinition charged on approval before a
 vendor's first programme, not as a constant in the app. Tests: 954 pass.
 
+Session 2026-09-12: Food tab restructured to the supplied design. The screen header was removed and
+replaced by Packages/Active tabs, which split the two stacked sections into two lists; a floating
+"Start" button opens a bottom sheet offering Create and Join. Two reusable components were added,
+`AppActionSheet` and `AppFab`. Create routes to the coordinator application and Join to the Packages
+list, both placeholders recorded in `docs/BACKEND_REQUIREMENTS.md` — Food has no create-programme form
+and no join-by-code. Tests: 960 pass, 5 added.
+
 Order: package list → detail → enrollment/payment confirmation → progress/contribution/distribution
 history. Confirm whether this is savings, commerce fulfillment, or both; item substitution, capacity,
 coordinator verification, schedule, refund/cancellation, fulfillment evidence, and payment semantics.

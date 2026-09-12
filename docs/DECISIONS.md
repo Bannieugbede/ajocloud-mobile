@@ -1251,3 +1251,55 @@ cards instead of matching them — the chrome reads as chrome.
 A contrast test asserts each failing pair. It was confirmed to fail on the old
 value before being kept, so it is a regression test rather than a restatement of
 whatever the palette happens to say.
+
+## Food tab: two tabs, and one Start button (2026-09-12)
+
+### The screen names itself, so the header went
+
+"Food Ajo / Community bulk buying and distribution" sat above a list on the tab
+already labelled Food. The segmented control replaces it: it says which of the
+two lists is showing, which the title never did, and it costs no vertical space
+because it took the title's.
+
+### Packages and Active are two lists, not two sections
+
+The screen stacked "My Active Plans" above "Browse Packages", so someone with
+several plans scrolled past all of them to reach anything joinable, and someone
+with none saw a heading over nothing. They are now tabs.
+
+Packages opens first. The tab exists to find a programme, and a member with no
+plans yet would otherwise land on an empty screen. The coordinator invitation
+moved onto Packages alone — it belongs with the programmes to browse, not with
+the plans someone already holds — but the error state is drawn on both, because
+one failed request leaves neither list trustworthy and showing it on Packages
+alone would let Active look merely empty.
+
+### Start is an extended button, not a bare plus
+
+A circular "+" on a screen that lists things to join does not say whether it
+creates or joins. The label does. It floats over the list rather than scrolling
+with it, and the scroll view pads its own content past it so the last card is
+never left underneath.
+
+### The sheet is a new component, because `AppSelect` is the wrong shape
+
+`AppSelect` already models a sheet, but a full-page one: right for a long,
+searchable list, too much for two actions. `AppActionSheet` is the short form —
+a panel at the bottom, where the thumb already is having just pressed Start.
+
+It closes before running the chosen action, so a handler that navigates does not
+leave a sheet mounted over the screen it moved to, and it can be dismissed three
+ways — scrim, Close, and Android back — because a sheet that can only be
+dismissed by choosing something is a trap. A test covers dismissal specifically.
+
+### Where Create and Join actually go
+
+Create routes to the coordinator application. Creating a programme is a
+coordinator's action and the application is what grants it, so an unapproved
+member is sent to apply rather than to a form the backend would refuse.
+
+Join routes to the Packages list. There is no join-by-code for Food — unlike
+Ajo, a programme is joined by opening it and subscribing to a package — so
+inventing a code-entry screen would have meant asking for a code nobody issues.
+Both are placeholders for flows that do not exist yet, and are recorded as such
+in `docs/BACKEND_REQUIREMENTS.md`.
