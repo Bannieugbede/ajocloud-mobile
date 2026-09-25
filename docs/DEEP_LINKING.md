@@ -39,3 +39,25 @@ Changing the app's `scheme` in `app.json` breaks this link unless
 `app/+native-intent.ts` redirects a cold-start delivery of this link to
 `/sign-in`. The handoff code is deliberately dropped: it is single-use and the
 session that requested it is gone.
+
+## Invitation links (`/join/<code>`)
+
+The same invitation arrives in three forms, all ending on `join/[code]`:
+
+| Form                               | iOS                       | Android                        |
+| ---------------------------------- | ------------------------- | ------------------------------ |
+| `ajocloud://join/<code>`           | Opens the app             | Opens the app                  |
+| `https://ajocloud.com/join/<code>` | Opens the app (universal) | Opens the web page (see below) |
+| Push notification tap              | Opens the app             | Opens the app                  |
+
+Without the app installed, the https link opens the web page, which describes
+the group, offers to open the app through the scheme, and links to both stores.
+
+Android App Links are not active yet: the website's `assetlinks.json` still
+needs the release key's SHA-256 fingerprint (`eas credentials --platform
+android`), and `app.json` then needs the `intentFilters` block listed in the web
+repository's `docs/app-links.md`. Until then an Android user reaches the app
+through the web page's "Open in app" button.
+
+`ios/` is generated. `app.json` is the source of truth for the associated
+domain; a local `ios/` folder picks it up on the next `npx expo prebuild`.

@@ -295,12 +295,13 @@ tap that launches it is the common case — and a listener registered during
 render is too late for that. The response identifier is remembered so a
 re-render does not navigate again and fight whatever the user did next.
 
-**Universal links are not enabled yet.** `associatedDomains` and
-`intentFilters` are deliberately absent from `app.json`: declaring them while
-the website serves placeholder association files makes `https://` links fail
-silently and in a harder way to diagnose than not claiming them at all. The
-custom scheme works today; see `docs/app-links.md` in the web repository for
-what has to be filled in first.
+**Universal links are enabled on iOS only.** (Updated 2026-09-25; see
+"Universal links on iOS" below.) `intentFilters` are still deliberately absent
+from `app.json`: declaring them while the website serves a placeholder
+`assetlinks.json` makes `https://` links fail silently and in a harder way to
+diagnose than not claiming them at all. The custom scheme works on both
+platforms; see `docs/app-links.md` in the web repository for what has to be
+filled in first.
 
 ## Contribution payment (2026-09-04)
 
@@ -1303,3 +1304,27 @@ Ajo, a programme is joined by opening it and subscribing to a package — so
 inventing a code-entry screen would have meant asking for a code nobody issues.
 Both are placeholders for flows that do not exist yet, and are recorded as such
 in `docs/BACKEND_REQUIREMENTS.md`.
+
+## Universal links on iOS (2026-09-25)
+
+**iOS claims `applinks:ajocloud.com` now; Android waits for its fingerprint.**
+The Apple association file needs only the Team ID, which is already in the
+Xcode project (`DATP227H95`), so the website's file can be filled in honestly.
+Android's needs the SHA-256 of the release signing key, which EAS holds and
+which cannot be derived from the source. Claiming the Android link before that
+value exists would repeat the silent failure the earlier decision avoided.
+
+**The debug keystore's fingerprint is never listed in `assetlinks.json`.** The
+checked-in `android/app/debug.keystore` is React Native's shared public debug
+key. Listing it would let anyone sign an app with our package name and receive
+invitation links, and an invitation code is a bearer credential.
+
+**Only `/join/*` is claimed.** It is the only https link the backend sends to
+members. `/invite` is a staff invitation to the web console and must stay in
+the browser; `/admin` and the marketing pages have no app equivalent. Expo
+Router strips the origin from an https URL, so a universal link lands on
+`join/[code]` without any new handling.
+
+**`app-links-config.test.ts` pins the claimed domain to `EXPO_PUBLIC_WEB_URL`.**
+A domain the app claims but no link uses opens nothing, and the failure looks
+like a browser tab rather than an error.

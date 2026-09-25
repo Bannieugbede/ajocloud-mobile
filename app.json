@@ -10,6 +10,7 @@
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.mirumversal.ajocloud",
+      "associatedDomains": ["applinks:ajocloud.com"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
