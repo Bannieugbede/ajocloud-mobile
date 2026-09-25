@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
+import { poolShareMessage } from '@/services/share-links';
 import { fontSizes, radius, spacing } from '@/theme';
 
 /**
@@ -29,7 +30,7 @@ export function PoolCodeScreen({
 
   const share = () => {
     void Share.share({
-      message: `Join "${poolName}" on Ajo Cloud with code ${joinCode}.`,
+      message: poolShareMessage(poolName, joinCode),
     });
   };
 

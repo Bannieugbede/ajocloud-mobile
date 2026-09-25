@@ -69,6 +69,8 @@ function ThemedNavigation() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="join/index" options={{ headerShown: false }} />
         <Stack.Screen name="join/[code]" options={{ title: 'Invitation' }} />
+        <Stack.Screen name="invite/akawo/[code]" options={{ headerShown: false }} />
+        <Stack.Screen name="invite/food/[programmeId]" options={{ headerShown: false }} />
       </Stack>
     </>
   );

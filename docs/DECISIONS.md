@@ -1357,3 +1357,23 @@ person returns to the web page and taps Open in the app.
 **The end of registration resumes a held invitation.** Only sign-in did before,
 so someone who had to create an account to accept an invitation was dropped on
 Home and lost it.
+
+## Shared links for every product (2026-09-25)
+
+**Akawo pools and Food programmes are shared as website links.** Before, a pool
+was shared as a bare code and a programme not at all, so someone without the
+app got nothing to open. The website link works with or without the app. The
+pool message keeps the bare code too, because a link is useless read aloud.
+
+**Links go through public entry screens, not straight to the tabs.** The tab
+screens assume a session. `invite/akawo/[code]` and `invite/food/[programmeId]`
+decide: signed in, straight on; signed out, hold the destination and sign in
+first.
+
+**One held destination, not one per product.** The newest link is the one the
+person is acting on. Holding an Ajo invitation, a pool and a programme at once
+would resume whichever the code happened to check first.
+
+**Food is shared only while `OPEN` or `ACTIVE`.** Those are the only states the
+website's public preview describes. A link to a draft would open on "not
+available".

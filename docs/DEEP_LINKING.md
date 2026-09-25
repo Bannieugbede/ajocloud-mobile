@@ -84,3 +84,28 @@ the app.
 The end of registration (`intent.tsx`) resumes a held invitation the same way
 sign-in does, so someone who created an account to accept an invitation is
 taken back to it.
+
+## Akawo pool and Food Ajo links (`/akawo/join/<code>`, `/food/<id>`)
+
+Members share these as website links (`src/services/share-links.ts`), because a
+website link works for everyone: it opens the app when installed, and otherwise
+the website shows the pool or programme and offers to join on the web or get
+the app. The pool code screen shares the link and the bare code, for someone
+typing it in. The Food programme screen has a Share button while the programme
+is `OPEN` or `ACTIVE`, the only states the website's public preview describes.
+
+`+native-intent.ts` redirects both paths, from the scheme or a universal link,
+to public entry screens under `/invite`. Left alone, `/akawo/join/<code>` would
+match nothing and `/food/<id>` would land on a tab screen that assumes a
+session. Only `?ref=` is carried across from the link's query.
+
+| Entry screen                | Signed in                                      | Signed out                                           |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
+| `invite/akawo/[code]`       | Pool join screen, code filled in and looked up | Pool held, sign in, then the pool join screen        |
+| `invite/food/[programmeId]` | The programme's screen in the Food tab         | Programme held, sign in, then the programme's screen |
+
+The held destination (`pending-invitation.ts`) now covers an Ajo invitation,
+an Akawo pool or a Food programme, one at a time, for an hour, in SecureStore.
+A record saved in the older `{ code }` form still reads as an Ajo invitation.
+The Play install referrer carries `ajocloud_pool` and `ajocloud_food` as well,
+and opens the matching entry screen on first launch.

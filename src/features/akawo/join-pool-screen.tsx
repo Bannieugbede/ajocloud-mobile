@@ -26,6 +26,7 @@ export function JoinPoolScreen({
   onLookup,
   onJoin,
   onClearPreview,
+  initialCode,
 }: {
   preview?: PoolPreview | null;
   looking: boolean;
@@ -34,9 +35,11 @@ export function JoinPoolScreen({
   onLookup: (joinCode: string) => void;
   onJoin: (values: { joinCode: string; fullName: string; reference: string }) => void;
   onClearPreview: () => void;
+  /** A code that arrived in a shared link, already filled in. */
+  initialCode?: string;
 }) {
   const { colors } = useTheme();
-  const [joinCode, setJoinCode] = useState('');
+  const [joinCode, setJoinCode] = useState(initialCode ?? '');
   const [fullName, setFullName] = useState('');
   const [reference, setReference] = useState('');
   const [touched, setTouched] = useState(false);

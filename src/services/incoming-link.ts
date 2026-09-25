@@ -78,3 +78,27 @@ export function normaliseReferralCode(input: unknown): string | null {
   }
   return `${REFERRAL_PREFIX}${body}`;
 }
+
+/** Mirrors the backend's pool-code alphabet (`pool-policy.ts`): no 0/O, 1/I/L. */
+const POOL_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/**
+ * The canonical form of an Akawo pool join code, or null. Compared the way the
+ * backend compares them: case-insensitive, spaces and dashes ignored.
+ */
+export function normalisePoolCode(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const code = input.trim().toUpperCase().replace(/[\s-]/g, '');
+  if (code.length !== 8) return null;
+  for (const character of code) {
+    if (!POOL_CODE_ALPHABET.includes(character)) return null;
+  }
+  return code;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Whether a value is shaped like a Food Ajo programme id. */
+export function isProgrammeId(value: unknown): value is string {
+  return typeof value === 'string' && UUID.test(value);
+}

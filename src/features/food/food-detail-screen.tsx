@@ -50,6 +50,7 @@ export function FoodDetailScreen({
   onRetry,
   onSubscribe,
   onUnsubscribe,
+  onShare,
 }: {
   programme?: FoodProgramme;
   /** The viewer's own enrolment in this programme, if any. */
@@ -63,6 +64,8 @@ export function FoodDetailScreen({
   onRetry: () => void;
   onSubscribe: (packageId: string) => void;
   onUnsubscribe: () => void;
+  /** Shares the programme's web link. Absent when there is no link to share. */
+  onShare?: () => void;
 }) {
   const { colors } = useTheme();
   const [panel, setPanel] = useState<Panel>('details');
@@ -276,6 +279,9 @@ export function FoodDetailScreen({
             ) : null}
           </View>
         )}
+        {onShare ? (
+          <AppButton label="Share this programme" variant="ghost" onPress={onShare} />
+        ) : null}
       </View>
     </ScrollView>
   );

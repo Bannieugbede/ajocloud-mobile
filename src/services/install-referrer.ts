@@ -1,14 +1,25 @@
-import { isPlausibleInvitationCode, normaliseReferralCode } from '@/services/incoming-link';
+import {
+  isPlausibleInvitationCode,
+  isProgrammeId,
+  normalisePoolCode,
+  normaliseReferralCode,
+} from '@/services/incoming-link';
 
 export type InstallAttribution = {
+  /** An Ajo group invitation code. */
   invitationCode: string | null;
+  /** An Akawo pool join code, canonical. */
+  poolCode: string | null;
+  /** A Food Ajo programme id. */
+  programmeId: string | null;
   referralCode: string | null;
 };
 
 /**
  * What the website attached to a Play Store install.
  *
- * The website's Play link carries `referrer=ajocloud_invite=…&ajocloud_ref=…`
+ * The website's Play link carries one destination (`ajocloud_invite`,
+ * `ajocloud_pool` or `ajocloud_food`) and optionally `ajocloud_ref`
  * (`src/lib/attribution.ts` in the web repository), and Google Play returns
  * that string to the app through the Install Referrer API. It sits beside the
  * `utm_*` values Play adds itself, so only the prefixed keys are read.
@@ -21,7 +32,12 @@ export type InstallAttribution = {
  * implements only partly, and so this can be tested without a native module.
  */
 export function attributionFromInstallReferrer(referrer: unknown): InstallAttribution {
-  const attribution: InstallAttribution = { invitationCode: null, referralCode: null };
+  const attribution: InstallAttribution = {
+    invitationCode: null,
+    poolCode: null,
+    programmeId: null,
+    referralCode: null,
+  };
   if (typeof referrer !== 'string' || referrer.length === 0) return attribution;
 
   for (const pair of referrer.split('&')) {
@@ -37,6 +53,10 @@ export function attributionFromInstallReferrer(referrer: unknown): InstallAttrib
 
     if (key === 'ajocloud_invite' && isPlausibleInvitationCode(value)) {
       attribution.invitationCode = value;
+    } else if (key === 'ajocloud_pool') {
+      attribution.poolCode = normalisePoolCode(value);
+    } else if (key === 'ajocloud_food' && isProgrammeId(value)) {
+      attribution.programmeId = value.toLowerCase();
     } else if (key === 'ajocloud_ref') {
       attribution.referralCode = normaliseReferralCode(value);
     }

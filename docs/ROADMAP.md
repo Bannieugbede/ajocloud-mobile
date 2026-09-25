@@ -797,3 +797,28 @@ come back and tap Open in the app.
 
 Follow-ups: device test of each path on both platforms; set the store URLs on
 the website when the listings go live.
+
+## Shared links for Akawo pools and Food Ajo (IN REVIEW, 2026-09-25)
+
+Summary: pools and programmes are shared as website links, which open the app
+when installed and a web landing page otherwise. Signed-out arrivals hold the
+destination through sign-in.
+
+| Item                      | Where                                                              |
+| ------------------------- | ------------------------------------------------------------------ |
+| Share links and messages  | `src/services/share-links.ts`, `pool-code-screen.tsx`, Food detail |
+| Link routing              | `src/app/+native-intent.ts`, `src/app/invite/*`                    |
+| Held destination, resumed | `src/services/pending-invitation.ts`, `post-sign-in-route.ts`      |
+| Pool code from a link     | `src/app/(tabs)/akawo/pools/join.tsx`                              |
+| Play install referrer     | `src/services/install-referrer.ts`, `use-install-attribution.ts`   |
+
+Tests: `__tests__/share-links.test.tsx` (new), `__tests__/referral-links.test.tsx`
+and `src/services/install-referrer.test.ts` extended. `bun run validate` passes.
+
+Limitations: not exercised on a device. The pool created in the app is a draft
+until the organiser opens it, and its link reports "not taking members" until
+then. The manage screen still shares by name only, because the code cannot be
+fetched again after creation.
+
+Follow-ups: device test of each link on both platforms; Android App Links once
+the release fingerprint is in the website's `assetlinks.json`.

@@ -125,12 +125,32 @@ describe('a Play Store install from the website', () => {
     );
     await renderHook(() => useInstallAttribution());
     await waitFor(() =>
-      expect(mockPush).toHaveBeenCalledWith({
-        pathname: '/join/[code]',
-        params: { code: INVITE, ref: 'AJO-7KQ3MZ' },
-      }),
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/join/[code]', params: { code: INVITE } }),
     );
     expect(mockHoldReferral).toHaveBeenCalledWith('AJO-7KQ3MZ');
+  });
+
+  it('opens an Akawo pool passed through Play', async () => {
+    mockGetInstallReferrer.mockResolvedValueOnce('ajocloud_pool=ABCDEFGH');
+    await renderHook(() => useInstallAttribution());
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({
+        pathname: '/invite/akawo/[code]',
+        params: { code: 'ABCDEFGH' },
+      }),
+    );
+  });
+
+  it('opens a Food Ajo programme passed through Play', async () => {
+    const programmeId = '11111111-2222-4333-8444-555555555555';
+    mockGetInstallReferrer.mockResolvedValueOnce(`ajocloud_food=${programmeId}`);
+    await renderHook(() => useInstallAttribution());
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({
+        pathname: '/invite/food/[programmeId]',
+        params: { programmeId },
+      }),
+    );
   });
 
   it('acts only once per installation', async () => {

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
+import { Share } from 'react-native';
 
 import {
   getFoodProgramme,
@@ -8,6 +9,7 @@ import {
   unsubscribeFromProgramme,
 } from '@/api/endpoints/food-ajo';
 import { FoodDetailScreen } from '@/features/food/food-detail-screen';
+import { foodShareMessage } from '@/services/share-links';
 import type { AppError } from '@/types/errors';
 
 export default function FoodProgrammeRoute() {
@@ -43,6 +45,13 @@ export default function FoodProgrammeRoute() {
     onSuccess: refresh,
   });
 
+  // Only a programme others can see is worth sharing: the website's page for
+  // it answers for OPEN and ACTIVE programmes alone.
+  const shareable =
+    programme.data && (programme.data.status === 'OPEN' || programme.data.status === 'ACTIVE')
+      ? foodShareMessage(programme.data.name, programme.data.id)
+      : null;
+
   return (
     <FoodDetailScreen
       {...(programme.data ? { programme: programme.data } : {})}
@@ -59,6 +68,7 @@ export default function FoodProgrammeRoute() {
       onRetry={() => void programme.refetch()}
       onSubscribe={(packageId) => subscribe.mutate(packageId)}
       onUnsubscribe={() => unsubscribe.mutate()}
+      {...(shareable ? { onShare: () => void Share.share({ message: shareable }) } : {})}
     />
   );
 }
