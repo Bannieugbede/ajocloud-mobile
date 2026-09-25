@@ -847,3 +847,40 @@ screen, because they are true for as long as the screen is open. Confirmation
 dialogs stay dialogs.
 
 Follow-ups: device check of swipe-to-dismiss and of toasts over the keyboard.
+
+## One payment flow for every product (IN REVIEW, 2026-09-26)
+
+Summary: Ajo contributions and Food enrolments now pay through the same flow as
+Akawo dues and wallet top-ups. Every product calls `usePayment().start`; the
+shared flow quotes the amount, offers the methods the server allows, handles a
+short wallet with an in-place top-up, and resumes the payment afterwards. Needs
+backend branch `feat/unified-payments` (ADR-013).
+
+| Item                              | Where                                                        |
+| --------------------------------- | ------------------------------------------------------------ |
+| Entry point for products          | `src/features/payments/use-payment.ts`                       |
+| Per-target rules and refreshes    | `src/features/payments/payment-targets.ts`                   |
+| Shortfall, part payment, keys     | `src/features/payments/payment-flow.ts`                      |
+| Flow id, pause and resume         | `src/store/payment-store.ts`                                 |
+| Quote, methods, part payment      | `src/app/(tabs)/pay/index.tsx`, `payment-method-screen.tsx`  |
+| Polling and resume after a top-up | `src/app/(tabs)/pay/result.tsx`, `payment-result-screen.tsx` |
+| Ajo, Akawo, Food, Home, top-up    | the product routes, each calling `usePayment`                |
+
+Removed: `src/app/(tabs)/ajo/[groupId]/contribute.tsx` and
+`src/features/ajo/pay-contribution-screen.tsx`, whose part-payment choice moved
+into the shared flow. Home's upcoming contribution, which opened that route
+without the schedule it needed, now opens the payment directly.
+
+Tests: `payment-flow.test.ts`, `payment-targets.test.ts` and
+`payment-store.test.ts` (new); `__tests__/payment-screens.test.tsx` and
+`__tests__/food-detail-screen.test.tsx` extended; `home-data.test.ts` extended.
+`bun run validate` passes: 86 suites, 1,111 tests.
+
+Limitations: not exercised on a device, including the pay tab's pop-to-top on
+blur and `router.dismissTo` when resuming after a top-up. A top-up completes
+only when the provider's webhook arrives, so resuming depends on it. Bills keep
+their own validated flow. Akawo savings goals have no deposit route on the
+backend and are unchanged.
+
+Follow-ups: device test of each product's payment, including a short wallet and
+a part payment; Food instalments if the product wants them.

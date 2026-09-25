@@ -1,6 +1,7 @@
 import {
   acceptsNewMembers,
   coordinatorInvitation,
+  enrolmentPayment,
   enrolmentProgressBps,
   fulfilmentLabel,
   isEnrolled,
@@ -165,5 +166,63 @@ describe('priceLabel', () => {
       (minor, currency) => `${currency} ${minor}`,
     );
     expect(label).toBe('NGN 3500000 / Monthly');
+  });
+});
+
+describe('enrolmentPayment', () => {
+  const enrolment = {
+    id: 'sub-1',
+    groupId: 'prog-1',
+    packageId: 'pkg-1',
+    status: 'PENDING',
+    quantity: 2,
+    fulfilmentMethod: 'PICKUP',
+    createdAt: '2026-07-01T00:00:00.000Z',
+    group: { name: 'Staples', status: 'OPEN', distributionAt: null },
+    package: { name: 'Rice', priceMinor: '3500000', currency: 'NGN' },
+    amountDueMinor: '7000000',
+    amountPaidMinor: '0',
+  };
+
+  it('owes the whole price while unpaid, and can be paid', () => {
+    expect(enrolmentPayment(enrolment, 'OPEN')).toEqual({
+      totalMinor: '7000000',
+      paidMinor: '0',
+      owedMinor: '7000000',
+      currency: 'NGN',
+      payable: true,
+      canLeave: true,
+    });
+  });
+
+  it('owes nothing once paid, and is refundable only before buying begins', () => {
+    const paid = { ...enrolment, status: 'ACTIVE', amountPaidMinor: '7000000' };
+    expect(enrolmentPayment(paid, 'OPEN')).toMatchObject({
+      owedMinor: '0',
+      payable: false,
+      canLeave: true,
+    });
+    expect(enrolmentPayment(paid, 'ACTIVE')?.canLeave).toBe(false);
+  });
+
+  it('still takes payment after buying begins from a member already enrolled', () => {
+    expect(enrolmentPayment(enrolment, 'ACTIVE')?.payable).toBe(true);
+  });
+
+  it.each(['SUSPENDED', 'COMPLETED', 'CANCELLED'])(
+    'takes no payment for a %s programme',
+    (status) => {
+      expect(enrolmentPayment(enrolment, status)?.payable).toBe(false);
+    },
+  );
+
+  it('says nothing when the server does not report what was paid', () => {
+    const { amountPaidMinor: _omitted, ...unreported } = enrolment;
+    expect(enrolmentPayment(unreported, 'OPEN')).toBeNull();
+  });
+
+  it('is nothing for a member who is not enrolled', () => {
+    expect(enrolmentPayment(null, 'OPEN')).toBeNull();
+    expect(enrolmentPayment({ ...enrolment, status: 'CANCELLED' }, 'OPEN')).toBeNull();
   });
 });

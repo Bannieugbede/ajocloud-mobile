@@ -148,3 +148,49 @@ export function priceLabel(
     .replace(/^./, (character) => character.toUpperCase());
   return `${amount} / ${frequency}`;
 }
+
+/** Where a member's enrolment stands with its payment. */
+export type EnrolmentPayment = {
+  /** What the enrolment costs: the package price for each portion. */
+  totalMinor: string;
+  paidMinor: string;
+  /** What is still to pay; zero once paid. */
+  owedMinor: string;
+  currency: string;
+  /** The member can pay now: something is owed and the programme collects. */
+  payable: boolean;
+  /**
+   * Leaving is allowed. A paid enrolment is refunded, which the server allows
+   * only until buying begins; an unpaid one can always be withdrawn.
+   */
+  canLeave: boolean;
+};
+
+/**
+ * The payment side of an enrolment, from what the server says it costs and has
+ * received. Null when the member is not enrolled, or when the server does not
+ * report what has been paid: guessing "nothing" would tell someone who has paid
+ * that they still owe.
+ */
+export function enrolmentPayment(
+  subscription: FoodSubscription | null | undefined,
+  programmeStatus: string,
+): EnrolmentPayment | null {
+  if (!subscription || !isEnrolled(subscription)) return null;
+  if (subscription.amountPaidMinor === undefined) return null;
+  const total =
+    subscription.amountDueMinor !== undefined
+      ? BigInt(subscription.amountDueMinor)
+      : BigInt(subscription.package.priceMinor) * BigInt(subscription.quantity);
+  const paid = BigInt(subscription.amountPaidMinor);
+  const owed = total > paid ? total - paid : 0n;
+  const collecting = programmeStatus === 'OPEN' || programmeStatus === 'ACTIVE';
+  return {
+    totalMinor: total.toString(),
+    paidMinor: paid.toString(),
+    owedMinor: owed.toString(),
+    currency: subscription.package.currency,
+    payable: subscription.status === 'PENDING' && owed > 0n && collecting,
+    canLeave: paid === 0n || programmeStatus === 'OPEN',
+  };
+}

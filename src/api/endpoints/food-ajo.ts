@@ -66,6 +66,14 @@ export type FoodSubscription = {
   status: string;
   quantity: number;
   fulfilmentMethod: string;
+  /**
+   * What the enrolment costs in total, and how much of it has been paid. An
+   * enrolment is PENDING until paid in full, then ACTIVE. Absent from the
+   * subscribe response, which is always a fresh, unpaid enrolment.
+   */
+  amountDueMinor?: string;
+  amountPaidMinor?: string;
+  paidAt?: string | null;
   createdAt: string;
   group: { name: string; status: string; distributionAt: string | null };
   package: { name: string; priceMinor: string; currency: string };
@@ -88,6 +96,10 @@ export function subscribeToProgramme(
   );
 }
 
+/**
+ * Withdraws from a programme. A paid enrolment is refunded to the wallet, which
+ * the server allows only until buying begins.
+ */
 export function unsubscribeFromProgramme(programmeId: string): Promise<FoodSubscription> {
   if (!apiClient) throw new Error('API configuration is unavailable');
   return apiClient.request(

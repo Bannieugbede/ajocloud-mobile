@@ -168,7 +168,10 @@ export const toast = {
   info: (message: string, options?: ToastOptions) => show('info', message, options),
   dismiss: (id: string) => publish(toasts.filter((entry) => entry.id !== id)),
   /** Removes every toast. For tests, and for signing out. */
-  clear: () => publish([]),
+  clear: () => {
+    // Nothing to tell the host when nothing is showing.
+    if (toasts.length > 0) publish([]);
+  },
 };
 
 /** The toasts on screen right now, newest first, outside React. For tests. */

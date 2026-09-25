@@ -172,14 +172,18 @@ Client notes:
 - `feeMinor` is currently always `"0"`. The banded model is still undecided, so
   the field is real and displayed but charges nothing yet.
 
-**What still does not work end to end:** a `TRANSFER` or `CARD` payment reaches
-`PROCESSING` and stays there. Only a signature-verified Monnify webhook may
-complete an external payment, and that handler is not written. Wallet payments
-settle fully today, so the Akawo pool flow completes when the payer has a funded
-wallet.
+**Update 2026-09-26 — every product is payable (backend ADR-013).** Akawo dues,
+Ajo contributions, Food enrolments and wallet top-ups are all targets of the one
+contract. Every intent returns `methods`: product targets accept `WALLET` only,
+and a top-up accepts `TRANSFER` and `CARD` and completes by webhook. An Ajo
+contribution may name `amountMinor` up to what is owed; any other target that
+names one is refused. A Food enrolment is paid in full, held in the programme's
+escrow, and refunded to the wallet if withdrawn while the programme is `OPEN`.
+`GET /food-ajo/programmes/subscriptions/mine` returns `amountDueMinor`,
+`amountPaidMinor` and `paidAt`.
 
-`AJO_CONTRIBUTION`, `FOOD_SUBSCRIPTION` and `WALLET_TOPUP` are refused with 422
-until those products expose something payable.
+Still open: releasing Food escrow to a vendor, and an Akawo organiser's
+collection, are not built. Neither affects the member's side of paying.
 
 ## Akawo group pools
 
@@ -243,6 +247,12 @@ rather than losing five steps of typing.
   app has no screen that surfaces the request or lets someone respond.
 
 ## Food contributions and the payment schedule (2026-09-07)
+
+**Resolved 2026-09-26.** An enrolment is now paid in full through the shared
+payment contract, and the member's enrolment list reports what it costs and what
+has been paid. The Payment Schedule tab shows those figures. Instalments, which
+the design's progress bar implies, are still not modelled: the backend takes the
+whole price once. The original note follows.
 
 The Food detail design shows a "Payment Schedule" tab and a "My Progress" bar at
 60%. Neither can be built from what exists.

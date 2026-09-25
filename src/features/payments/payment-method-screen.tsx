@@ -1,48 +1,55 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import type { PaymentIntent, PaymentMethod } from '@/api/endpoints/payments';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppDivider } from '@/components/ui/app-divider';
+import { AppHero } from '@/components/ui/app-hero';
+import { AppInput } from '@/components/ui/app-input';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppErrorState } from '@/components/ui/app-state';
-import { AppHero } from '@/components/ui/app-hero';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, spacing } from '@/theme';
-import { formatMinorAmount } from '@/utils/money';
+import { fontSizes, radius, spacing } from '@/theme';
+import { formatMinorAmount, majorToMinor } from '@/utils/money';
 
-const methods: {
-  value: PaymentMethod;
+import { partAmountMessage, partAmountProblem, walletShortfallMinor } from './payment-flow';
+import { methodsFor } from './payment-targets';
+
+type MethodOption = {
   label: string;
   description: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-}[] = [
-  {
-    value: 'WALLET',
+};
+
+const METHODS: Record<PaymentMethod, MethodOption> = {
+  WALLET: {
     label: 'Ajo Cloud wallet',
     description: 'Pay instantly from your balance',
     icon: 'wallet-outline',
   },
-  {
-    value: 'TRANSFER',
+  TRANSFER: {
     label: 'Bank transfer',
     description: 'Send to a one-time account number',
     icon: 'swap-horizontal-outline',
   },
-  {
-    value: 'CARD',
+  CARD: {
     label: 'Card',
     description: 'Pay with a debit card',
     icon: 'card-outline',
   },
-];
+};
 
 /**
- * The shared payment screen. Every product pays through this, so what is being
- * paid for is summarised by the caller and the mechanics stay identical.
+ * The first screen of every payment, whichever product it is for: what is
+ * being paid, how much, and how.
+ *
+ * Nothing here is product-specific. The server quotes the amount and says which
+ * methods the payment accepts; the caller supplies the words. A product payment
+ * that the wallet cannot cover offers a top-up in place, so a short balance is
+ * a step on the way rather than a dead end.
  */
 export function PaymentMethodScreen({
   title,
@@ -51,7 +58,11 @@ export function PaymentMethodScreen({
   walletAvailableMinor,
   loading,
   error,
+  owedMinor,
+  updatingAmount = false,
   onRetry,
+  onChangeAmount,
+  onTopUp,
   onContinue,
 }: {
   /** What is being paid for, e.g. the pool's name. */
@@ -61,13 +72,27 @@ export function PaymentMethodScreen({
   walletAvailableMinor?: string;
   loading: boolean;
   error: boolean;
+  /**
+   * Everything still owed, for a payment that may be made in part. Absent for
+   * one that must be paid in full, which hides the choice entirely.
+   */
+  owedMinor?: string;
+  /** A new quote is being fetched for a changed amount. */
+  updatingAmount?: boolean;
   onRetry: () => void;
+  /** Asks for a new quote: part of what is owed, or null for all of it. */
+  onChangeAmount?: (amountMinor: string | null) => void;
+  /** Pauses this payment to add `amountMinor` to the wallet first. */
+  onTopUp?: (amountMinor: string) => void;
   onContinue: (method: PaymentMethod) => void;
 }) {
   const { colors } = useTheme();
-  const [method, setMethod] = useState<PaymentMethod>('WALLET');
+  const [chosen, setChosen] = useState<PaymentMethod | null>(null);
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [partAmount, setPartAmount] = useState('');
+  const [partTouched, setPartTouched] = useState(false);
 
-  if (loading) {
+  if (loading && !intent) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <AppSkeletonCard testID="payment-skeleton" />
@@ -87,106 +112,226 @@ export function PaymentMethodScreen({
     );
   }
 
-  // Only the wallet can be short of funds; the other rails are funded at the
-  // point of payment.
-  const walletShort =
-    walletAvailableMinor !== undefined && BigInt(walletAvailableMinor) < BigInt(intent.totalMinor);
+  const methods = methodsFor(intent);
+  const shortfall = methods.includes('WALLET')
+    ? walletShortfallMinor(walletAvailableMinor, intent.totalMinor)
+    : null;
+  const unavailable = (method: PaymentMethod) => method === 'WALLET' && shortfall !== null;
+  const firstAvailable = methods.find((method) => !unavailable(method)) ?? null;
+  // The member's choice while it is still possible; otherwise the first method
+  // that is. Derived rather than stored, so a quote that changes the total
+  // cannot leave a method selected that no longer covers it.
+  const method = chosen && !unavailable(chosen) ? chosen : firstAvailable;
+
+  const payingPart = owedMinor !== undefined && intent.amountMinor !== owedMinor;
+  const partProblem =
+    owedMinor !== undefined ? partAmountProblem(partAmount, owedMinor) : ('empty' as const);
+  const partMessage =
+    owedMinor !== undefined && partProblem && (partTouched || partProblem !== 'empty')
+      ? partAmountMessage(partProblem, formatMinorAmount(owedMinor, intent.currency))
+      : null;
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-      contentInsetAdjustmentBehavior="automatic"
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.flex}
     >
-      <AppHero
-        label="PAYING"
-        amountMinor={intent.totalMinor}
-        currency={intent.currency}
-        meta={[title, subtitle].filter(Boolean).join(' · ')}
-      />
+      <ScrollView
+        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <AppHero
+          label="PAYING"
+          amountMinor={intent.totalMinor}
+          currency={intent.currency}
+          meta={[title, subtitle].filter(Boolean).join(' · ')}
+        />
 
-      {/* The fee is shown separately rather than folded into one number, so the
-          user can see exactly what the platform charges. */}
-      {intent.feeMinor !== '0' ? (
-        <AppCard tone="muted">
-          <View style={styles.breakdownRow}>
-            <AppText style={{ color: colors.textMuted }}>Amount</AppText>
-            <AppText>{formatMinorAmount(intent.amountMinor, intent.currency)}</AppText>
-          </View>
-          <View style={styles.breakdownRow}>
-            <AppText style={{ color: colors.textMuted }}>Fee</AppText>
-            <AppText>{formatMinorAmount(intent.feeMinor, intent.currency)}</AppText>
-          </View>
-          <AppDivider />
-          <View style={styles.breakdownRow}>
-            <AppText weight="semibold">Total</AppText>
-            <AppText weight="semibold">
-              {formatMinorAmount(intent.totalMinor, intent.currency)}
-            </AppText>
-          </View>
-        </AppCard>
-      ) : null}
+        {owedMinor !== undefined && onChangeAmount ? (
+          <AppCard tone="muted" style={styles.amountCard}>
+            <View style={styles.breakdownRow}>
+              <AppText style={{ color: colors.textMuted }}>Still owed</AppText>
+              <AppText weight="semibold">{formatMinorAmount(owedMinor, intent.currency)}</AppText>
+            </View>
 
-      <AppText accessibilityRole="header" weight="semibold">
-        How would you like to pay?
-      </AppText>
-
-      {methods.map((option) => {
-        const selected = method === option.value;
-        const disabled = option.value === 'WALLET' && walletShort;
-        return (
-          <AppCard
-            key={option.value}
-            onPress={disabled ? undefined : () => setMethod(option.value)}
-            accessibilityLabel={option.label}
-            style={[
-              styles.method,
-              selected && { borderColor: colors.primary },
-              disabled && styles.disabled,
-            ]}
-          >
-            <View style={styles.methodRow}>
-              <Ionicons
-                name={option.icon}
-                size={22}
-                color={selected ? colors.primary : colors.textMuted}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-              />
-              <View style={styles.methodText}>
-                <AppText weight="medium">{option.label}</AppText>
-                <AppText style={[styles.meta, { color: colors.textMuted }]}>
-                  {option.value === 'WALLET' && walletAvailableMinor !== undefined
-                    ? disabled
-                      ? `Not enough balance — ${formatMinorAmount(walletAvailableMinor, intent.currency)} available`
-                      : `${formatMinorAmount(walletAvailableMinor, intent.currency)} available`
-                    : option.description}
-                </AppText>
+            {editingAmount ? (
+              <View style={styles.partForm}>
+                <AppInput
+                  label="How much would you like to pay now?"
+                  value={partAmount}
+                  onChangeText={setPartAmount}
+                  keyboardType="decimal-pad"
+                  autoFocus
+                  error={partMessage ?? undefined}
+                  testID="payment-part-amount"
+                />
+                <View style={styles.inlineActions}>
+                  <AppButton
+                    label="Use this amount"
+                    loading={updatingAmount}
+                    disabled={updatingAmount}
+                    onPress={() => {
+                      setPartTouched(true);
+                      const minor = majorToMinor(partAmount.trim());
+                      if (partProblem || minor === null) return;
+                      setEditingAmount(false);
+                      // Paying everything is not a part payment: ask for the
+                      // whole debt, so the quote reads the owed amount itself.
+                      onChangeAmount(minor === owedMinor ? null : minor);
+                    }}
+                    style={styles.grow}
+                  />
+                  <AppButton
+                    label="Cancel"
+                    variant="ghost"
+                    disabled={updatingAmount}
+                    onPress={() => setEditingAmount(false)}
+                  />
+                </View>
               </View>
-              {selected ? (
+            ) : (
+              <View style={styles.inlineActions}>
+                <AppText style={[styles.meta, styles.grow, { color: colors.textMuted }]}>
+                  {payingPart
+                    ? `Paying ${formatMinorAmount(intent.amountMinor, intent.currency)} now. The rest stays owed.`
+                    : 'You can pay part of it now and the rest later.'}
+                </AppText>
+                <AppButton
+                  label={payingPart ? 'Pay all' : 'Pay part'}
+                  variant="ghost"
+                  loading={updatingAmount}
+                  disabled={updatingAmount}
+                  onPress={() => {
+                    if (payingPart) {
+                      onChangeAmount(null);
+                      return;
+                    }
+                    setPartAmount('');
+                    setPartTouched(false);
+                    setEditingAmount(true);
+                  }}
+                />
+              </View>
+            )}
+          </AppCard>
+        ) : null}
+
+        {/* The fee is shown separately rather than folded into one number, so
+            the member can see exactly what the platform charges. */}
+        {intent.feeMinor !== '0' ? (
+          <AppCard tone="muted">
+            <View style={styles.breakdownRow}>
+              <AppText style={{ color: colors.textMuted }}>Amount</AppText>
+              <AppText>{formatMinorAmount(intent.amountMinor, intent.currency)}</AppText>
+            </View>
+            <View style={styles.breakdownRow}>
+              <AppText style={{ color: colors.textMuted }}>Fee</AppText>
+              <AppText>{formatMinorAmount(intent.feeMinor, intent.currency)}</AppText>
+            </View>
+            <AppDivider />
+            <View style={styles.breakdownRow}>
+              <AppText weight="semibold">Total</AppText>
+              <AppText weight="semibold">
+                {formatMinorAmount(intent.totalMinor, intent.currency)}
+              </AppText>
+            </View>
+          </AppCard>
+        ) : null}
+
+        <AppText accessibilityRole="header" weight="semibold">
+          {methods.length > 1 ? 'How would you like to pay?' : 'Paying with'}
+        </AppText>
+
+        {methods.map((option) => {
+          const details = METHODS[option];
+          const selected = method === option;
+          const disabled = unavailable(option);
+          return (
+            <AppCard
+              key={option}
+              onPress={disabled ? undefined : () => setChosen(option)}
+              accessibilityLabel={details.label}
+              style={[
+                styles.method,
+                { borderColor: selected ? colors.primary : colors.border },
+                disabled && styles.disabled,
+              ]}
+            >
+              <View style={styles.methodRow}>
                 <Ionicons
-                  name="checkmark-circle"
-                  size={20}
-                  color={colors.primary}
+                  name={details.icon}
+                  size={22}
+                  color={selected ? colors.primary : colors.textMuted}
                   accessibilityElementsHidden
                   importantForAccessibility="no"
                 />
-              ) : null}
-            </View>
-          </AppCard>
-        );
-      })}
+                <View style={styles.methodText}>
+                  <AppText weight="medium">{details.label}</AppText>
+                  <AppText style={[styles.meta, { color: colors.textMuted }]}>
+                    {option === 'WALLET' && walletAvailableMinor !== undefined
+                      ? `${formatMinorAmount(walletAvailableMinor, intent.currency)} available`
+                      : details.description}
+                  </AppText>
+                </View>
+                {selected ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={colors.primary}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
+                  />
+                ) : null}
+              </View>
+            </AppCard>
+          );
+        })}
 
-      <AppButton label="Continue" onPress={() => onContinue(method)} />
-    </ScrollView>
+        {/* Standing state rather than a toast: it stays true, and actionable,
+            for as long as the member is on this screen. */}
+        {shortfall !== null ? (
+          <View
+            style={[styles.notice, { backgroundColor: colors.warningSoft }]}
+            testID="payment-shortfall"
+          >
+            <AppText weight="semibold" accessibilityLiveRegion="polite">
+              Your wallet is {formatMinorAmount(shortfall, intent.currency)} short
+            </AppText>
+            <AppText style={{ color: colors.textMuted }}>
+              Add money to your wallet, then come back to finish this payment. It will be waiting
+              for you.
+            </AppText>
+            {onTopUp ? (
+              <AppButton label="Add money" variant="outline" onPress={() => onTopUp(shortfall)} />
+            ) : null}
+          </View>
+        ) : null}
+
+        <AppButton
+          label="Continue"
+          disabled={method === null || updatingAmount}
+          onPress={() => {
+            if (method) onContinue(method);
+          }}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { gap: spacing.md, padding: spacing.lg, paddingBottom: spacing.xxl },
+  amountCard: { gap: spacing.sm },
+  partForm: { gap: spacing.sm },
+  inlineActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  grow: { flex: 1 },
   breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
   method: { borderWidth: 2 },
   disabled: { opacity: 0.5 },
   methodRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   methodText: { flex: 1, gap: 2 },
   meta: { fontSize: fontSizes.caption },
+  notice: { borderRadius: radius.md, gap: spacing.sm, padding: spacing.md },
 });

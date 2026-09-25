@@ -62,15 +62,7 @@ const ROUTES: readonly [string, () => React.ReactElement, readonly string[]][] =
   [
     'ajo',
     AjoLayout,
-    [
-      'index',
-      'create',
-      'join',
-      '[groupId]/index',
-      '[groupId]/contribute',
-      '[groupId]/swap',
-      '[groupId]/swaps',
-    ],
+    ['index', 'create', 'join', '[groupId]/index', '[groupId]/swap', '[groupId]/swaps'],
   ],
   [
     'akawo',

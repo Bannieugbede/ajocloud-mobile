@@ -36,8 +36,13 @@ export type UpcomingItem = {
   amountMinor: string;
   currency: string;
   dueAt: string;
-  /** Set only for contributions, which are the rows a payment settles. */
+  /** The Ajo contribution schedule a payment settles. Contributions only. */
   scheduleId?: string;
+  /**
+   * The Akawo due a payment settles, set only while it can be paid: a due
+   * already PROCESSING is owed but has a payment on its way.
+   */
+  dueId?: string;
   urgency: 'OVERDUE' | 'DUE_SOON' | 'SCHEDULED';
 };
 
@@ -173,6 +178,7 @@ export function poolDuesAsUpcoming(
       product: 'Akawo' as const,
       amountMinor: entry.due?.amountMinor ?? entry.pool.amountMinor,
       currency: entry.pool.currency,
+      ...(entry.due?.status === 'PENDING' ? { dueId: entry.due.id } : {}),
       // An undated due sorts to the end rather than to the top on an empty
       // string, which would make it look like the most urgent thing owed.
       dueAt: entry.pool.dueAt ?? '',

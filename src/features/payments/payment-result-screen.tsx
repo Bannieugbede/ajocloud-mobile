@@ -7,6 +7,7 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
+import { toast } from '@/components/ui/app-toast';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 
@@ -26,13 +27,21 @@ type Presentation = {
 export function PaymentResultScreen({
   intent,
   title,
+  pausedFor,
   onDone,
   onRetry,
+  onResume,
 }: {
   intent: PaymentIntent;
   title: string;
+  /**
+   * The payment this one was a top-up for, which is waiting to be finished.
+   * Once the money has arrived, the next step is to go back and pay it.
+   */
+  pausedFor?: string;
   onDone: () => void;
   onRetry: () => void;
+  onResume?: () => void;
 }) {
   const { colors } = useTheme();
 
@@ -50,7 +59,9 @@ export function PaymentResultScreen({
         tint: colors.warning,
         soft: colors.warningSoft,
         heading: 'Waiting for your payment',
-        body: 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
+        body: pausedFor
+          ? `We will confirm this as soon as the money arrives, and you can then finish paying for ${pausedFor}.`
+          : 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
       },
       FAILED: {
         icon: 'close-circle' as const,
@@ -77,6 +88,8 @@ export function PaymentResultScreen({
       // here rather than rendering an undefined heading at runtime.
     } satisfies Record<PaymentIntent['status'], Presentation>
   )[intent.status];
+
+  const canResume = intent.status === 'SUCCEEDED' && Boolean(pausedFor) && Boolean(onResume);
 
   return (
     <ScrollView
@@ -128,7 +141,9 @@ export function PaymentResultScreen({
             label="Copy account number"
             variant="outline"
             onPress={() => {
-              void Clipboard.setStringAsync(intent.transferInstructions?.accountNumber ?? '');
+              void Clipboard.setStringAsync(intent.transferInstructions?.accountNumber ?? '').then(
+                () => toast.success('Account number copied.'),
+              );
             }}
           />
         </AppCard>
@@ -136,9 +151,12 @@ export function PaymentResultScreen({
 
       <View style={styles.footer}>
         {intent.status === 'FAILED' ? <AppButton label="Try again" onPress={onRetry} /> : null}
+        {canResume ? (
+          <AppButton label={`Continue to pay for ${pausedFor}`} onPress={onResume} />
+        ) : null}
         <AppButton
           label="Done"
-          variant={intent.status === 'FAILED' ? 'outline' : 'primary'}
+          variant={intent.status === 'FAILED' || canResume ? 'outline' : 'primary'}
           onPress={onDone}
         />
       </View>

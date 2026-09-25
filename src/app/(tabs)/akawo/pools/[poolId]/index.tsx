@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { getMemberPool } from '@/api/endpoints/akawo-pools';
 import { MemberPoolScreen } from '@/features/akawo/member-pool-screen';
-import { usePaymentStore } from '@/store/payment-store';
+import { usePayment } from '@/features/payments/use-payment';
 
 export default function MemberPoolRoute() {
   const { poolId } = useLocalSearchParams<{ poolId: string }>();
-  const startPayment = usePaymentStore((state) => state.start);
+  const payment = usePayment();
 
   const query = useQuery({
     queryKey: ['akawo-pool', poolId],
@@ -26,15 +26,12 @@ export default function MemberPoolRoute() {
       onPay={() => {
         const due = query.data?.due;
         if (!due || !query.data) return;
-        startPayment({
+        payment.start({
           target: { kind: 'AKAWO_POOL_DUE', poolId, dueId: due.id },
           title: query.data.pool.name,
           subtitle: query.data.membership.reference,
           returnTo: `/(tabs)/akawo/pools/${poolId}`,
         });
-        // push: the pool stays underneath, so abandoning the payment returns
-        // here rather than dropping the user out of the pool entirely.
-        router.push('/(tabs)/pay');
       }}
     />
   );

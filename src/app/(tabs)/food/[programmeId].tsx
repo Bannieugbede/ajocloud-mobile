@@ -7,13 +7,18 @@ import {
   subscribeToProgramme,
   unsubscribeFromProgramme,
 } from '@/api/endpoints/food-ajo';
+import type { FoodSubscription } from '@/api/endpoints/food-ajo';
 import { FoodDetailScreen } from '@/features/food/food-detail-screen';
+import { enrolmentPayment } from '@/features/food/programme-summary';
+import { usePayment } from '@/features/payments/use-payment';
+import { toast } from '@/components/ui/app-toast';
 import { foodShareMessage, shareContent } from '@/services/share-links';
 import type { AppError } from '@/types/errors';
 
 export default function FoodProgrammeRoute() {
   const { programmeId } = useLocalSearchParams<{ programmeId: string }>();
   const queryClient = useQueryClient();
+  const payment = usePayment();
 
   const programme = useQuery({
     queryKey: ['food-programme', programmeId],
@@ -35,16 +40,40 @@ export default function FoodProgrammeRoute() {
     void queryClient.invalidateQueries({ queryKey: ['food-programmes'] });
   };
 
+  const pay = (enrolment: FoodSubscription) =>
+    payment.start({
+      target: { kind: 'FOOD_SUBSCRIPTION', programmeId, subscriptionId: enrolment.id },
+      title: programme.data?.name ?? enrolment.group.name,
+      subtitle: enrolment.package.name,
+      returnTo: `/(tabs)/food/${programmeId}`,
+    });
+
   const subscribe = useMutation({
-    meta: { successMessage: 'You’re enrolled. Your contributions start with the programme.' },
     mutationFn: (packageId: string) => subscribeToProgramme(programmeId, { packageId }),
-    onSuccess: refresh,
+    onSuccess: (enrolment) => {
+      refresh();
+      // Enrolling holds a place; paying confirms it. Straight on to payment,
+      // so joining is one flow rather than two visits. Leaving it unpaid is
+      // still possible, and the Pay button stays here until it is paid.
+      pay(enrolment);
+    },
   });
   const unsubscribe = useMutation({
-    meta: { successMessage: 'You’ve left this programme.' },
     mutationFn: () => unsubscribeFromProgramme(programmeId),
-    onSuccess: refresh,
+    onSuccess: () => {
+      refresh();
+      // A paid enrolment was refunded, so the wallet has moved too.
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      void queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      void queryClient.invalidateQueries({ queryKey: ['wallet-summary'] });
+      toast.success(
+        subscription && subscription.amountPaidMinor && subscription.amountPaidMinor !== '0'
+          ? 'You’ve left this programme. What you paid is back in your wallet.'
+          : 'You’ve left this programme.',
+      );
+    },
   });
+  const owed = programme.data ? enrolmentPayment(subscription, programme.data.status) : null;
 
   // Only a programme others can see is worth sharing: the website's page for
   // it answers for OPEN and ACTIVE programmes alone.
@@ -69,6 +98,7 @@ export default function FoodProgrammeRoute() {
       onRetry={() => void programme.refetch()}
       onSubscribe={(packageId) => subscribe.mutate(packageId)}
       onUnsubscribe={() => unsubscribe.mutate()}
+      {...(owed?.payable && subscription ? { onPay: () => pay(subscription) } : {})}
       {...(shareable ? { onShare: () => void shareContent(shareable) } : {})}
     />
   );

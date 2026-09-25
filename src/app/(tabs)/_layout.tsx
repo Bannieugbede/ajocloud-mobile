@@ -72,7 +72,9 @@ export default function TabsLayout() {
       <Tabs.Screen name="bills" options={{ href: null, title: 'Bills' }} />
       {/* The payment flow is entered from a feature, never from the tab bar:
           without a payment in progress it has nothing to show. */}
-      <Tabs.Screen name="pay" options={{ href: null }} />
+      {/* popToTopOnBlur: leaving the flow unwinds it, so the next payment does
+          not open on top of the last one's result. */}
+      <Tabs.Screen name="pay" options={{ href: null, popToTopOnBlur: true }} />
       {/* Reached from Profile and from a notification tap. A seventh tab would
           crowd the bar without earning its place next to the products. */}
       {/* headerShown is off for the whole navigator, because every tab root

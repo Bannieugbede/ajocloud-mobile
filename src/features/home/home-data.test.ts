@@ -423,6 +423,15 @@ describe('poolDuesAsUpcoming', () => {
     expect(poolDuesAsUpcoming([pool('p1', 'A', 'PROCESSING')], NOW)).toHaveLength(1);
   });
 
+  it('names the due to pay only while it can be paid', () => {
+    const [pending] = poolDuesAsUpcoming([pool('p1', 'A', 'PENDING')], NOW);
+    const [processing] = poolDuesAsUpcoming([pool('p2', 'B', 'PROCESSING')], NOW);
+    expect(pending?.dueId).toBeDefined();
+    // A payment is already on its way; offering to pay again would invite a
+    // second one.
+    expect(processing?.dueId).toBeUndefined();
+  });
+
   it('excludes settled dues', () => {
     // Waived is settled: the organiser excused it, so nothing is owed.
     expect(poolDuesAsUpcoming([pool('p1', 'A', 'PAID'), pool('p2', 'B', 'WAIVED')], NOW)).toEqual(

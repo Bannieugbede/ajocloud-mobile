@@ -1,12 +1,14 @@
 import { apiClient } from '@/api/client/api-client';
 
 /**
- * The payment contract every feature pays through.
+ * The payment contract every product pays through: Akawo pool dues, Ajo
+ * contributions, Food enrolments and wallet top-ups.
  *
- * Implemented on the backend as of 2026-09-02 — see `docs/payments.md` and
- * ADR-008 in the backend repo. Wallet payments settle inside the request;
- * transfer and card payments reach PROCESSING and wait for a provider webhook
- * that is not yet written, so they cannot complete today.
+ * See `docs/payments.md` and ADR-013 in the backend repo. The server decides
+ * the amount and which methods a payment accepts; the app renders what it is
+ * told. Product payments come from the wallet and settle inside the request.
+ * A top-up comes from outside by transfer or card, and completes only when the
+ * provider's webhook arrives.
  */
 
 export type PaymentMethod = 'WALLET' | 'TRANSFER' | 'CARD';
@@ -15,16 +17,23 @@ export type PaymentTargetType =
   'AKAWO_POOL_DUE' | 'AJO_CONTRIBUTION' | 'FOOD_SUBSCRIPTION' | 'WALLET_TOPUP';
 
 /**
- * What is being paid for. Adding a product means adding a variant here and a
- * case in `targetRequest` below.
+ * What is being paid for. Adding a product means adding a variant here, a case
+ * in `targetRequest` below, and an entry in `features/payments/payment-targets`.
  *
- * Note there is no amount: the server reads it from the target. Sending one
- * would be ignored, and accepting one would be an underpayment vulnerability.
+ * The server reads the amount from the target. Only an Ajo contribution, which
+ * may be paid in part, and a top-up, which has no row to read one from, can
+ * name one; the server refuses an amount on any other target.
  */
 export type PaymentIntentTarget =
   | { kind: 'AKAWO_POOL_DUE'; poolId: string; dueId: string }
-  | { kind: 'AJO_CONTRIBUTION'; groupId: string; scheduleId: string }
-  | { kind: 'FOOD_SUBSCRIPTION'; subscriptionId: string }
+  | {
+      kind: 'AJO_CONTRIBUTION';
+      groupId: string;
+      scheduleId: string;
+      /** Part of what is owed. Omitted to pay all of it. */
+      amountMinor?: string;
+    }
+  | { kind: 'FOOD_SUBSCRIPTION'; programmeId: string; subscriptionId: string }
   /**
    * The one target the client names an amount for, because a top-up has no row
    * to read one from. The server refuses an amount on every other kind, so this
@@ -50,6 +59,11 @@ export type PaymentIntent = {
   totalMinor: string;
   currency: string;
   method: PaymentMethod | null;
+  /**
+   * The methods this payment accepts, in the order to offer them. Absent from
+   * servers older than ADR-013, where `payment-targets` supplies the default.
+   */
+  methods?: PaymentMethod[];
   /** Server-supplied label for what is being paid, e.g. the pool's name. */
   description: string;
   expiresAt: string;
@@ -87,7 +101,11 @@ function targetRequest(target: PaymentIntentTarget): {
     case 'AKAWO_POOL_DUE':
       return { targetType: 'AKAWO_POOL_DUE', targetId: target.dueId };
     case 'AJO_CONTRIBUTION':
-      return { targetType: 'AJO_CONTRIBUTION', targetId: target.scheduleId };
+      return {
+        targetType: 'AJO_CONTRIBUTION',
+        targetId: target.scheduleId,
+        ...(target.amountMinor ? { amountMinor: target.amountMinor } : {}),
+      };
     case 'FOOD_SUBSCRIPTION':
       return { targetType: 'FOOD_SUBSCRIPTION', targetId: target.subscriptionId };
     case 'WALLET_TOPUP':
@@ -99,7 +117,7 @@ function targetRequest(target: PaymentIntentTarget): {
 /**
  * Creates an intent for a target. The amount comes from the server for every
  * target that has a row to read one from, so a tampered request cannot underpay
- * a due; only a wallet top-up names its own.
+ * a due.
  *
  * `idempotencyKey` is required: a retried tap must not create a second payment.
  * Repeating a key returns the original intent rather than an error.

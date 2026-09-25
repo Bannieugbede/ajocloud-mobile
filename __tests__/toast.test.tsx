@@ -4,6 +4,12 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { AppToastHost, MAX_VISIBLE_TOASTS, currentToasts, toast } from '@/components/ui/app-toast';
 import { createQueryCaches } from '@/providers/query-toasts';
 
+// Cleared inside act while a host may still be mounted, so the host's update
+// is flushed here rather than warned about by the global clear after it.
+afterEach(async () => {
+  await act(async () => toast.clear());
+});
+
 describe('the toast store', () => {
   it('shows the newest first', () => {
     toast.success('First');

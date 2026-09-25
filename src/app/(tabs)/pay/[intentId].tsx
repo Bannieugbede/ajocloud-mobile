@@ -8,6 +8,7 @@ import {
   type PaymentMethod,
 } from '@/api/endpoints/payments';
 import { PaymentConfirmScreen } from '@/features/payments/payment-confirm-screen';
+import { queryKeysAfterPayment } from '@/features/payments/payment-targets';
 import { usePaymentStore } from '@/store/payment-store';
 import type { AppError } from '@/types/errors';
 
@@ -34,9 +35,12 @@ export default function PaymentConfirmRoute() {
       confirmPaymentIntent(intentId, { method, transactionPin }, idempotencyKey),
     onSuccess: (result) => {
       // The payment changed the thing being paid for, so its screens refetch.
-      void queryClient.invalidateQueries({ queryKey: ['akawo-pool'] });
-      void queryClient.invalidateQueries({ queryKey: ['akawo-pools'] });
-      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      // Which screens those are is the target's to say, not this route's.
+      if (request) {
+        for (const queryKey of queryKeysAfterPayment(request.target)) {
+          void queryClient.invalidateQueries({ queryKey });
+        }
+      }
       // replace: the PIN prompt must not remain behind a completed payment,
       // where a back gesture would invite paying twice.
       router.replace({

@@ -12,11 +12,13 @@ import {
 import { getCurrentUser } from '@/api/endpoints/users';
 import { toast } from '@/components/ui/app-toast';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
+import { usePayment } from '@/features/payments/use-payment';
 import { groupShareMessage, shareContent } from '@/services/share-links';
 
 export default function AjoGroupRoute() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const queryClient = useQueryClient();
+  const payment = usePayment();
 
   const group = useQuery({
     queryKey: ['ajo-group', groupId],
@@ -107,23 +109,16 @@ export default function AjoGroupRoute() {
       onViewSwaps={() =>
         router.push({ pathname: '/(tabs)/ajo/[groupId]/swaps', params: { groupId } })
       }
-      onPayContribution={({ scheduleId, amountMinor, amountPaidMinor, currency, sequence }) => {
-        // Straight to the contribution route rather than through the shared
-        // payment flow: that flow's AJO_CONTRIBUTION target is not implemented
-        // server-side, so it would take the member to a dead end.
-        router.push({
-          pathname: '/(tabs)/ajo/[groupId]/contribute',
-          params: {
-            groupId,
-            scheduleId,
-            groupName: group.data?.name ?? 'Your group',
-            sequence: String(sequence),
-            amountDueMinor: amountMinor,
-            amountPaidMinor,
-            currency,
-          },
-        });
-      }}
+      onPayContribution={({ scheduleId, sequence }) =>
+        // The shared flow quotes what is still owed and lets the member pay
+        // part of it, so nothing about the amount travels from here.
+        payment.start({
+          target: { kind: 'AJO_CONTRIBUTION', groupId, scheduleId },
+          title: group.data?.name ?? 'Your group',
+          subtitle: `Round ${sequence}`,
+          returnTo: `/(tabs)/ajo/${groupId}`,
+        })
+      }
     />
   );
 }

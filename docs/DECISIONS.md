@@ -305,6 +305,9 @@ filled in first.
 
 ## Contribution payment (2026-09-04)
 
+> Superseded 2026-09-26: contributions are paid through the shared payment flow.
+> See "One payment flow for every product" below.
+
 **The contribution screen calls the Ajo settlement route directly, not the
 shared payment flow.** That flow's `AJO_CONTRIBUTION` target still throws
 "this payment type is not available yet" server-side, so routing a member
@@ -1407,3 +1410,43 @@ the old title and description as its spoken label.
 
 **Offline is one sticky toast.** It stays until the connection returns, then
 becomes "back online", so money actions never look available while offline.
+
+## One payment flow for every product (2026-09-26)
+
+**Products say what is owed; one flow does the paying.** Akawo dues, Ajo
+contributions, Food enrolments and wallet top-ups all call `usePayment().start`
+with a target, a title and where to return. The quote, the method, the PIN, the
+result, polling a transfer, and a top-up for a short wallet live in
+`src/features/payments` and `src/app/(tabs)/pay`, once. The separate Ajo
+contribute screen is gone; its part-payment choice moved into the shared flow.
+
+**The server decides the methods.** Each intent carries `methods` (backend
+ADR-013), and the screen offers exactly those. Product payments come from the
+wallet: an external payment for a due would settle as a deposit and leave the
+due unpaid. `payment-targets.ts` holds a fallback for servers that do not send
+`methods`, typed as a total record so a new target kind cannot be forgotten.
+
+**A short wallet is a step, not a dead end.** The payment screen says how much
+is missing and offers to add it. The store pauses the payment, runs a top-up
+that returns to the same place, and once the money has arrived the result screen
+offers "Continue to pay for …", which resumes the paused payment as a fresh flow.
+
+**Each run of the flow has an id, and the screen is keyed by it.** The server
+answers a repeated idempotency key with the original intent, whatever the new
+request says, so a key that survived from one payment into the next would
+return the wrong one. The key is derived from the flow id and the amount, so a
+retried tap returns the same intent and a changed amount gets a new one. The pay
+tab also pops to its first screen on blur, so a new payment never opens on top
+of the last result.
+
+**A quote is a query, not a mutation.** Creating an intent is idempotent by
+key, so it is safe to express as a query keyed by flow and amount. That removes
+the effect that fired a mutation on mount, and lets a changed amount keep the
+previous quote on screen while the new one loads.
+
+**Food: enrol, then pay, in one go.** Enrolling holds a place and goes straight
+to payment. An unpaid enrolment keeps a Pay button and a "Payment due" badge. A
+paid one can be left with a refund until buying begins, and after that the
+screen says why it cannot be given up. Amounts are shown only when the server
+reports them: assuming "nothing paid" would tell someone who has paid that they
+owe.

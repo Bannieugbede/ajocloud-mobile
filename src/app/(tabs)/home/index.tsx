@@ -18,6 +18,7 @@ import {
   type QuickPayItem,
   type UpcomingItem,
 } from '@/features/home/home-data';
+import { usePayment } from '@/features/payments/use-payment';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeStore } from '@/store/theme-store';
 
@@ -26,6 +27,7 @@ const SCHEDULE_FANOUT = 4;
 
 export default function HomeRoute() {
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const payment = usePayment();
 
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser });
   const wallets = useQuery({ queryKey: ['wallets'], queryFn: listWallets });
@@ -149,19 +151,32 @@ export default function HomeRoute() {
     ]);
   };
 
+  // Money owed opens its payment straight away, through the same flow its
+  // product screen uses; anything else opens the group it belongs to.
   const openUpcoming = (item: UpcomingItem) => {
+    if (item.kind === 'CONTRIBUTION' && item.scheduleId) {
+      payment.start({
+        target: { kind: 'AJO_CONTRIBUTION', groupId: item.groupId, scheduleId: item.scheduleId },
+        title: item.groupName,
+        subtitle: 'Ajo contribution',
+        returnTo: '/(tabs)/home',
+      });
+      return;
+    }
+    if (item.kind === 'POOL_DUE' && item.dueId) {
+      payment.start({
+        target: { kind: 'AKAWO_POOL_DUE', poolId: item.groupId, dueId: item.dueId },
+        title: item.groupName,
+        subtitle: 'Akawo pool',
+        returnTo: '/(tabs)/home',
+      });
+      return;
+    }
     if (item.kind === 'POOL_DUE') {
       router.push({ pathname: '/(tabs)/akawo/pools/[poolId]', params: { poolId: item.groupId } });
       return;
     }
-    if (item.kind === 'PAYOUT') {
-      router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: item.groupId } });
-      return;
-    }
-    router.push({
-      pathname: '/(tabs)/ajo/[groupId]/contribute',
-      params: { groupId: item.groupId },
-    });
+    router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: item.groupId } });
   };
 
   const openQuickPay = (_item: QuickPayItem) => {

@@ -58,6 +58,24 @@ const subscription: FoodSubscription = {
   package: { name: 'Premium Family Package', priceMinor: '3500000', currency: 'NGN' },
 };
 
+/** Enrolled, as the member's own list reports it, and not yet paid. */
+const unpaid: FoodSubscription = {
+  ...subscription,
+  status: 'PENDING',
+  amountDueMinor: '3500000',
+  amountPaidMinor: '0',
+  paidAt: null,
+};
+
+/** Paid in full, which makes the enrolment ACTIVE. */
+const paid: FoodSubscription = {
+  ...subscription,
+  status: 'ACTIVE',
+  amountDueMinor: '3500000',
+  amountPaidMinor: '3500000',
+  paidAt: '2026-07-02T00:00:00.000Z',
+};
+
 function setup(overrides: Partial<React.ComponentProps<typeof FoodDetailScreen>> = {}) {
   return render(
     <FoodDetailScreen
@@ -182,13 +200,20 @@ describe('once joined', () => {
     expect(view.getByText('Your enrolment')).toBeTruthy();
   });
 
-  it('never claims a payment figure the backend does not hold', async () => {
-    // There is no Food contribution model — no payment records, no schedule
-    // endpoint. A progress bar here would be a made-up number about someone's
-    // money, so the screen says plainly that payments are not tracked yet.
+  it('shows what the enrolment costs, what is paid and what is left', async () => {
+    const view = await setup({ subscription: unpaid });
+    await act(async () => fireEvent.press(view.getByRole('tab', { name: 'Payment Schedule' })));
+    expect(view.getByLabelText('Total: ₦35,000.00')).toBeTruthy();
+    expect(view.getByLabelText('Paid: ₦0.00')).toBeTruthy();
+    expect(view.getByLabelText('Still to pay: ₦35,000.00')).toBeTruthy();
+    expect(view.getByLabelText('Status: Payment due')).toBeTruthy();
+  });
+
+  it('shows no payment figures when the server does not report them', async () => {
+    // Guessing "nothing paid" would tell a member who has paid that they owe.
     const view = await setup({ subscription });
     await act(async () => fireEvent.press(view.getByRole('tab', { name: 'Payment Schedule' })));
-    expect(view.getByText('Payments are not tracked here yet')).toBeTruthy();
+    expect(view.queryByText('Still to pay')).toBeNull();
     expect(view.queryByText(/%$/)).toBeNull();
   });
 
@@ -207,6 +232,32 @@ describe('once joined', () => {
       fireEvent.press(view.getByRole('button', { name: 'Leave this programme' })),
     );
     expect(onUnsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to pay an unpaid enrolment, through the shared payment flow', async () => {
+    const onPay = jest.fn();
+    const view = await setup({ subscription: unpaid, onPay });
+    expect(view.getByText('Payment due')).toBeTruthy();
+    await act(async () => fireEvent.press(view.getByRole('button', { name: 'Pay ₦35,000.00' })));
+    expect(onPay).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms a paid place and offers a refund for leaving before buying starts', async () => {
+    const view = await setup({ subscription: paid });
+    expect(view.queryByRole('button', { name: /^Pay / })).toBeNull();
+    expect(view.getByRole('button', { name: 'Leave and get a refund' })).toBeTruthy();
+    await act(async () => fireEvent.press(view.getByRole('tab', { name: 'Payment Schedule' })));
+    expect(view.getByText('Your place is paid for')).toBeTruthy();
+    expect(view.getByLabelText('Status: Paid in full')).toBeTruthy();
+  });
+
+  it('does not offer to give up a paid place once buying has begun', async () => {
+    const view = await setup({
+      programme: { ...programme, status: 'ACTIVE' },
+      subscription: paid,
+    });
+    expect(view.queryByRole('button', { name: /Leave/ })).toBeNull();
+    expect(view.getByText(/can no longer be given up/)).toBeTruthy();
   });
 
   it('treats a cancelled enrolment as not joined', async () => {

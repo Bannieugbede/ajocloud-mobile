@@ -22,6 +22,8 @@ import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
 import {
+  type EnrolmentPayment,
+  enrolmentPayment,
   fulfilmentLabel,
   isEnrolled,
   joinBlockedReason,
@@ -51,6 +53,7 @@ export function FoodDetailScreen({
   onRetry,
   onSubscribe,
   onUnsubscribe,
+  onPay,
   onShare,
 }: {
   programme?: FoodProgramme;
@@ -65,6 +68,8 @@ export function FoodDetailScreen({
   onRetry: () => void;
   onSubscribe: (packageId: string) => void;
   onUnsubscribe: () => void;
+  /** Opens the shared payment flow for the member's unpaid enrolment. */
+  onPay?: () => void;
   /** Shares the programme's web link. Absent when there is no link to share. */
   onShare?: () => void;
 }) {
@@ -99,6 +104,7 @@ export function FoodDetailScreen({
   }
 
   const enrolled = isEnrolled(subscription);
+  const payment = enrolmentPayment(subscription, programme.status);
   const blocked = joinBlockedReason(programme);
   const spots = placesLeft(programme);
 
@@ -123,7 +129,13 @@ export function FoodDetailScreen({
         testID="food-detail-hero"
         imageUrl={selected?.imageUrl}
         title={selected?.name ?? programme.name}
-        badge={enrolled ? <AppBadge label="Joined" tone="success" /> : null}
+        badge={
+          payment?.payable ? (
+            <AppBadge label="Payment due" tone="warning" />
+          ) : enrolled ? (
+            <AppBadge label="Joined" tone="success" />
+          ) : null
+        }
         trailing={<AppFloatBack fallback="/(tabs)/food" />}
         subtitle={
           <>
@@ -239,11 +251,28 @@ export function FoodDetailScreen({
             ) : null}
           </>
         ) : (
-          <PaymentSchedule programme={programme} subscription={subscription ?? null} />
+          <PaymentSchedule
+            programme={programme}
+            subscription={subscription ?? null}
+            payment={payment}
+          />
         )}
 
         {enrolled ? (
           <View style={styles.section}>
+            {payment?.payable && onPay ? (
+              <>
+                <AppButton
+                  label={`Pay ${formatMinorAmount(payment.owedMinor, payment.currency)}`}
+                  onPress={onPay}
+                  disabled={submitting ?? false}
+                />
+                <AppText style={[styles.hint, { color: colors.textMuted }]}>
+                  Paying confirms your place. The money is held for this programme, and returned to
+                  your wallet if you leave before buying starts.
+                </AppText>
+              </>
+            ) : null}
             {panel === 'details' ? (
               <AppButton
                 label="View Payment Schedule"
@@ -251,12 +280,22 @@ export function FoodDetailScreen({
                 onPress={() => setPanel('schedule')}
               />
             ) : null}
-            <AppButton
-              label="Leave this programme"
-              variant="ghost"
-              onPress={onUnsubscribe}
-              loading={submitting ?? false}
-            />
+            {payment?.canLeave === false ? (
+              <AppText style={[styles.hint, { color: colors.textMuted }]}>
+                Buying has begun, so your paid place can no longer be given up.
+              </AppText>
+            ) : (
+              <AppButton
+                label={
+                  payment && payment.paidMinor !== '0'
+                    ? 'Leave and get a refund'
+                    : 'Leave this programme'
+                }
+                variant="ghost"
+                onPress={onUnsubscribe}
+                loading={submitting ?? false}
+              />
+            )}
           </View>
         ) : (
           <View style={styles.section}>
@@ -317,23 +356,22 @@ function PackageOption({
 }
 
 /**
- * The member's own payments.
- *
- * There is no Food contribution model on the backend — no payment records, no
- * schedule endpoint — so this states what is known from the programme's own
- * terms and says plainly that individual payments are not tracked yet. Drawing
- * a progress bar over a percentage nobody has computed would be inventing a
- * figure about someone's money.
+ * The member's own enrolment and where its payment stands: what it costs, what
+ * has been paid, and what is left. Every figure comes from the server, which
+ * records the payment when it settles.
  */
 function PaymentSchedule({
   programme,
   subscription,
+  payment,
 }: {
   programme: FoodProgramme;
   subscription: FoodSubscription | null;
+  payment: EnrolmentPayment | null;
 }) {
   const { colors } = useTheme();
   const quantity = subscription?.quantity ?? 1;
+  const paidInFull = payment !== null && payment.owedMinor === '0';
 
   return (
     <View style={styles.section}>
@@ -344,20 +382,50 @@ function PaymentSchedule({
         <ScheduleRow label="Package" value={subscription?.package.name ?? '—'} />
         <ScheduleRow label="Portions" value={`${quantity} portion${quantity === 1 ? '' : 's'}`} />
         <ScheduleRow label="Contribution" value={priceLabel(programme, formatMinorAmount)} />
-        <ScheduleRow label="Status" value={statusLabel(subscription?.status ?? 'PENDING')} />
         <ScheduleRow label="How you collect" value={fulfilmentLabel(programme.fulfilmentMethod)} />
         <ScheduleRow label="Next distribution" value={longDate(programme.distributionAt)} />
       </AppCard>
 
-      <View style={[styles.notice, { backgroundColor: colors.infoSoft }]}>
-        <AppText weight="semibold" style={{ color: colors.info }}>
-          Payments are not tracked here yet
-        </AppText>
-        <AppText style={{ color: colors.textMuted }}>
-          Your coordinator collects contributions for this programme. Once payments run through Ajo
-          Cloud, each one will be listed here with the date it was received.
-        </AppText>
-      </View>
+      {payment ? (
+        <AppCard style={styles.scheduleCard}>
+          <AppText accessibilityRole="header" weight="semibold" style={styles.heading}>
+            Payment
+          </AppText>
+          <ScheduleRow
+            label="Total"
+            value={formatMinorAmount(payment.totalMinor, payment.currency)}
+          />
+          <ScheduleRow
+            label="Paid"
+            value={formatMinorAmount(payment.paidMinor, payment.currency)}
+          />
+          <ScheduleRow
+            label="Still to pay"
+            value={formatMinorAmount(payment.owedMinor, payment.currency)}
+          />
+          <ScheduleRow
+            label="Status"
+            value={
+              paidInFull
+                ? 'Paid in full'
+                : payment.payable
+                  ? 'Payment due'
+                  : statusLabel(subscription?.status ?? 'PENDING')
+            }
+          />
+        </AppCard>
+      ) : null}
+
+      {paidInFull ? (
+        <View style={[styles.notice, { backgroundColor: colors.successSoft }]}>
+          <AppText weight="semibold" style={{ color: colors.success }}>
+            Your place is paid for
+          </AppText>
+          <AppText style={{ color: colors.textMuted }}>
+            The money is held for this programme until your coordinator buys the food.
+          </AppText>
+        </View>
+      ) : null}
     </View>
   );
 }
