@@ -771,3 +771,29 @@ Not yet built: Food coordinator tooling (creating programmes, procurement,
 distribution) has no mobile surface — those routes exist on the backend but are
 only reachable by API. Nothing yet emits product notifications either, so the
 inbox is empty in practice until the domain events are wired.
+
+## Referral links and install hand-off (IN REVIEW, 2026-09-25)
+
+Summary: a shared referral link (`/join?ref=AJO-XXXXXX`) now opens the app, and
+its code, or an invitation's, survives an install from the website.
+
+| Item                             | Where                                                            |
+| -------------------------------- | ---------------------------------------------------------------- |
+| Referral link route              | `src/app/join/index.tsx`                                         |
+| Referral held until sign-up      | `src/services/pending-referral.ts`, `details-step.tsx`           |
+| Android install referrer         | `src/services/install-referrer.ts`, `use-install-attribution.ts` |
+| Invitation resumed after sign-up | `src/app/(auth)/intent.tsx`                                      |
+
+Tests: `__tests__/referral-links.test.tsx`, `src/services/install-referrer.test.ts`,
+`src/services/pending-referral.test.ts`, and referral cases in
+`src/services/incoming-link.test.ts`. `bun run validate` passes.
+
+Limitations: not exercised on a device. Android App Links are still unverified
+(see "Universal links on iOS" in `docs/DECISIONS.md`), so on Android the website
+hands over through the custom scheme or the Play referrer. The Play referrer
+only works once the website's `NEXT_PUBLIC_PLAY_STORE_URL` is set, which waits
+on a live listing. iOS has no install referrer; the website asks the person to
+come back and tap Open in the app.
+
+Follow-ups: device test of each path on both platforms; set the store URLs on
+the website when the listings go live.

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Linking, StyleSheet, View } from 'react-native';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import { environment } from '@/config/environment';
 import { FieldIcon } from '@/features/auth/field-icon';
 import { PasswordInput } from '@/features/auth/password-input';
 import { useTheme } from '@/hooks/use-theme';
+import { clearHeldReferral, readHeldReferral } from '@/services/pending-referral';
 import type { AppError } from '@/types/errors';
 import { spacing } from '@/theme';
 import { StepScreen } from './step-screen';
@@ -64,9 +66,30 @@ export function DetailsStep({
       acceptedPrivacy: false as never,
     },
   });
+  // A referral link opened earlier, in the app or passed on by the website or
+  // a Play install, is filled in here. It only fills an empty field, so a code
+  // the person has already typed always wins.
+  useEffect(() => {
+    let cancelled = false;
+    void readHeldReferral()
+      .then((code) => {
+        if (!cancelled && code && !form.getValues('referralCode')) {
+          form.setValue('referralCode', code);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [form]);
+
   const mutation = useMutation({
     mutationFn: registerAccount,
-    onSuccess: (challenge) => onRegistered(challenge),
+    onSuccess: (challenge) => {
+      // The account now carries the code, so there is nothing left to offer.
+      void clearHeldReferral().catch(() => undefined);
+      onRegistered(challenge);
+    },
   });
 
   const submit = form.handleSubmit((values) => {

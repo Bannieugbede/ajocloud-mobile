@@ -1,4 +1,8 @@
-import { invitationCodeFromUrl, isPlausibleInvitationCode } from './incoming-link';
+import {
+  invitationCodeFromUrl,
+  isPlausibleInvitationCode,
+  normaliseReferralCode,
+} from './incoming-link';
 
 // A realistic code: 32 random bytes rendered as base64url, as the API issues.
 const CODE = 'q7Xv3nRk2LpZ8sWt4YbG1mHc6dJfN0uA9eKiOxPzQrE';
@@ -82,5 +86,33 @@ describe('host handling', () => {
     // accept a link some other site can mint, and the code would then be sent
     // to the API as though the user had been invited.
     expect(invitationCodeFromUrl(`https://evil.example.com/x/join/${CODE}`)).toBeNull();
+  });
+});
+
+describe('normaliseReferralCode', () => {
+  it('accepts the canonical form', () => {
+    expect(normaliseReferralCode('AJO-7KQ3MZ')).toBe('AJO-7KQ3MZ');
+  });
+
+  it('accepts what a person plausibly types, as the backend does', () => {
+    expect(normaliseReferralCode('ajo-7kq3mz')).toBe('AJO-7KQ3MZ');
+    expect(normaliseReferralCode(' 7KQ3MZ ')).toBe('AJO-7KQ3MZ');
+    expect(normaliseReferralCode('AJO- 7KQ 3MZ')).toBe('AJO-7KQ3MZ');
+  });
+
+  it.each([
+    ['the wrong length', 'AJO-7KQ3M'],
+    ['a character the alphabet leaves out', 'AJO-7KQ3M0'],
+    ['a letter people misread', 'AJO-7KQ3MI'],
+    ['a different prefix', 'XYZ-7KQ3MZ'],
+    ['a path', '../../pay'],
+    ['empty', ''],
+  ])('refuses %s', (_label, input) => {
+    expect(normaliseReferralCode(input)).toBeNull();
+  });
+
+  it('refuses a value that is not a string', () => {
+    expect(normaliseReferralCode(['AJO-7KQ3MZ'])).toBeNull();
+    expect(normaliseReferralCode(undefined)).toBeNull();
   });
 });

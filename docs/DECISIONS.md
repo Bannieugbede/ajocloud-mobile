@@ -1328,3 +1328,32 @@ Router strips the origin from an https URL, so a universal link lands on
 **`app-links-config.test.ts` pins the claimed domain to `EXPO_PUBLIC_WEB_URL`.**
 A domain the app claims but no link uses opens nothing, and the failure looks
 like a browser tab rather than an error.
+
+## Referral links and install hand-off (2026-09-25)
+
+**A referral is held for thirty days; an invitation for one hour.** A held
+invitation resumes an action, and resuming it a day later would join someone to
+a group by surprise. A held referral only pre-fills an optional, visible,
+editable field at sign-up, and the gap it covers, between opening a friend's
+link and signing up, is often days.
+
+**The referral is read at sign-up, not taken.** Sign-up can be abandoned and
+restarted, and the code should still be there. It is cleared once an account
+has been created.
+
+**A later referral replaces an earlier one.** The most recent link is the one
+that got the person to act.
+
+**The Play install referrer is read once per installation.** Play keeps
+returning it for months, so acting on it at each launch would keep reopening an
+invitation long after it was dealt with. The "read" flag is written before the
+referrer is fetched, so a failure cannot become a retry loop.
+
+**No fingerprinting or server-side install matching.** Guessing which install
+came from which web visit is unreliable, and on iOS it would mean joining
+someone to a savings group on a guess. The iOS hand-off is explicit instead: the
+person returns to the web page and taps Open in the app.
+
+**The end of registration resumes a held invitation.** Only sign-in did before,
+so someone who had to create an account to accept an invitation was dropped on
+Home and lost it.

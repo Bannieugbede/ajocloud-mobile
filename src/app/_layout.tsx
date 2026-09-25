@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { useIncomingInvitation } from '@/hooks/use-incoming-invitation';
+import { useInstallAttribution } from '@/hooks/use-install-attribution';
 import { useNotificationNavigation } from '@/hooks/use-notification-navigation';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemedStackOptions } from '@/hooks/use-themed-stack-options';
@@ -46,11 +47,13 @@ function ThemedNavigation() {
   const { colors, mode } = useTheme();
   const stackOptions = useThemedStackOptions();
 
-  // Both live here rather than on a screen: a tapped notification or an
-  // invitation link often launches the app from cold, so whatever handles them
-  // has to be mounted before any particular screen is.
+  // These live here rather than on a screen: a tapped notification, an
+  // invitation link or a first launch from a Play install often starts the
+  // app from cold, so whatever handles them has to be mounted before any
+  // particular screen is.
   useNotificationNavigation();
   useIncomingInvitation();
+  useInstallAttribution();
 
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(colors.background);
@@ -64,6 +67,7 @@ function ThemedNavigation() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(public)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="join/index" options={{ headerShown: false }} />
         <Stack.Screen name="join/[code]" options={{ title: 'Invitation' }} />
       </Stack>
     </>

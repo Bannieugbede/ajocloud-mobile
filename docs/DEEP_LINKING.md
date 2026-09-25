@@ -61,3 +61,26 @@ through the web page's "Open in app" button.
 
 `ios/` is generated. `app.json` is the source of truth for the associated
 domain; a local `ios/` folder picks it up on the next `npx expo prebuild`.
+
+## Referral links (`/join?ref=AJO-XXXXXX`)
+
+`referral-share.ts` builds these. `app/join/index.tsx` holds the code
+(`pending-referral.ts`, 30 days) and sends someone signed out to sign-up, where
+the referral field is pre-filled. Someone signed in goes home. The code is
+normalised the way the backend does it, and anything that is not a code is
+dropped rather than filled in. An invitation link may carry `?ref=` too.
+`join/[code]` holds it on arrival, so it counts even if that invitation is
+declined.
+
+## After an install from the website
+
+On first launch, Android reads the Play Install Referrer once per installation
+(`use-install-attribution.ts`). The website puts
+`ajocloud_invite=<code>&ajocloud_ref=<AJO-XXXXXX>` there, so a person who
+followed an invitation lands straight on it, with any referral held. iOS has no
+equivalent. The website asks the person to return to its tab and tap Open in
+the app.
+
+The end of registration (`intent.tsx`) resumes a held invitation the same way
+sign-in does, so someone who created an account to accept an invitation is
+taken back to it.

@@ -48,3 +48,33 @@ export function invitationCodeFromUrl(url: string): string | null {
 export function isPlausibleInvitationCode(code: string): boolean {
   return /^[A-Za-z0-9_-]{32,128}$/.test(code);
 }
+
+/**
+ * Mirrors the backend's referral code alphabet and shape (`referral-code.ts`).
+ * It leaves out the characters people mistype from a screenshot: 0/O, 1/I/L
+ * and 8/B.
+ */
+const REFERRAL_ALPHABET = '2345679ACDEFGHJKMNPQRTUVWXYZ';
+const REFERRAL_PREFIX = 'AJO-';
+const REFERRAL_BODY_LENGTH = 6;
+
+/**
+ * The canonical form of a referral code from a link, or null.
+ *
+ * Accepts what the backend accepts — lower case, a missing prefix, stray
+ * spaces — so a code that is right in every way that matters is not refused
+ * here. Anything else is dropped rather than carried into sign-up, where a
+ * code that credits nobody would look as if it had been applied.
+ */
+export function normaliseReferralCode(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const trimmed = input.trim().toUpperCase().replace(/\s+/g, '');
+  const body = trimmed.startsWith(REFERRAL_PREFIX)
+    ? trimmed.slice(REFERRAL_PREFIX.length)
+    : trimmed;
+  if (body.length !== REFERRAL_BODY_LENGTH) return null;
+  for (const character of body) {
+    if (!REFERRAL_ALPHABET.includes(character)) return null;
+  }
+  return `${REFERRAL_PREFIX}${body}`;
+}

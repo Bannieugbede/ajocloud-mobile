@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { previewGroupInvitation, resolveInvitationGroup } from '@/api/endpoints/ajo-groups';
 import { InviteLandingScreen } from '@/features/ajo/invite-landing-screen';
 import { isPlausibleInvitationCode } from '@/services/incoming-link';
 import { holdInvitation } from '@/services/pending-invitation';
+import { holdReferral } from '@/services/pending-referral';
 import { restoreSession } from '@/services/session-storage';
 import type { AppError } from '@/types/errors';
 
@@ -13,16 +14,23 @@ import type { AppError } from '@/types/errors';
  * Where an invitation link lands.
  *
  * Reached from `ajocloud://join/CODE`, from the website's matching page, and
- * from a push notification. The reader may not be signed in — an invitation is
+ * from a push notification. The website's link may also carry the sharer's
+ * referral code as `?ref=`, which is held for sign-up. The reader may not be signed in — an invitation is
  * frequently someone's first contact with the app — so the group is described
  * first and the account is asked for only when they accept.
  */
 export default function JoinByCodeRoute() {
-  const { code } = useLocalSearchParams<{ code: string }>();
+  const { code, ref } = useLocalSearchParams<{ code: string; ref?: string }>();
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<AppError | null>(null);
 
   const valid = typeof code === 'string' && isPlausibleInvitationCode(code);
+
+  // Held on arrival rather than on accept: someone who declines this group
+  // may still sign up, and the referral should still count if they do.
+  useEffect(() => {
+    if (typeof ref === 'string') void holdReferral(ref).catch(() => undefined);
+  }, [ref]);
 
   const preview = useQuery({
     queryKey: ['group-invitation', code],
