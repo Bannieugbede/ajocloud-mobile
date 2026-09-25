@@ -8,14 +8,9 @@ import { AppStepper } from '@/components/ui/app-stepper';
 import { AppText } from '@/components/ui/app-text';
 import { AppToggleRow } from '@/components/ui/app-toggle-row';
 import { useTheme } from '@/hooks/use-theme';
+import { normaliseGroupCode } from '@/services/incoming-link';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
-
-/**
- * An invitation code is a 32-byte value in base64url, so it is long and mixed
- * case. Pasting is the realistic path, and autocorrect would corrupt it.
- */
-export const MIN_INVITATION_CODE_LENGTH = 32;
 
 export type ResolvedGroup = { groupId: string; groupName: string };
 
@@ -54,7 +49,11 @@ export function JoinGroupScreen({
   const [touched, setTouched] = useState(false);
 
   const trimmed = code.trim();
-  const codeValid = trimmed.length >= MIN_INVITATION_CODE_LENGTH;
+  // Canonical, so a short code typed in lower case or with a dash is the same
+  // code. Invitations issued before short links are longer and case-sensitive,
+  // and are kept exactly.
+  const canonical = normaliseGroupCode(trimmed);
+  const codeValid = canonical !== null;
   const slotsValue = /^\d+$/.test(slots.trim()) ? Number(slots.trim()) : 0;
 
   return (
@@ -86,14 +85,17 @@ export function JoinGroupScreen({
             setCode(value);
             setTouched(false);
           }}
-          placeholder="Paste the code"
+          placeholder="e.g. 7KQ3MZP2AC"
           autoCapitalize="none"
           autoCorrect={false}
-          // The code is case-sensitive base64url; autocorrect would break it.
+          // Autocorrect would break a code. Capitalisation is left alone because
+          // invitations from before short links are case-sensitive.
           spellCheck={false}
           editable={!resolved}
           error={
-            touched && !codeValid ? 'That code looks too short. Paste the whole one.' : undefined
+            touched && !codeValid
+              ? 'That doesn’t look like an invitation code. Check it and try again.'
+              : undefined
           }
         />
 
@@ -147,7 +149,7 @@ export function JoinGroupScreen({
             onPress={() =>
               onSubmit({
                 groupId: resolved.groupId,
-                invitationCode: trimmed,
+                invitationCode: canonical ?? trimmed,
                 requestedSlots: Math.max(1, slotsValue),
               })
             }
@@ -162,11 +164,11 @@ export function JoinGroupScreen({
                 setTouched(true);
                 return;
               }
-              onVerify(trimmed);
+              onVerify(canonical ?? trimmed);
             }}
             loading={verifying}
             // Disabled until the code could plausibly be one, so the button
-            // cannot spend a request on something that is obviously too short.
+            // cannot spend a request on something that cannot be a code.
             disabled={verifying || !codeValid}
           />
         )}

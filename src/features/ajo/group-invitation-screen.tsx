@@ -1,4 +1,4 @@
-import { Share, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 
 import { AppButton } from '@/components/ui/app-button';
@@ -6,6 +6,7 @@ import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
+import { groupShareMessage, shareContent } from '@/services/share-links';
 import { fontSizes, spacing } from '@/theme';
 
 /**
@@ -13,23 +14,24 @@ import { fontSizes, spacing } from '@/theme';
  *
  * The invitation code exists only in the create response — the backend stores a
  * digest and cannot return it again — so this screen must make copying and
- * sharing it easy before the administrator navigates away. Joining also needs
- * the group id, so both are shared together.
+ * sharing it easy before the administrator navigates away. What is shared is
+ * the short web link, ajocloud.com/g/<code>: it opens the app for anyone who
+ * has it, shows the group to anyone who does not, and unfurls in a chat with
+ * the group's name. The code is shown too, for typing into the app by hand.
  */
 export function GroupInvitationScreen({
   groupName,
-  groupId,
   invitationCode,
   onDone,
 }: {
   groupName: string;
-  groupId: string;
   invitationCode: string;
   onDone: () => void;
 }) {
   const { colors } = useTheme();
 
-  const invitation = `Join "${groupName}" on Ajo Cloud.\nGroup ID: ${groupId}\nInvitation code: ${invitationCode}`;
+  const shared = groupShareMessage(groupName, invitationCode);
+  const invitation = `${shared.message}\nInvitation code: ${invitationCode}`;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -46,10 +48,6 @@ export function GroupInvitationScreen({
         </AppText>
 
         <AppCard>
-          <AppText style={{ color: colors.textMuted }}>Group ID</AppText>
-          <AppText weight="semibold" style={styles.mono} selectable>
-            {groupId}
-          </AppText>
           <AppText style={{ color: colors.textMuted }}>Invitation code</AppText>
           <AppText weight="bold" style={styles.mono} selectable>
             {invitationCode}
@@ -61,7 +59,7 @@ export function GroupInvitationScreen({
         <AppButton
           label="Share invitation"
           onPress={() => {
-            void Share.share({ message: invitation });
+            void shareContent({ message: invitation, url: shared.url });
           }}
         />
         <AppButton

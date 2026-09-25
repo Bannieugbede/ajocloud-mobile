@@ -27,6 +27,7 @@ const PACKAGE = {
 
 const programme: FoodProgramme = {
   id: 'prog-1',
+  shortCode: '4FD5GHJ',
   coordinatorUserId: 'user-9',
   name: 'Premium Family Package',
   status: 'OPEN',

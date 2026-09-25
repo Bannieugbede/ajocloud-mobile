@@ -1,11 +1,11 @@
-import { Share, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { poolShareMessage } from '@/services/share-links';
+import { poolShareMessage, shareContent } from '@/services/share-links';
 import { fontSizes, radius, spacing } from '@/theme';
 
 /**
@@ -29,9 +29,7 @@ export function PoolCodeScreen({
   const { colors } = useTheme();
 
   const share = () => {
-    void Share.share({
-      message: poolShareMessage(poolName, joinCode),
-    });
+    void shareContent(poolShareMessage(poolName, joinCode));
   };
 
   return (

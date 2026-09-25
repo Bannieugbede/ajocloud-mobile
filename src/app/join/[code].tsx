@@ -4,27 +4,32 @@ import { useEffect, useState } from 'react';
 
 import { previewGroupInvitation, resolveInvitationGroup } from '@/api/endpoints/ajo-groups';
 import { InviteLandingScreen } from '@/features/ajo/invite-landing-screen';
-import { isPlausibleInvitationCode } from '@/services/incoming-link';
+import { normaliseGroupCode } from '@/services/incoming-link';
 import { holdInvitation } from '@/services/pending-invitation';
 import { holdReferral } from '@/services/pending-referral';
 import { restoreSession } from '@/services/session-storage';
 import type { AppError } from '@/types/errors';
 
 /**
- * Where an invitation link lands.
+ * Where an Ajo group link lands: an invitation, or a listed group's public
+ * code.
  *
- * Reached from `ajocloud://join/CODE`, from the website's matching page, and
- * from a push notification. The website's link may also carry the sharer's
+ * Reached from `ajocloud://g/CODE` and the website's `/g/CODE` (both routed
+ * here by `+native-intent`), from `ajocloud://join/CODE` for links sent before
+ * short links, and from a push notification. The website's link may also carry the sharer's
  * referral code as `?ref=`, which is held for sign-up. The reader may not be signed in — an invitation is
  * frequently someone's first contact with the app — so the group is described
  * first and the account is asked for only when they accept.
  */
 export default function JoinByCodeRoute() {
-  const { code, ref } = useLocalSearchParams<{ code: string; ref?: string }>();
+  const params = useLocalSearchParams<{ code: string; ref?: string }>();
+  const { ref } = params;
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<AppError | null>(null);
 
-  const valid = typeof code === 'string' && isPlausibleInvitationCode(code);
+  // Canonical from here on: a short code retyped in lower case is the same code.
+  const code = normaliseGroupCode(params.code) ?? '';
+  const valid = code !== '';
 
   // Held on arrival rather than on accept: someone who declines this group
   // may still sign up, and the referral should still count if they do.

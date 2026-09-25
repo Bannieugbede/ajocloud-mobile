@@ -111,6 +111,20 @@ export function canLock(
   return isAdmin && (group.status === 'DRAFT' || group.status === 'OPEN');
 }
 
+/**
+ * Whether the viewer can invite people: any active member, while the group
+ * still takes members. Matches what the backend allows for issuing invitations.
+ */
+export function canInvite(
+  group: Pick<AjoGroupDetail, 'status' | 'members'>,
+  viewerUserId: string | null,
+): boolean {
+  const isMember = group.members.some(
+    (member) => member.userId === viewerUserId && member.status === 'ACTIVE',
+  );
+  return isMember && (group.status === 'DRAFT' || group.status === 'OPEN');
+}
+
 /** A rotation needs at least two positions taken, or there is nothing to rotate. */
 export const MIN_SLOTS_TO_LOCK = 2;
 

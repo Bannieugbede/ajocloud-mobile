@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
-import { Alert, Share } from 'react-native';
+import { Alert } from 'react-native';
 
 import { listAkawoGoals } from '@/api/endpoints/akawo';
 import { logout } from '@/api/endpoints/auth';
@@ -11,7 +11,8 @@ import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { totalAkawoSaved } from '@/features/home/home-data';
 import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
-import { referralShareMessage } from '@/features/profile/referral-share';
+import { referralLink, referralShareMessage } from '@/features/profile/referral-share';
+import { shareContent } from '@/services/share-links';
 import { clearSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
@@ -67,7 +68,7 @@ export default function ProfileRoute() {
   };
 
   const shareCode = (code: string) => {
-    void Share.share({ message: referralShareMessage(code) });
+    void shareContent({ message: referralShareMessage(code), url: referralLink(code) });
   };
 
   return (

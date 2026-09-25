@@ -12,6 +12,10 @@ export type AkawoPool = {
   dueAt: string | null;
   closedAt: string | null;
   createdAt: string;
+  /** The pool's permanent public code: ajocloud.com/p/<shortCode>. */
+  shortCode?: string;
+  /** A listed pool is indexed and anyone can join from its public link. */
+  publiclyListed?: boolean;
   /** Who is collecting. Present on the joined list; absent elsewhere. */
   organiserName?: string;
 };
@@ -122,6 +126,18 @@ export function getMemberPool(poolId: string): Promise<MemberPoolView> {
 export function openAkawoPool(poolId: string): Promise<AkawoPool> {
   return client().request(`/api/v1/akawo/pools/${encodeURIComponent(poolId)}/open`, {
     method: 'POST',
+  });
+}
+
+/**
+ * Lists the pool publicly, or takes it down. The organiser only. A listed pool
+ * is indexed and anyone can join from ajocloud.com/p/<shortCode> without the
+ * join code.
+ */
+export function setAkawoPoolListing(poolId: string, publiclyListed: boolean): Promise<AkawoPool> {
+  return client().request(`/api/v1/akawo/pools/${encodeURIComponent(poolId)}`, {
+    method: 'PATCH',
+    body: { publiclyListed },
   });
 }
 

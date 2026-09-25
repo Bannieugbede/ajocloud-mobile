@@ -40,15 +40,49 @@ Changing the app's `scheme` in `app.json` breaks this link unless
 `/sign-in`. The handoff code is deliberately dropped: it is single-use and the
 session that requested it is gone.
 
-## Invitation links (`/join/<code>`)
+## Short links
 
-The same invitation arrives in three forms, all ending on `join/[code]`:
+Everything a member shares is a short link on the website, built in
+`src/services/share-links.ts` from `EXPO_PUBLIC_WEB_URL`:
 
-| Form                               | iOS                       | Android                        |
-| ---------------------------------- | ------------------------- | ------------------------------ |
-| `ajocloud://join/<code>`           | Opens the app             | Opens the app                  |
-| `https://ajocloud.com/join/<code>` | Opens the app (universal) | Opens the web page (see below) |
-| Push notification tap              | Opens the app             | Opens the app                  |
+| Link            | What it is                                                     | Where it lands in the app   |
+| --------------- | -------------------------------------------------------------- | --------------------------- |
+| `/g/<code>`     | Ajo group: 10-char invitation, or a listed group's 7-char code | `join/[code]`               |
+| `/p/<code>`     | Akawo pool: 8-char join code, or a listed pool's 7-char code   | `invite/akawo/[code]`       |
+| `/f/<code>`     | Food Ajo programme: 7-char code (or an id, from older links)   | `invite/food/[programmeId]` |
+| `/r/AJO-XXXXXX` | Referral                                                       | `join?ref=` (sign-up)       |
+
+`+native-intent.ts` maps them, from the scheme (`ajocloud://g/<code>`) or a
+universal link, and only when the short path is the first segment. The links
+from before short links (`/join/<code>`, `/akawo/join/<code>`, `/food/<id>`,
+`/join?ref=`) still open the same screens. Only `?ref=` is carried across from
+a link's query.
+
+Code shapes mirror the backend's `docs/share-links.md` and are checked in
+`src/services/incoming-link.ts` (`normaliseGroupCode`, `normalisePoolCode`,
+`normaliseProgrammeRef`). Short codes are case-insensitive; an invitation from
+before short links is 43 characters of base64url and is kept exactly.
+
+Sharing goes through `shareContent`, which on iOS passes the link as `url` as
+well as in the message, so the share sheet and iMessage show the website's
+preview. Every message carries the full web link, which is what WhatsApp and
+other chat apps unfurl.
+
+A 7-character code is a group's permanent public code. It admits anyone only
+while the organiser has listed the group, from the Ajo group screen (its
+administrator) or the Akawo organiser screen. A listed group or pool is shared
+by that permanent link; an unlisted Ajo group is shared by issuing a new
+single-use invitation each time, from the group screen's "Invite people" card.
+
+## Invitation links (`/g/<code>`)
+
+The same link arrives in three forms, all ending on `join/[code]`:
+
+| Form                            | iOS                       | Android                        |
+| ------------------------------- | ------------------------- | ------------------------------ |
+| `ajocloud://g/<code>`           | Opens the app             | Opens the app                  |
+| `https://ajocloud.com/g/<code>` | Opens the app (universal) | Opens the web page (see below) |
+| Push notification tap           | Opens the app             | Opens the app                  |
 
 Without the app installed, the https link opens the web page, which describes
 the group, offers to open the app through the scheme, and links to both stores.
@@ -62,9 +96,9 @@ through the web page's "Open in app" button.
 `ios/` is generated. `app.json` is the source of truth for the associated
 domain; a local `ios/` folder picks it up on the next `npx expo prebuild`.
 
-## Referral links (`/join?ref=AJO-XXXXXX`)
+## Referral links (`/r/AJO-XXXXXX`)
 
-`referral-share.ts` builds these. `app/join/index.tsx` holds the code
+`referral-share.ts` builds these; `+native-intent.ts` sends them to `join?ref=`. `app/join/index.tsx` holds the code
 (`pending-referral.ts`, 30 days) and sends someone signed out to sign-up, where
 the referral field is pre-filled. Someone signed in goes home. The code is
 normalised the way the backend does it, and anything that is not a code is
@@ -85,7 +119,7 @@ The end of registration (`intent.tsx`) resumes a held invitation the same way
 sign-in does, so someone who created an account to accept an invitation is
 taken back to it.
 
-## Akawo pool and Food Ajo links (`/akawo/join/<code>`, `/food/<id>`)
+## Akawo pool and Food Ajo links (`/p/<code>`, `/f/<code>`)
 
 Members share these as website links (`src/services/share-links.ts`), because a
 website link works for everyone: it opens the app when installed, and otherwise
@@ -94,10 +128,10 @@ the app. The pool code screen shares the link and the bare code, for someone
 typing it in. The Food programme screen has a Share button while the programme
 is `OPEN` or `ACTIVE`, the only states the website's public preview describes.
 
-`+native-intent.ts` redirects both paths, from the scheme or a universal link,
-to public entry screens under `/invite`. Left alone, `/akawo/join/<code>` would
-match nothing and `/food/<id>` would land on a tab screen that assumes a
-session. Only `?ref=` is carried across from the link's query.
+`+native-intent.ts` redirects both, from the scheme or a universal link, to
+public entry screens under `/invite`, which handle a signed-out arrival. A Food
+short code is exchanged for the programme id through the public preview first,
+since every other programme screen is keyed by id.
 
 | Entry screen                | Signed in                                      | Signed out                                           |
 | --------------------------- | ---------------------------------------------- | ---------------------------------------------------- |

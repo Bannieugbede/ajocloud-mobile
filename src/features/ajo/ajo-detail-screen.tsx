@@ -12,6 +12,7 @@ import { AppSegmented } from '@/components/ui/app-segmented';
 import { AppStatTiles } from '@/components/ui/app-stat-tiles';
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
+import { AppToggleRow } from '@/components/ui/app-toggle-row';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import { longDate, shortDate } from '@/utils/dates';
@@ -20,6 +21,7 @@ import { statusLabel } from '@/utils/status';
 
 import {
   buildRotation,
+  canInvite,
   canLock,
   canRequestSwap,
   currentRotationSequence,
@@ -44,6 +46,10 @@ export function AjoDetailScreen({
   onViewSwaps,
   swapsAwaitingMe,
   onPayContribution,
+  inviting,
+  listing,
+  onInvite,
+  onSetListing,
 }: {
   group?: AjoGroupDetail;
   cycles?: AjoCycle[];
@@ -65,6 +71,14 @@ export function AjoDetailScreen({
     currency: string;
     sequence: number;
   }) => void;
+  /** Preparing a link to share, which for an unlisted group issues an invitation. */
+  inviting?: boolean;
+  /** A listing change is on its way to the server. */
+  listing?: boolean;
+  /** Shares the group: its public link when listed, a new invitation otherwise. */
+  onInvite?: () => void;
+  /** Administrator only: lists the group publicly, or takes it down. */
+  onSetListing?: (listed: boolean) => void;
 }) {
   const { colors } = useTheme();
   const [panel, setPanel] = useState<Panel>('rotation');
@@ -147,6 +161,35 @@ export function AjoDetailScreen({
               })
             }
           />
+        </AppCard>
+      ) : null}
+
+      {onInvite && canInvite(group, viewerUserId) ? (
+        <AppCard>
+          <AppText accessibilityRole="header" weight="semibold" style={styles.cardTitle}>
+            Invite people
+          </AppText>
+          <AppText style={{ color: colors.textMuted }}>
+            {group.publiclyListed
+              ? 'This group is listed. Anyone with its link can see it and join.'
+              : 'Send a link that lets one person join. It works for 14 days.'}
+          </AppText>
+          <AppButton
+            label={group.publiclyListed ? 'Share group link' : 'Share an invitation'}
+            onPress={onInvite}
+            loading={inviting ?? false}
+            disabled={inviting ?? false}
+          />
+          {onSetListing && canLock(group, viewerUserId) ? (
+            <AppToggleRow
+              testID="ajo-group-listing"
+              title="List this group publicly"
+              description="Lets anyone find the group on search engines and join from its permanent link. Turn it off at any time."
+              value={group.publiclyListed ?? false}
+              onValueChange={onSetListing}
+              disabled={listing ?? false}
+            />
+          ) : null}
         </AppCard>
       ) : null}
 

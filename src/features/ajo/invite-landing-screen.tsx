@@ -80,11 +80,16 @@ export function InviteLandingScreen({
       contentInsetAdjustmentBehavior="automatic"
     >
       <AppText style={{ color: colors.textMuted }}>
-        {preview.inviterName} invited you to join
+        {preview.kind === 'listed'
+          ? `An Ajo group run by ${preview.inviterName}`
+          : `${preview.inviterName} invited you to join`}
       </AppText>
       <AppText weight="bold" style={[styles.heading, { color: colors.text }]}>
         {preview.groupName}
       </AppText>
+      {preview.kind === 'listed' && preview.description ? (
+        <AppText style={{ color: colors.textMuted }}>{preview.description}</AppText>
+      ) : null}
 
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Detail

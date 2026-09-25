@@ -14,6 +14,8 @@ export type FoodPackage = {
 
 export type FoodProgramme = {
   id: string;
+  /** The programme's public code: its link is ajocloud.com/f/<shortCode>. */
+  shortCode: string;
   coordinatorUserId: string;
   name: string;
   status: string;
@@ -42,6 +44,15 @@ function client() {
 
 export function listFoodProgrammes(): Promise<FoodProgrammePage> {
   return client().request('/api/v1/food-ajo/programmes?limit=25');
+}
+
+/**
+ * A programme's public description, by its short code or id. Unauthenticated:
+ * this is how a shared `/f/<code>` link is turned into the programme id the
+ * rest of the app works with.
+ */
+export function previewFoodProgramme(idOrCode: string): Promise<{ id: string; shortCode: string }> {
+  return client().request(`/api/v1/public/food-programmes/${encodeURIComponent(idOrCode)}`);
 }
 
 export function getFoodProgramme(programmeId: string): Promise<FoodProgramme> {

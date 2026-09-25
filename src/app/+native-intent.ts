@@ -10,12 +10,14 @@
  * handoff code is deliberately dropped: it is single-use and short-lived, and
  * the session that requested it is gone.
  *
- * `/akawo/join/<code>` and `/food/<id>` are the website's shared-link paths,
- * reached through the app's scheme or a universal link. Left alone,
- * `/akawo/join/<code>` would fall through to nothing and `/food/<id>` would
- * land on a tab screen that assumes a session. Both go to public entry screens
- * under `/invite`, which handle a signed-out arrival. The `?ref=` a link may
- * carry is kept.
+ * The website's shared links are short: `/g/<code>` (Ajo), `/p/<code>`
+ * (Akawo pool), `/f/<code>` (Food Ajo) and `/r/<code>` (referral), reached
+ * through the app's scheme or a universal link. Each goes to the app's entry
+ * screen for it, all of which handle a signed-out arrival: the Ajo invitation
+ * screen, the public pool and programme screens under `/invite`, and sign-up
+ * with the referral. The paths from before short links (`/akawo/join/<code>`,
+ * `/food/<id>`; `/join/<code>` routes by itself) keep working. The `?ref=` a
+ * link may carry is kept, and nothing else in its query.
  */
 export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
   try {
@@ -24,6 +26,18 @@ export function redirectSystemPath({ path }: { path: string; initial: boolean })
     if (/(^|\/)auth\/google(\?|$)/.test(path)) return '/sign-in';
 
     const query = queryOf(path);
+
+    // Only as the first segment of the path: `ajocloud://g/X`,
+    // `https://<host>/g/X` or `/g/X`. Anywhere deeper is not a link we issue.
+    const short = /^(?:ajocloud:\/\/\/?|https?:\/\/[^/?#]+\/|\/)?([gpfr])\/([^/?#]+)/.exec(path);
+    if (short?.[1] && short[2]) {
+      const [, kind, code] = short;
+      if (kind === 'g') return `/join/${code}${query}`;
+      if (kind === 'p') return `/invite/akawo/${code}${query}`;
+      if (kind === 'f') return `/invite/food/${code}${query}`;
+      return `/join?ref=${code}`;
+    }
+
     const pool = /(?:^|\/)akawo\/join\/([^/?#]+)/.exec(path);
     if (pool?.[1]) return `/invite/akawo/${pool[1]}${query}`;
     const food = /(?:^|\/)food\/([0-9a-fA-F-]{36})(?=[/?#]|$)/.exec(path);

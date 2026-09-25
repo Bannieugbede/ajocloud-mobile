@@ -1,9 +1,10 @@
 /**
- * The invitation code carried by an incoming link, or null.
+ * The Ajo group code carried by an incoming link, or null.
  *
- * Accepts both forms the same invitation can arrive as: the app's own scheme
- * (`ajocloud://join/CODE`), and the https link on the website that someone
- * without the app lands on first (`https://ajocloud.com/join/CODE`).
+ * Accepts both forms the same link can arrive as: the app's own scheme
+ * (`ajocloud://g/CODE`), and the https link on the website that someone
+ * without the app lands on first (`https://ajocloud.com/g/CODE`). The path
+ * from before short links, `/join/CODE`, is read the same way.
  *
  * Deliberately plain string work rather than `Linking.parse`. This runs on a
  * value that can be typed, forwarded, or crafted by any page the user visits,
@@ -24,29 +25,59 @@ export function invitationCodeFromUrl(url: string): string | null {
 
   const segments = path.split('/').filter((segment) => segment.length > 0);
 
-  // The scheme form puts "join" first (ajocloud://join/CODE); the https form
-  // puts the host there, so "join" is second (https://host/join/CODE). Only
-  // those two positions are accepted: matching "join" anywhere would honour
-  // https://anyone.example/x/join/CODE, letting an unrelated page hand the app
-  // a code as though the user had been invited.
+  // The scheme form puts "g" first (ajocloud://g/CODE); the https form puts
+  // the host there, so "g" is second (https://host/g/CODE). Only those two
+  // positions are accepted: matching "g" anywhere would honour
+  // https://anyone.example/x/g/CODE, letting an unrelated page hand the app a
+  // code as though the user had been invited.
   const hadScheme = withoutScheme !== url;
   const isSchemeForm = hadScheme && !url.startsWith('http://') && !url.startsWith('https://');
   const joinAt = isSchemeForm ? 0 : 1;
-  if (segments[joinAt] !== 'join') return null;
+  if (segments[joinAt] !== 'g' && segments[joinAt] !== 'join') return null;
 
-  const code = segments[joinAt + 1];
-  if (!code) return null;
-
-  return isPlausibleInvitationCode(code) ? code : null;
+  return normaliseGroupCode(segments[joinAt + 1]);
 }
 
 /**
- * Whether a code is shaped like one the API issues: 32 random bytes as
- * base64url. Checking here means a truncated or mistyped link fails at once
- * rather than after a round trip, and keeps anything odd out of a URL path.
+ * The alphabet of every short code in a shared link, mirroring the backend's
+ * `src/common/links/share-code.ts`: 0/O, 1/I/L and 8/B are left out.
  */
+const SHARE_CODE_ALPHABET = '2345679ACDEFGHJKMNPQRTUVWXYZ';
+
+function normaliseShareCode(input: unknown, length: number): string | null {
+  if (typeof input !== 'string') return null;
+  const code = input.trim().toUpperCase().replace(/[\s-]/g, '');
+  if (code.length !== length) return null;
+  for (const character of code) {
+    if (!SHARE_CODE_ALPHABET.includes(character)) return null;
+  }
+  return code;
+}
+
+/** A group's permanent 7-character public code, or null. */
+export function normalisePublicCode(input: unknown): string | null {
+  return normaliseShareCode(input, 7);
+}
+
+/**
+ * The code in an Ajo group link, in the form the API reads it, or null:
+ *
+ * - a 10-character invitation,
+ * - a listed group's 7-character public code, or
+ * - a 43-character invitation from before short links, which is base64url,
+ *   case-sensitive, and kept exactly.
+ *
+ * Checking here means a truncated or mistyped link fails at once rather than
+ * after a round trip, and keeps anything odd out of a URL path.
+ */
+export function normaliseGroupCode(input: unknown): string | null {
+  const short = normaliseShareCode(input, 10) ?? normaliseShareCode(input, 7);
+  if (short) return short;
+  return typeof input === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(input) ? input : null;
+}
+
 export function isPlausibleInvitationCode(code: string): boolean {
-  return /^[A-Za-z0-9_-]{32,128}$/.test(code);
+  return normaliseGroupCode(code) !== null;
 }
 
 /**
@@ -83,11 +114,15 @@ export function normaliseReferralCode(input: unknown): string | null {
 const POOL_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 /**
- * The canonical form of an Akawo pool join code, or null. Compared the way the
- * backend compares them: case-insensitive, spaces and dashes ignored.
+ * The canonical form of the code in an Akawo pool link, or null: an
+ * 8-character join code, or a listed pool's 7-character public code. Compared
+ * the way the backend compares them: case-insensitive, spaces and dashes
+ * ignored.
  */
 export function normalisePoolCode(input: unknown): string | null {
   if (typeof input !== 'string') return null;
+  const publicCode = normalisePublicCode(input);
+  if (publicCode) return publicCode;
   const code = input.trim().toUpperCase().replace(/[\s-]/g, '');
   if (code.length !== 8) return null;
   for (const character of code) {
@@ -101,4 +136,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Whether a value is shaped like a Food Ajo programme id. */
 export function isProgrammeId(value: unknown): value is string {
   return typeof value === 'string' && UUID.test(value);
+}
+
+/**
+ * The code in a Food Ajo link, canonical, or null: the programme's public code
+ * (`/f/<code>`), or its id from a link shared before short codes.
+ */
+export function normaliseProgrammeRef(input: unknown): string | null {
+  const publicCode = normalisePublicCode(input);
+  if (publicCode) return publicCode;
+  return isProgrammeId(input) ? input.toLowerCase() : null;
 }

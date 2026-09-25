@@ -55,6 +55,7 @@ it('opens a live Food Ajo programme', async () => {
       programmes={[
         {
           id: 'food',
+          shortCode: '4FD5GHJ',
           coordinatorUserId: 'user',
           name: 'Family Staples',
           status: 'ACTIVE',

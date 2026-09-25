@@ -89,13 +89,14 @@ describe('GroupInvitationScreen', () => {
     const view = await render(
       <GroupInvitationScreen
         groupName="Family Rotation"
-        groupId="group-1"
-        invitationCode="abcdef123456"
+        invitationCode="WHE4NTDH27"
         onDone={jest.fn()}
       />,
     );
-    expect(view.getByText('abcdef123456')).toBeTruthy();
+    expect(view.getByText('WHE4NTDH27')).toBeTruthy();
     expect(view.getByText(/not be able to see the code again/i)).toBeTruthy();
+    // The link carries everything; a group id is nothing a person can use.
+    expect(view.queryByText('Group ID')).toBeNull();
   });
 });
 
@@ -178,5 +179,61 @@ describe('SwapRequestScreen', () => {
       />,
     );
     expect(view.getByText(/nothing to swap/i)).toBeTruthy();
+  });
+});
+
+describe('inviting people from the group screen', () => {
+  const open: AjoGroupDetail = { ...group, status: 'OPEN', lockedAt: null };
+  const asAdmin: AjoGroupDetail = {
+    ...open,
+    members: open.members.map((member) =>
+      member.userId === ME ? { ...member, role: 'GROUP_ADMIN' } : { ...member, role: 'MEMBER' },
+    ),
+  };
+  const setup = async (overrides: Partial<Parameters<typeof AjoDetailScreen>[0]> = {}) =>
+    await render(
+      <AjoDetailScreen
+        group={open}
+        viewerUserId={ME}
+        loading={false}
+        error={false}
+        onRetry={jest.fn()}
+        onLock={jest.fn()}
+        onRequestSwap={jest.fn()}
+        onViewSwaps={jest.fn()}
+        swapsAwaitingMe={0}
+        onPayContribution={jest.fn()}
+        onInvite={jest.fn()}
+        onSetListing={jest.fn()}
+        {...overrides}
+      />,
+    );
+
+  it('lets any member share an invitation while the group takes members', async () => {
+    const onInvite = jest.fn();
+    const view = await setup({ onInvite });
+    await act(async () => fireEvent.press(view.getByText('Share an invitation')));
+    expect(onInvite).toHaveBeenCalled();
+    // Listing is the administrator's decision.
+    expect(view.queryByTestId('ajo-group-listing')).toBeNull();
+  });
+
+  it('shares the permanent link once the group is listed', async () => {
+    const view = await setup({ group: { ...open, publiclyListed: true, shortCode: '7KQ3MZP' } });
+    expect(view.getByText('Share group link')).toBeTruthy();
+  });
+
+  it('gives the administrator the listing switch', async () => {
+    const onSetListing = jest.fn();
+    const view = await setup({ group: asAdmin, onSetListing });
+    await act(async () =>
+      fireEvent(view.getByLabelText(/^List this group publicly/), 'valueChange', true),
+    );
+    expect(onSetListing).toHaveBeenCalledWith(true);
+  });
+
+  it('offers nothing to invite to once the rotation is locked', async () => {
+    const view = await setup({ group });
+    expect(view.queryByText('Invite people')).toBeNull();
   });
 });

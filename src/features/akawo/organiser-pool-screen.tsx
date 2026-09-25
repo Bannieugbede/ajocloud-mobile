@@ -11,6 +11,7 @@ import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppStatTiles } from '@/components/ui/app-stat-tiles';
 import { AppEmptyState, AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
+import { AppToggleRow } from '@/components/ui/app-toggle-row';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import { formatMinorAmount } from '@/utils/money';
@@ -42,6 +43,8 @@ export function OrganiserPoolScreen({
   onExport,
   onWaive,
   onRemove,
+  listing,
+  onSetListing,
 }: {
   data?: OrganiserPoolView;
   loading: boolean;
@@ -57,6 +60,10 @@ export function OrganiserPoolScreen({
   onExport: () => void;
   onWaive: (member: AkawoPoolMember) => void;
   onRemove: (member: AkawoPoolMember) => void;
+  /** A listing change is on its way to the server. */
+  listing?: boolean;
+  /** Lists the pool publicly, or takes it down. */
+  onSetListing?: (listed: boolean) => void;
 }) {
   const { colors } = useTheme();
   const [panel, setPanel] = useState<Panel>('overview');
@@ -159,7 +166,24 @@ export function OrganiserPoolScreen({
           ) : null}
 
           {isOpen ? (
-            <AppButton label="Share join code" variant="outline" onPress={onShareCode} />
+            <AppButton
+              label={data.publiclyListed ? 'Share pool link' : 'Share join code'}
+              variant="outline"
+              onPress={onShareCode}
+            />
+          ) : null}
+
+          {onSetListing && (data.status === 'DRAFT' || data.status === 'OPEN') ? (
+            <AppCard>
+              <AppToggleRow
+                testID="akawo-pool-listing"
+                title="List this pool publicly"
+                description="Lets anyone find the pool on search engines and join from its permanent link, without the join code. Turn it off at any time."
+                value={data.publiclyListed ?? false}
+                onValueChange={onSetListing}
+                disabled={listing ?? false}
+              />
+            </AppCard>
           ) : null}
         </>
       ) : (

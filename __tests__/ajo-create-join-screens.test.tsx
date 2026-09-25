@@ -173,6 +173,16 @@ describe('joining an Ajo group', () => {
     expect(onVerify).not.toHaveBeenCalled();
   });
 
+  it('verifies a short code as retyped, in its canonical form', async () => {
+    const onVerify = jest.fn();
+    const view = await setup({ onVerify });
+    await act(async () =>
+      fireEvent.changeText(view.getByLabelText('Invitation code'), 'whe4-ntdh27'),
+    );
+    await act(async () => fireEvent.press(view.getByText('Verify code')));
+    expect(onVerify).toHaveBeenCalledWith('WHE4NTDH27');
+  });
+
   it('verifies a code that could plausibly be one', async () => {
     const onVerify = jest.fn();
     const view = await setup({ onVerify });

@@ -8,11 +8,13 @@ import {
   getOrganiserPool,
   openAkawoPool,
   removePoolMember,
+  setAkawoPoolListing,
   waivePoolDue,
   type AkawoPoolMember,
 } from '@/api/endpoints/akawo-pools';
 import { exportPoolRecord } from '@/features/akawo/export-pool-record';
 import { OrganiserPoolScreen } from '@/features/akawo/organiser-pool-screen';
+import { poolShareMessage, shareContent } from '@/services/share-links';
 import type { AppError } from '@/types/errors';
 
 export default function ManagePoolRoute() {
@@ -54,6 +56,12 @@ export default function ManagePoolRoute() {
     onError: report,
   });
 
+  const listing = useMutation({
+    mutationFn: (listed: boolean) => setAkawoPoolListing(poolId, listed),
+    onSuccess: invalidate,
+    onError: report,
+  });
+
   const remove = useMutation({
     mutationFn: (member: AkawoPoolMember) => removePoolMember(poolId, member.id),
     onSuccess: invalidate,
@@ -73,13 +81,21 @@ export default function ManagePoolRoute() {
       onClose={() => lifecycle.mutate('close')}
       onCancel={() => lifecycle.mutate('cancel')}
       onShareCode={() => {
-        // The plaintext code is never returned again after creation, so this
-        // shares the pool by name and leaves the code to the organiser's own
-        // copy of it.
+        const pool = query.data;
+        // A listed pool has a permanent link that admits anyone, so it can be
+        // shared again at any time. Otherwise the plaintext join code is never
+        // returned after creation, so this shares the pool by name and leaves
+        // the code to the organiser's own copy of it.
+        if (pool?.publiclyListed && pool.shortCode) {
+          void shareContent(poolShareMessage(pool.name, pool.shortCode, { typeable: false }));
+          return;
+        }
         void Share.share({
-          message: `Join "${query.data?.name ?? 'my pool'}" on Ajo Cloud with the code I sent you.`,
+          message: `Join "${pool?.name ?? 'my pool'}" on Ajo Cloud with the code I sent you.`,
         });
       }}
+      listing={listing.isPending}
+      onSetListing={(listed) => listing.mutate(listed)}
       onExport={() => {
         if (!query.data) return;
         void exportPoolRecord(query.data).catch(() =>

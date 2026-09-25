@@ -18,7 +18,6 @@ export default function AjoInvitationRoute() {
 
   return (
     <GroupInvitationScreen
-      groupId={groupId}
       groupName={groupName ?? 'Your group'}
       invitationCode={invitationCode}
       onDone={() => router.replace({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId } })}

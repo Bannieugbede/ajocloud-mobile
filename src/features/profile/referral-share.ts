@@ -6,7 +6,9 @@
  * mistake nobody can correct after it is sent.
  */
 
-import { environment } from '@/config/environment';
+import { referralLink } from '@/services/share-links';
+
+export { referralLink };
 
 /**
  * A share message carrying both the code and a link.
@@ -25,15 +27,4 @@ export function referralShareMessage(code: string): string {
   ]
     .filter((line) => line !== '')
     .join('\n');
-}
-
-/**
- * Where a shared code sends someone, or null when no web address is
- * configured. Returning null rather than a broken URL keeps a half-built link
- * out of a message that has already been sent.
- */
-export function referralLink(code: string): string | null {
-  const base = environment.EXPO_PUBLIC_WEB_URL;
-  if (!base) return null;
-  return `${base.replace(/\/+$/, '')}/join?ref=${encodeURIComponent(code)}`;
 }

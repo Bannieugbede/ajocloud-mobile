@@ -1,16 +1,16 @@
 import {
-  isPlausibleInvitationCode,
-  isProgrammeId,
+  normaliseGroupCode,
   normalisePoolCode,
+  normaliseProgrammeRef,
   normaliseReferralCode,
 } from '@/services/incoming-link';
 
 export type InstallAttribution = {
-  /** An Ajo group invitation code. */
+  /** An Ajo group link code: an invitation, or a listed group's public code. */
   invitationCode: string | null;
-  /** An Akawo pool join code, canonical. */
+  /** An Akawo pool join code, or a listed pool's public code. Canonical. */
   poolCode: string | null;
-  /** A Food Ajo programme id. */
+  /** A Food Ajo programme's public code, or its id from an older link. */
   programmeId: string | null;
   referralCode: string | null;
 };
@@ -51,12 +51,12 @@ export function attributionFromInstallReferrer(referrer: unknown): InstallAttrib
       continue;
     }
 
-    if (key === 'ajocloud_invite' && isPlausibleInvitationCode(value)) {
-      attribution.invitationCode = value;
+    if (key === 'ajocloud_invite') {
+      attribution.invitationCode = normaliseGroupCode(value);
     } else if (key === 'ajocloud_pool') {
       attribution.poolCode = normalisePoolCode(value);
-    } else if (key === 'ajocloud_food' && isProgrammeId(value)) {
-      attribution.programmeId = value.toLowerCase();
+    } else if (key === 'ajocloud_food') {
+      attribution.programmeId = normaliseProgrammeRef(value);
     } else if (key === 'ajocloud_ref') {
       attribution.referralCode = normaliseReferralCode(value);
     }

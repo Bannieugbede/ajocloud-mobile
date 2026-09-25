@@ -1,14 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 
+import { Alert } from 'react-native';
+
 import {
+  createGroupInvitation,
   getAjoGroup,
   getAjoSchedule,
   listAjoSwaps,
   lockAjoGroup,
+  setAjoGroupListing,
 } from '@/api/endpoints/ajo-groups';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
+import { groupShareMessage, shareContent } from '@/services/share-links';
+import type { AppError } from '@/types/errors';
 
 export default function AjoGroupRoute() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -46,6 +52,37 @@ export default function AjoGroupRoute() {
     },
   });
 
+  // A listed group is shared by its permanent link, which admits anyone and
+  // costs nothing. An unlisted one needs an invitation: single-use, issued for
+  // this share, because a link forwarded beyond the person it was meant for
+  // should not admit a whole group chat.
+  const invite = useMutation({
+    mutationFn: async () => {
+      const current = group.data;
+      if (!current) return;
+      const code =
+        current.publiclyListed && current.shortCode
+          ? current.shortCode
+          : (await createGroupInvitation(groupId, { maxUses: 1 })).code;
+      await shareContent(groupShareMessage(current.name, code));
+    },
+    onError: (error: unknown) =>
+      Alert.alert(
+        'Could not create a link',
+        (error as AppError | null)?.message ?? 'Please try again.',
+      ),
+  });
+
+  const listing = useMutation({
+    mutationFn: (listed: boolean) => setAjoGroupListing(groupId, listed),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ajo-group', groupId] }),
+    onError: (error: unknown) =>
+      Alert.alert(
+        'Could not change the listing',
+        (error as AppError | null)?.message ?? 'Please try again.',
+      ),
+  });
+
   return (
     <AjoDetailScreen
       {...(group.data ? { group: group.data } : {})}
@@ -59,6 +96,10 @@ export default function AjoGroupRoute() {
         void schedule.refetch();
       }}
       onLock={() => lock.mutate()}
+      inviting={invite.isPending}
+      listing={listing.isPending}
+      onInvite={() => invite.mutate()}
+      onSetListing={(listed) => listing.mutate(listed)}
       swapsAwaitingMe={swaps.data?.filter((swap) => swap.awaitingMyDecision).length ?? 0}
       onRequestSwap={() =>
         // push: the group stays underneath, so cancelling a swap returns to it.

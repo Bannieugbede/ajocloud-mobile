@@ -13,6 +13,10 @@ export type AjoGroupSummary = {
   startDate: string;
   endDate: string;
   _count: { slots: number; members: number };
+  /** The group's permanent public code: ajocloud.com/g/<shortCode>. */
+  shortCode?: string;
+  /** Listed groups are indexed and joinable by anyone from their public link. */
+  publiclyListed?: boolean;
   /** Who runs the group. Null when no admin membership is active. */
   adminName?: string | null;
   /** The round in progress, for the rotation position and next due date. */
@@ -99,6 +103,8 @@ export type CreatedAjoGroup = {
   name: string;
   status: string;
   invitationCode: string;
+  shortCode: string;
+  publiclyListed: boolean;
 };
 
 function client() {
@@ -127,25 +133,45 @@ export function createAjoGroup(input: CreateAjoGroupInput): Promise<CreatedAjoGr
 }
 
 /**
- * What a shared invitation link says about its group.
+ * What a shared Ajo group link (`/g/<code>`) says about its group: an
+ * invitation, or a group its administrator has listed publicly.
  *
  * Read without a session: the link may be opened by someone who has just
  * installed the app and has not signed in yet, so the screen can show what they
  * were invited to before asking them to.
  */
 export type GroupInvitePreview = {
+  kind?: 'invitation' | 'listed';
+  shortCode?: string | null;
   groupName: string;
+  description?: string | null;
+  /** The inviter, or for a listed group its administrator. */
   inviterName: string;
   contributionAmountMinor: string;
   currency: string;
   contributionFrequency: string;
   memberCount: number;
   maxMembers: number;
-  expiresAt: string;
+  /** Null for a listed group, whose link does not expire. */
+  expiresAt: string | null;
 };
 
 export function previewGroupInvitation(code: string): Promise<GroupInvitePreview> {
-  return client().request(`/api/v1/invitations/${encodeURIComponent(code)}`);
+  return client().request(`/api/v1/public/ajo-groups/${encodeURIComponent(code)}`);
+}
+
+/**
+ * Lists the group publicly, or takes it down. Its administrator only. A listed
+ * group is indexed by search engines and anyone can join from its public link.
+ */
+export function setAjoGroupListing(
+  groupId: string,
+  listed: boolean,
+): Promise<{ id: string; shortCode: string; publiclyListed: boolean }> {
+  return client().request(`/api/v1/ajo-groups/${encodeURIComponent(groupId)}/listing`, {
+    method: 'PATCH',
+    body: { listed },
+  });
 }
 
 /** Issues a shareable invitation link. The code is returned only here. */
