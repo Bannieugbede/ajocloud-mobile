@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -37,6 +38,7 @@ export function SendMoneyScreen({
   }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [amountMajor, setAmountMajor] = useState('');
   const [note, setNote] = useState('');
@@ -113,12 +115,6 @@ export function SendMoneyScreen({
         <AppText style={{ color: colors.textMuted }}>
           This goes straight to their wallet and cannot be undone.
         </AppText>
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
 
         <AppButton
           label="Send money"

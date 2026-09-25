@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
 import type { AjoSwapRequest } from '@/api/endpoints/ajo-groups';
@@ -40,6 +41,7 @@ export function SwapApprovalsScreen({
   onReject: (swap: AjoSwapRequest) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const mine = pendingMyDecision(swaps);
   const rest = otherSwaps(swaps);
 
@@ -85,12 +87,6 @@ export function SwapApprovalsScreen({
       contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      {error ? (
-        <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-          {error.message}
-        </AppText>
-      ) : null}
-
       {mine.length > 0 ? (
         <>
           <AppText accessibilityRole="header" weight="semibold">

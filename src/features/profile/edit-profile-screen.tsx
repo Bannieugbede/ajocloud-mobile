@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-na
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast, useSuccessToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -26,6 +27,8 @@ export function EditProfileScreen({
   onSubmit: (input: { firstName: string; lastName: string }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
+  useSuccessToast(saved && !error, 'Your details have been saved.');
   const [firstName, setFirstName] = useState(initialFirst);
   const [lastName, setLastName] = useState(initialLast);
   const [touched, setTouched] = useState(false);
@@ -65,17 +68,6 @@ export function EditProfileScreen({
         <AppText style={{ color: colors.textMuted }}>
           Contact support if you need to change the email on your account.
         </AppText>
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
-        {saved && !error ? (
-          <AppText style={{ color: colors.success }} accessibilityLiveRegion="polite">
-            Your details have been saved.
-          </AppText>
-        ) : null}
 
         <AppButton
           label="Save changes"

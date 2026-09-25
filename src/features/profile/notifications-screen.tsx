@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast, useSuccessToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -44,6 +45,8 @@ export function NotificationsScreen({
   onQuietHours: (window: { startMinutes: number; endMinutes: number } | null) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
+  useSuccessToast(saved && !error, 'Your notification settings have been saved.');
   const current = quietHoursLabel(quietWindow);
 
   return (
@@ -102,17 +105,6 @@ export function NotificationsScreen({
           ))}
         </View>
       </AppCard>
-
-      {error ? (
-        <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-          {error.message}
-        </AppText>
-      ) : null}
-      {saved && !error ? (
-        <AppText style={{ color: colors.success }} accessibilityLiveRegion="polite">
-          Your notification settings have been saved.
-        </AppText>
-      ) : null}
 
       <AppText style={{ color: colors.textMuted }}>
         Messages about your security — signing in, password changes and account locks — are always

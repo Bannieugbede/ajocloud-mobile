@@ -27,6 +27,7 @@ export default function JoinAjoGroupRoute() {
   });
 
   const join = useMutation({
+    meta: { successMessage: 'You’ve joined the group.' },
     mutationFn: (input: { groupId: string; invitationCode: string; requestedSlots: number }) =>
       joinAjoGroup(input.groupId, {
         invitationCode: input.invitationCode,

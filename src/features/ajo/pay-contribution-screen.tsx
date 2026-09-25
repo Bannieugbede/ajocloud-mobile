@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -37,6 +38,7 @@ export function PayContributionScreen({
   onSubmit: (amountMinor: string) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
 
   const remainingMinor = (BigInt(amountDueMinor) - BigInt(amountPaidMinor)).toString();
   const [payingPart, setPayingPart] = useState(false);
@@ -124,12 +126,6 @@ export function PayContributionScreen({
             />
           </View>
         )}
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );

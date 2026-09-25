@@ -11,3 +11,10 @@ jest.mock('react-native-safe-area-context', () => {
   const mock = require('react-native-safe-area-context/jest/mock');
   return mock.default ?? mock;
 });
+
+// Toasts live in a module-level store, so one test's messages would otherwise
+// still be "on screen" in the next.
+afterEach(() => {
+  const { toast } = require('@/components/ui/app-toast');
+  toast.clear();
+});

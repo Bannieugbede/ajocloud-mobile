@@ -7,6 +7,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppMedallion } from '@/components/ui/app-medallion';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -39,6 +40,7 @@ export function JoinPoolScreen({
   initialCode?: string;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [joinCode, setJoinCode] = useState(initialCode ?? '');
   const [fullName, setFullName] = useState('');
   const [reference, setReference] = useState('');
@@ -89,14 +91,6 @@ export function JoinPoolScreen({
           />
         ) : null}
 
-        {error && !preview ? (
-          <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-            <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-              {error.message}
-            </AppText>
-          </View>
-        ) : null}
-
         {preview ? (
           <>
             <View style={[styles.summary, { backgroundColor: colors.primarySoft }]}>
@@ -144,14 +138,6 @@ export function JoinPoolScreen({
                   : undefined
               }
             />
-
-            {error ? (
-              <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-                <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-                  {error.message}
-                </AppText>
-              </View>
-            ) : null}
 
             <AppButton
               label="Join pool"

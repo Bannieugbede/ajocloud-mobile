@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
@@ -114,6 +114,16 @@ export function AppEmptyState({
   );
 }
 
+/**
+ * What a screen shows where its content would be when it could not load.
+ *
+ * Deliberately quiet: the failure itself is announced once, as a toast raised
+ * by the query cache (`src/providers/query-toasts.ts`), so repeating it here as
+ * a red card only shouted the same news twice. What is left is the way back:
+ * one "Try again". `title` and `description` are not drawn; they give the
+ * button its spoken label, so someone using a screen reader still hears what
+ * failed when they reach it.
+ */
 export function AppErrorState({
   title = 'Something went wrong',
   description,
@@ -121,35 +131,35 @@ export function AppErrorState({
   testID,
 }: {
   title?: string;
-  description: string;
+  description?: string;
   onRetry: () => void;
   testID?: string;
 }) {
   const { colors } = useTheme();
   return (
-    <View
-      style={[styles.panel, { backgroundColor: colors.errorSoft, borderColor: colors.errorSoft }]}
-      testID={testID}
-      accessibilityLiveRegion="polite"
-    >
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        style={[styles.medallion, { backgroundColor: colors.cardBackground }]}
+    <View style={styles.retry} testID={testID}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${title}. Try again`}
+        {...(description ? { accessibilityHint: description } : {})}
+        onPress={onRetry}
+        hitSlop={8}
+        style={({ pressed }) => [
+          styles.retryButton,
+          { borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
+        ]}
       >
-        <Ionicons name="alert-circle-outline" size={30} color={colors.error} />
-      </View>
-
-      <View style={styles.copy}>
-        <AppText weight="bold" style={[styles.title, { color: colors.error }]}>
-          {title}
+        <Ionicons
+          name="refresh"
+          size={18}
+          color={colors.primary}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
+        <AppText weight="semibold" style={{ color: colors.primary }}>
+          Try again
         </AppText>
-        <AppText style={[styles.description, { color: colors.textMuted }]}>{description}</AppText>
-      </View>
-
-      <View style={styles.actions}>
-        <AppButton label="Try again" variant="outline" onPress={onRetry} style={styles.action} />
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -181,5 +191,16 @@ const styles = StyleSheet.create({
   description: { textAlign: 'center' },
 
   actions: { alignSelf: 'stretch', gap: spacing.xs },
+
+  retry: { alignItems: 'center', paddingVertical: spacing.xl },
+  retryButton: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.xs + 2,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
   action: { alignSelf: 'stretch' },
 });

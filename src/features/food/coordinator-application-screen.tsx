@@ -12,6 +12,7 @@ import { AppSection } from '@/components/ui/app-section';
 import { AppSelect } from '@/components/ui/app-select';
 import { AppStepProgress } from '@/components/ui/app-step-progress';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -56,6 +57,7 @@ export function CoordinatorApplicationScreen({
   onSubmit: (values: CoordinatorApplicationValues) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [values, setValues] = useState(initialCoordinatorApplicationValues);
   const [stepIndex, setStepIndex] = useState(0);
   const [touched, setTouched] = useState(false);
@@ -339,14 +341,6 @@ export function CoordinatorApplicationScreen({
               </AppCard>
             </AppSection>
           </>
-        ) : null}
-
-        {error ? (
-          <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-            <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-              {error.message}
-            </AppText>
-          </View>
         ) : null}
       </ScrollView>
 

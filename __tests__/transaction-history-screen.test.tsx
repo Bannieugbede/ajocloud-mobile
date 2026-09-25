@@ -100,7 +100,7 @@ it('explains an empty filter differently from an empty history', async () => {
 it('offers a retry when the history could not be loaded', async () => {
   const onRetry = jest.fn();
   const view = await setup(undefined, { error: true, onRetry });
-  await act(async () => fireEvent.press(view.getByRole('button', { name: 'Try again' })));
+  await act(async () => fireEvent.press(view.getByRole('button', { name: /Try again/ })));
   expect(onRetry).toHaveBeenCalledTimes(1);
 });
 

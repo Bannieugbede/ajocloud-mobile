@@ -28,6 +28,7 @@ export default function JoinPoolRoute() {
   }, [linkedCode, lookup]);
 
   const join = useMutation({
+    meta: { successMessage: 'You’ve joined the pool.' },
     mutationFn: joinAkawoPool,
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['akawo-pools'] });

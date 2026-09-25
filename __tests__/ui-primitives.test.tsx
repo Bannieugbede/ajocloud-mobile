@@ -77,7 +77,7 @@ describe('state components', () => {
     const view = await render(
       <AppErrorState description="Network unavailable." onRetry={onRetry} />,
     );
-    fireEvent.press(view.getByRole('button', { name: 'Try again' }));
+    fireEvent.press(view.getByRole('button', { name: /Try again/ }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 

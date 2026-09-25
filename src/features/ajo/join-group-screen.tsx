@@ -7,6 +7,7 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppStepper } from '@/components/ui/app-stepper';
 import { AppText } from '@/components/ui/app-text';
 import { AppToggleRow } from '@/components/ui/app-toggle-row';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { normaliseGroupCode } from '@/services/incoming-link';
 import { fontSizes, radius, spacing } from '@/theme';
@@ -43,6 +44,7 @@ export function JoinGroupScreen({
   onSubmit: (input: { groupId: string; invitationCode: string; requestedSlots: number }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [code, setCode] = useState(initialInvitationCode);
   const [slots, setSlots] = useState('1');
   const [multiple, setMultiple] = useState(false);
@@ -135,12 +137,6 @@ export function JoinGroupScreen({
               />
             ) : null}
           </>
-        ) : null}
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
         ) : null}
 
         {resolved ? (

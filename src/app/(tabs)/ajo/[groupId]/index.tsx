@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { Alert } from 'react-native';
-
 import {
   createGroupInvitation,
   getAjoGroup,
@@ -12,9 +10,9 @@ import {
   setAjoGroupListing,
 } from '@/api/endpoints/ajo-groups';
 import { getCurrentUser } from '@/api/endpoints/users';
+import { toast } from '@/components/ui/app-toast';
 import { AjoDetailScreen } from '@/features/ajo/ajo-detail-screen';
 import { groupShareMessage, shareContent } from '@/services/share-links';
-import type { AppError } from '@/types/errors';
 
 export default function AjoGroupRoute() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -46,6 +44,7 @@ export default function AjoGroupRoute() {
 
   const lock = useMutation({
     mutationFn: () => lockAjoGroup(groupId),
+    meta: { successMessage: 'The rotation is locked. Payout dates are set.' },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['ajo-group', groupId] });
       void queryClient.invalidateQueries({ queryKey: ['ajo-schedule', groupId] });
@@ -66,21 +65,21 @@ export default function AjoGroupRoute() {
           : (await createGroupInvitation(groupId, { maxUses: 1 })).code;
       await shareContent(groupShareMessage(current.name, code));
     },
-    onError: (error: unknown) =>
-      Alert.alert(
-        'Could not create a link',
-        (error as AppError | null)?.message ?? 'Please try again.',
-      ),
+    // A failure is toasted by the query cache, under this heading.
+    meta: { errorTitle: 'Couldn’t create a link' },
   });
 
   const listing = useMutation({
     mutationFn: (listed: boolean) => setAjoGroupListing(groupId, listed),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ajo-group', groupId] }),
-    onError: (error: unknown) =>
-      Alert.alert(
-        'Could not change the listing',
-        (error as AppError | null)?.message ?? 'Please try again.',
-      ),
+    onSuccess: (result) => {
+      toast.success(
+        result.publiclyListed
+          ? 'Your group is listed. Anyone can find it and join.'
+          : 'Your group is no longer listed.',
+      );
+      void queryClient.invalidateQueries({ queryKey: ['ajo-group', groupId] });
+    },
+    meta: { errorTitle: 'Couldn’t change the listing' },
   });
 
   return (

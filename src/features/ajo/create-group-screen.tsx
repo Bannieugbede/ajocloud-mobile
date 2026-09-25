@@ -17,6 +17,7 @@ import { AppStepProgress } from '@/components/ui/app-step-progress';
 import { AppStepper } from '@/components/ui/app-stepper';
 import { AppText } from '@/components/ui/app-text';
 import { AppToggleRow } from '@/components/ui/app-toggle-row';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -78,6 +79,7 @@ export function CreateGroupScreen({
   onSubmit: (input: CreateAjoGroupInput) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [values, setValues] = useState<CreateGroupValues>(initialCreateGroupValues);
   const [stepIndex, setStepIndex] = useState(0);
   const [touched, setTouched] = useState(false);
@@ -256,12 +258,6 @@ export function CreateGroupScreen({
         ) : null}
 
         {step === 'review' ? <Review values={values} /> : null}
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
 
         <View style={styles.actions}>
           {stepIndex > 0 ? (

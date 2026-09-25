@@ -822,3 +822,28 @@ fetched again after creation.
 
 Follow-ups: device test of each link on both platforms; Android App Links once
 the release fingerprint is in the website's `assetlinks.json`.
+
+## Toasts for errors, warnings and successes (IN REVIEW, 2026-09-25)
+
+Summary: every failed load, failed action, warning and success is shown as a
+toast. The "could not load" card is gone from every screen; what is left in its
+place is a quiet "Try again". Failures reach the toast from the query cache, so
+a screen needs no error UI of its own.
+
+| Item                          | Where                                                               |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Toast store and host          | `src/components/ui/app-toast.tsx`, mounted in `src/app/_layout.tsx` |
+| Failures and declared success | `src/providers/query-toasts.ts`, wired in `app-providers.tsx`       |
+| Offline and back online       | `src/providers/app-providers.tsx`                                   |
+| Screen-level toasts           | `src/hooks/use-toast-on-change.ts`                                  |
+| Quiet retry                   | `AppErrorState` in `src/components/ui/app-state.tsx`                |
+
+Tests: `__tests__/toast.test.tsx` (new); screen tests that looked for inline
+error or success text now read the toast store. `bun run validate` passes.
+
+Limitations: not exercised on a device. Field validation stays under each field,
+and standing states (a code shown only once, a due date, a draft pool) stay on
+screen, because they are true for as long as the screen is open. Confirmation
+dialogs stay dialogs.
+
+Follow-ups: device check of swipe-to-dismiss and of toasts over the keyboard.

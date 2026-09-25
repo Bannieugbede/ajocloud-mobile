@@ -15,6 +15,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { FieldIcon } from './field-icon';
 import { AppText } from '@/components/ui/app-text';
+import { useWarningToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import type { AppError } from '@/types/errors';
 import { spacing } from '@/theme';
@@ -45,6 +46,7 @@ export function VerificationScreen({
     onSuccess: (tokens) => onEmailVerified?.(tokens),
   });
   const resendMutation = useMutation({
+    meta: { successMessage: 'A new code is on its way.' },
     mutationFn: () => resendVerification(challenge.userId),
     onSuccess: (nextChallenge) => {
       setChallenge(nextChallenge);
@@ -56,6 +58,11 @@ export function VerificationScreen({
   const expired = Date.parse(challenge.expiresAt) <= now;
   const error = (verifyMutation.error ?? resendMutation.error) as AppError | null;
 
+  useWarningToast(
+    challenge.deliveryStatus === 'FAILED',
+    'We couldn’t confirm the email was delivered. Use resend when it becomes available.',
+  );
+
   return (
     <AuthFormScreen
       title="Check your email"
@@ -63,11 +70,6 @@ export function VerificationScreen({
       error={error?.message}
     >
       <View style={styles.form}>
-        {challenge.deliveryStatus === 'FAILED' ? (
-          <AppText accessibilityLiveRegion="assertive" style={{ color: colors.warning }}>
-            Delivery could not be confirmed. Use resend when it becomes available.
-          </AppText>
-        ) : null}
         <Controller
           control={form.control}
           name="code"

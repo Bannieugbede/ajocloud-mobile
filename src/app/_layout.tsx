@@ -12,6 +12,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { AppErrorBoundary } from '@/components/app-error-boundary';
+import { AppToastHost } from '@/components/ui/app-toast';
 import { useIncomingInvitation } from '@/hooks/use-incoming-invitation';
 import { useInstallAttribution } from '@/hooks/use-install-attribution';
 import { useNotificationNavigation } from '@/hooks/use-notification-navigation';
@@ -72,6 +73,8 @@ function ThemedNavigation() {
         <Stack.Screen name="invite/akawo/[code]" options={{ headerShown: false }} />
         <Stack.Screen name="invite/food/[programmeId]" options={{ headerShown: false }} />
       </Stack>
+      {/* After the stack, so toasts draw above every screen and modal. */}
+      <AppToastHost />
     </>
   );
 }

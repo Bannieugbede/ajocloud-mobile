@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { Alert, Share } from 'react-native';
+import { Share } from 'react-native';
 
 import {
   cancelAkawoPool,
@@ -13,9 +13,9 @@ import {
   type AkawoPoolMember,
 } from '@/api/endpoints/akawo-pools';
 import { exportPoolRecord } from '@/features/akawo/export-pool-record';
+import { toast } from '@/components/ui/app-toast';
 import { OrganiserPoolScreen } from '@/features/akawo/organiser-pool-screen';
 import { poolShareMessage, shareContent } from '@/services/share-links';
-import type { AppError } from '@/types/errors';
 
 export default function ManagePoolRoute() {
   const { poolId } = useLocalSearchParams<{ poolId: string }>();
@@ -32,11 +32,7 @@ export default function ManagePoolRoute() {
     void queryClient.invalidateQueries({ queryKey: ['akawo-pools'] });
   };
 
-  const report = (error: unknown) => {
-    const message =
-      (error as AppError | null)?.message ?? 'That could not be completed. Please try again.';
-    Alert.alert('Not completed', message);
-  };
+  // Failures are toasted by the query cache; each success says what changed.
 
   const lifecycle = useMutation({
     mutationFn: (action: 'open' | 'close' | 'cancel') =>
@@ -45,27 +41,41 @@ export default function ManagePoolRoute() {
         : action === 'close'
           ? closeAkawoPool(poolId)
           : cancelAkawoPool(poolId),
-    onSuccess: invalidate,
-    onError: report,
+    onSuccess: (_pool, action) => {
+      toast.success(
+        action === 'open'
+          ? 'The pool is open. Members can join with its code.'
+          : action === 'close'
+            ? 'The pool is closed. Its record is final.'
+            : 'The pool has been cancelled.',
+      );
+      invalidate();
+    },
   });
 
   const waive = useMutation({
     mutationFn: (member: AkawoPoolMember) =>
       waivePoolDue(poolId, member.id, 'Waived by the organiser'),
     onSuccess: invalidate,
-    onError: report,
+    meta: { successMessage: 'Their due has been waived.' },
   });
 
   const listing = useMutation({
     mutationFn: (listed: boolean) => setAkawoPoolListing(poolId, listed),
-    onSuccess: invalidate,
-    onError: report,
+    onSuccess: (pool) => {
+      toast.success(
+        pool.publiclyListed
+          ? 'Your pool is listed. Anyone can find it and join.'
+          : 'Your pool is no longer listed.',
+      );
+      invalidate();
+    },
   });
 
   const remove = useMutation({
     mutationFn: (member: AkawoPoolMember) => removePoolMember(poolId, member.id),
     onSuccess: invalidate,
-    onError: report,
+    meta: { successMessage: 'The member has been removed.' },
   });
 
   return (
@@ -99,7 +109,9 @@ export default function ManagePoolRoute() {
       onExport={() => {
         if (!query.data) return;
         void exportPoolRecord(query.data).catch(() =>
-          Alert.alert('Export failed', 'The record could not be prepared. Please try again.'),
+          toast.error('The record could not be prepared. Please try again.', {
+            title: 'Export failed',
+          }),
         );
       }}
       onWaive={(member) => waive.mutate(member)}

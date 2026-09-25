@@ -10,6 +10,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -65,6 +66,8 @@ export function PayBillScreen({
   onPay: (input: { customerReference: string; amountMinor: string }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(validationError?.message);
+  useErrorToast(payError?.message);
   const [reference, setReference] = useState(initialReference);
   const [amountMajor, setAmountMajor] = useState(
     initialAmountMinor ? minorToMajor(initialAmountMinor) : '',
@@ -106,12 +109,6 @@ export function PayBillScreen({
           autoCorrect={false}
           editable={!paying}
         />
-
-        {validationError ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {validationError.message}
-          </AppText>
-        ) : null}
 
         {validation ? (
           <AppCard>
@@ -161,12 +158,6 @@ export function PayBillScreen({
                 Your wallet has{' '}
                 {formatMinorAmount(walletAvailableMinor ?? '0', product?.currency ?? 'NGN')}{' '}
                 available, which is not enough for this.
-              </AppText>
-            ) : null}
-
-            {payError ? (
-              <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-                {payError.message}
               </AppText>
             ) : null}
 

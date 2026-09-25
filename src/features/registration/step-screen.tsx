@@ -2,6 +2,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import type { PropsWithChildren, ReactNode } from 'react';
 
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
 import { coreStepPosition, type RegistrationStep } from './steps';
@@ -25,6 +26,8 @@ export function StepScreen({
   footer?: ReactNode;
 }>) {
   const { colors } = useTheme();
+  // Shown as a toast, like every other error, rather than a box in the form.
+  useErrorToast(error);
   const position = coreStepPosition(step);
 
   return (
@@ -47,14 +50,6 @@ export function StepScreen({
               {description}
             </AppText>
           </View>
-          {error ? (
-            <View
-              accessibilityLiveRegion="assertive"
-              style={[styles.alert, { backgroundColor: colors.errorSoft }]}
-            >
-              <AppText style={{ color: colors.error }}>{error}</AppText>
-            </View>
-          ) : null}
           {children}
           {footer}
         </View>
@@ -103,5 +98,4 @@ const styles = StyleSheet.create({
   heading: { gap: spacing.sm },
   title: { fontSize: fontSizes.heading },
   description: { lineHeight: 24 },
-  alert: { borderRadius: radius.md, padding: spacing.md },
 });

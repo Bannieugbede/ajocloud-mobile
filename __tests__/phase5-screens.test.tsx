@@ -4,6 +4,7 @@ import type { AjoSwapRequest } from '@/api/endpoints/ajo-groups';
 import { SwapApprovalsScreen } from '@/features/ajo/swap-approvals-screen';
 import { toTopicRows } from '@/features/profile/notification-settings';
 import { NotificationsScreen } from '@/features/profile/notifications-screen';
+import { currentToasts } from '@/components/ui/app-toast';
 
 const now = new Date('2026-09-02T12:00:00.000Z');
 
@@ -77,10 +78,13 @@ describe('SwapApprovalsScreen', () => {
   });
 
   it('surfaces a failed decision', async () => {
-    const view = await setup({
+    await setup({
       error: { message: 'A conflicting swap request already exists' } as never,
     });
-    expect(view.getByText('A conflicting swap request already exists')).toBeTruthy();
+    expect(currentToasts()[0]).toMatchObject({
+      tone: 'error',
+      message: 'A conflicting swap request already exists',
+    });
   });
 });
 
@@ -138,7 +142,10 @@ describe('NotificationsScreen', () => {
   });
 
   it('confirms a save', async () => {
-    const view = await setup({ saved: true });
-    expect(view.getByText('Your notification settings have been saved.')).toBeTruthy();
+    await setup({ saved: true });
+    expect(currentToasts()[0]).toMatchObject({
+      tone: 'success',
+      message: 'Your notification settings have been saved.',
+    });
   });
 });

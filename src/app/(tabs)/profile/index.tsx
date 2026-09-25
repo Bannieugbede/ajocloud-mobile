@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
 
 import { listAkawoGoals } from '@/api/endpoints/akawo';
 import { logout } from '@/api/endpoints/auth';
@@ -13,6 +12,7 @@ import { totalAkawoSaved } from '@/features/home/home-data';
 import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
 import { referralLink, referralShareMessage } from '@/features/profile/referral-share';
 import { shareContent } from '@/services/share-links';
+import { toast } from '@/components/ui/app-toast';
 import { clearSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
@@ -63,7 +63,7 @@ export default function ProfileRoute() {
     void Clipboard.setStringAsync(code).then(() => {
       // Confirmed explicitly: a copy that says nothing leaves the user unsure
       // whether it worked, and they cannot see the clipboard to check.
-      Alert.alert('Copied', `Your referral code ${code} is on the clipboard.`);
+      toast.success(`Your referral code ${code} is copied.`);
     });
   };
 

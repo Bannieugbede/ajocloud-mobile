@@ -11,6 +11,7 @@ import {
 import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -48,6 +49,7 @@ export function FundWalletScreen({
   onContinue: (amountMinor: string) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [amountMajor, setAmountMajor] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -144,12 +146,6 @@ export function FundWalletScreen({
           The smallest amount you can add is {minimum}. A deposit fee applies and is shown before
           you pay.
         </AppText>
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
 
         <AppButton
           label="Continue"

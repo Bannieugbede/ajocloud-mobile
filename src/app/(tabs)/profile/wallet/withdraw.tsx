@@ -24,6 +24,7 @@ export default function WithdrawRoute() {
   const accounts = useQuery({ queryKey: ['bank-accounts'], queryFn: listBankAccounts });
 
   const withdraw = useMutation({
+    meta: { successMessage: 'Your withdrawal has been requested.' },
     mutationFn: (input: { bankAccountId: string; amountMinor: string; transactionPin: string }) => {
       if (!wallet) throw new Error('No wallet is available');
       return requestWithdrawal({ walletId: wallet.id, ...input }, idempotencyKey);

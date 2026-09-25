@@ -12,6 +12,7 @@ import {
 import { BankAccountStep } from './bank-account-step';
 import { IdentityDocumentStep } from './identity-document-step';
 import { PersonalDetailsStep } from './personal-details-step';
+import { currentToasts } from '@/components/ui/app-toast';
 
 jest.mock('@/api/endpoints/kyc', () => ({
   inquireAccount: jest.fn(),
@@ -73,7 +74,12 @@ describe('IdentityDocumentStep', () => {
     });
     await fireEvent.changeText(view.getByLabelText('BVN number'), '22345678901');
     await fireEvent.press(view.getByRole('button', { name: 'Verify' }));
-    expect(await view.findByText('Tick the box to let us verify your details')).toBeTruthy();
+    await waitFor(() =>
+      expect(currentToasts()[0]).toMatchObject({
+        tone: 'error',
+        message: 'Tick the box to let us verify your details',
+      }),
+    );
     expect(verifyIdentity).not.toHaveBeenCalled();
     await view.unmount();
   });
@@ -84,7 +90,9 @@ describe('IdentityDocumentStep', () => {
     });
     await fireEvent.changeText(view.getByLabelText('BVN number'), '223456');
     await fireEvent.press(view.getByRole('button', { name: 'Verify' }));
-    expect(await view.findByText('Your BVN is 11 digits')).toBeTruthy();
+    await waitFor(() =>
+      expect(currentToasts()[0]).toMatchObject({ tone: 'error', message: 'Your BVN is 11 digits' }),
+    );
     expect(verifyIdentity).not.toHaveBeenCalled();
     await view.unmount();
   });

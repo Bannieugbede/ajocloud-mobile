@@ -37,6 +37,7 @@ export default function PayContributionRoute() {
   }, [params.scheduleId]);
 
   const pay = useMutation({
+    meta: { successMessage: 'Contribution paid.' },
     mutationFn: (amountMinor: string) =>
       payAjoContribution(params.groupId, params.scheduleId, {
         amountMinor,

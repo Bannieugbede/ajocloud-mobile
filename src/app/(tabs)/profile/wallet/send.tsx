@@ -24,6 +24,7 @@ export default function SendMoneyRoute() {
   });
 
   const send = useMutation({
+    meta: { successMessage: 'Money sent.' },
     mutationFn: (input: {
       recipientEmail: string;
       amountMinor: string;

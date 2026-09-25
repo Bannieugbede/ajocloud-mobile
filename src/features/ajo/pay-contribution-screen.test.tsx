@@ -1,6 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 
 import { PayContributionScreen } from './pay-contribution-screen';
+import { currentToasts } from '@/components/ui/app-toast';
 
 const baseProps = {
   groupName: 'Lagos Traders',
@@ -137,11 +138,13 @@ describe('PayContributionScreen', () => {
     expect(onSubmit).toHaveBeenCalledWith('500000');
   });
 
-  it('shows a server error where a screen reader will announce it', async () => {
-    const view = await setup({
+  it('raises a server error as a toast, which a screen reader announces', async () => {
+    await setup({
       error: { kind: 'validation', message: 'Your wallet does not have enough' },
     });
-    expect(view.getByText('Your wallet does not have enough')).toBeTruthy();
+    expect(currentToasts()).toEqual([
+      expect.objectContaining({ tone: 'error', message: 'Your wallet does not have enough' }),
+    ]);
   });
 
   it('says the money stays in the group until everyone has paid', async () => {

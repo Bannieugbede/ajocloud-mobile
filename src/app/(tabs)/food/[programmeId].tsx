@@ -36,10 +36,12 @@ export default function FoodProgrammeRoute() {
   };
 
   const subscribe = useMutation({
+    meta: { successMessage: 'You’re enrolled. Your contributions start with the programme.' },
     mutationFn: (packageId: string) => subscribeToProgramme(programmeId, { packageId }),
     onSuccess: refresh,
   });
   const unsubscribe = useMutation({
+    meta: { successMessage: 'You’ve left this programme.' },
     mutationFn: () => unsubscribeFromProgramme(programmeId),
     onSuccess: refresh,
   });

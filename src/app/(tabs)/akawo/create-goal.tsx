@@ -9,6 +9,7 @@ export default function CreateAkawoGoalRoute() {
   const queryClient = useQueryClient();
 
   const create = useMutation({
+    meta: { successMessage: 'Your Akawo goal is ready.' },
     mutationFn: (input: CreateAkawoGoalInput) => createAkawoGoal(input),
     onSuccess: (goal) => {
       void queryClient.invalidateQueries({ queryKey: ['akawo-goals'] });

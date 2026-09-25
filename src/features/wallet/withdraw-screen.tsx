@@ -8,6 +8,7 @@ import { AppEmptyState } from '@/components/ui/app-state';
 import { AppInput } from '@/components/ui/app-input';
 import { AppSelect } from '@/components/ui/app-select';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -38,6 +39,7 @@ export function WithdrawScreen({
   onSubmit: (input: { bankAccountId: string; amountMinor: string; transactionPin: string }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [bankAccountId, setBankAccountId] = useState<string | null>(accounts[0]?.id ?? null);
   const [amountMajor, setAmountMajor] = useState('');
   const [pin, setPin] = useState('');
@@ -111,12 +113,6 @@ export function WithdrawScreen({
           We will hold this amount aside and pay it out to your bank. It leaves your available
           balance straight away, and can take a little while to arrive.
         </AppText>
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
 
         <AppButton
           label="Request payout"

@@ -13,6 +13,7 @@ import { AppStatTiles } from '@/components/ui/app-stat-tiles';
 import { AppSkeletonCard } from '@/components/ui/app-skeleton';
 import { AppErrorState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -68,6 +69,7 @@ export function FoodDetailScreen({
   onShare?: () => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(actionError?.message);
   const [panel, setPanel] = useState<Panel>('details');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -239,14 +241,6 @@ export function FoodDetailScreen({
         ) : (
           <PaymentSchedule programme={programme} subscription={subscription ?? null} />
         )}
-
-        {actionError ? (
-          <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-            <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-              {actionError.message}
-            </AppText>
-          </View>
-        ) : null}
 
         {enrolled ? (
           <View style={styles.section}>

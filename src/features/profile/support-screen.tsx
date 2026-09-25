@@ -13,6 +13,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -40,6 +41,7 @@ export function SupportScreen({
   onEmailSupport: () => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [touched, setTouched] = useState(false);
@@ -127,12 +129,6 @@ export function SupportScreen({
                   : undefined
               }
             />
-
-            {error ? (
-              <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-                {error.message}
-              </AppText>
-            ) : null}
 
             <AppButton
               label="Send Message"

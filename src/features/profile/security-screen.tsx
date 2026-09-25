@@ -7,6 +7,7 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppSection } from '@/components/ui/app-section';
 import { AppText } from '@/components/ui/app-text';
 import { AppToggleRow } from '@/components/ui/app-toggle-row';
+import { useErrorToast, useSuccessToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -40,6 +41,8 @@ export function SecurityScreen({
   onSubmit: (input: { pin: string; currentPin?: string }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
+  useSuccessToast(saved && !error, 'Your PIN has been updated.');
   const [currentPin, setCurrentPin] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -114,21 +117,6 @@ export function SecurityScreen({
               maxLength={4}
               error={touched && !matches ? 'Those PINs do not match.' : undefined}
             />
-
-            {error ? (
-              <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-                <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-                  {error.message}
-                </AppText>
-              </View>
-            ) : null}
-            {saved && !error ? (
-              <View style={[styles.notice, { backgroundColor: colors.successSoft }]}>
-                <AppText style={{ color: colors.success }} accessibilityLiveRegion="polite">
-                  Your PIN has been updated.
-                </AppText>
-              </View>
-            ) : null}
 
             <AppButton
               label={hasPin ? 'Change PIN' : 'Set PIN'}

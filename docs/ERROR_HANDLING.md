@@ -1,5 +1,18 @@
 # Error Handling
 
+## How errors reach the member
+
+Errors, warnings and successes are shown as toasts (`src/components/ui/app-toast.tsx`),
+never as cards or red text in a screen. Every failed query and mutation is toasted by the query
+cache (`src/providers/query-toasts.ts`); a load failure offers "Try again". Declare what a query or
+mutation says with `meta`: `errorTitle` for the heading, `successMessage` for a success toast, or
+`toast: false` when the screen presents the failure as its content. For a message a screen works
+out itself, use `useErrorToast`, `useWarningToast` or `useSuccessToast`
+(`src/hooks/use-toast-on-change.ts`). Field validation stays under its field, and confirmations
+stay dialogs. See `docs/DECISIONS.md`.
+
+## Policy
+
 Transport and backend failures normalize to `AppError`; UI never branches on arbitrary response
 strings. Authentication errors trigger the coordinated refresh policy, authorization hides unsafe
 actions and explains access, validation maps to fields, not-found distinguishes removed records,

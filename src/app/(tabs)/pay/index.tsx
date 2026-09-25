@@ -22,6 +22,8 @@ export default function PaymentMethodRoute() {
   );
 
   const intent = useMutation({
+    // The one thing a member needs to hear when a payment fails to start.
+    meta: { errorTitle: 'Nothing has been charged' },
     mutationFn: () => {
       if (!request) throw new Error('No payment was started');
       return createPaymentIntent(request.target, idempotencyKey);

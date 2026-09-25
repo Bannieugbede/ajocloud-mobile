@@ -20,6 +20,7 @@ export default function AjoSwapRoute() {
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser });
 
   const swap = useMutation({
+    meta: { successMessage: 'Swap request sent. The other member will be asked to approve it.' },
     mutationFn: (input: { fromSlotId: string; toSlotId: string; reason?: string }) =>
       requestAjoSwap(groupId, input),
     onSuccess: () => {

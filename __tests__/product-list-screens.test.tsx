@@ -155,10 +155,10 @@ describe('Food Ajo tabs and Start sheet', () => {
     // One request failing leaves neither list trustworthy, so an error shown
     // only on Packages would let Active look merely empty.
     const view = await setup({ error: true });
-    expect(view.getByText('Could not load Food Ajo')).toBeTruthy();
+    expect(view.getByRole('button', { name: /Could not load Food Ajo/ })).toBeTruthy();
 
     await act(async () => fireEvent.press(view.getByLabelText('Active')));
-    expect(view.getByText('Could not load Food Ajo')).toBeTruthy();
+    expect(view.getByRole('button', { name: /Could not load Food Ajo/ })).toBeTruthy();
   });
 
   it('offers Create and Join from the Start button', async () => {

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { approveAjoSwap, listAjoSwaps, rejectAjoSwap } from '@/api/endpoints/ajo-groups';
 import type { AjoSwapRequest } from '@/api/endpoints/ajo-groups';
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
+import { toast } from '@/components/ui/app-toast';
 import { SwapApprovalsScreen } from '@/features/ajo/swap-approvals-screen';
 import type { AppError } from '@/types/errors';
 
@@ -26,7 +27,8 @@ export default function SwapApprovalsRoute() {
     mutationFn: ({ swap, approve }: { swap: AjoSwapRequest; approve: boolean }) =>
       approve ? approveAjoSwap(groupId, swap.id) : rejectAjoSwap(groupId, swap.id),
     onSettled: () => setDeciding(null),
-    onSuccess: () => {
+    onSuccess: (_result, { approve }) => {
+      toast.success(approve ? 'Swap approved.' : 'Swap declined.');
       void queryClient.invalidateQueries({ queryKey: ['ajo-swaps', groupId] });
       // A settled swap can rewrite the rotation, so the group and its schedule
       // are no longer what was fetched.

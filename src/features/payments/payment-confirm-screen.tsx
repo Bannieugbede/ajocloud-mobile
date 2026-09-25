@@ -6,6 +6,7 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { PIN_LENGTH, PinInput } from '@/features/registration/pin-input';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -37,6 +38,7 @@ export function PaymentConfirmScreen({
   onConfirm: (transactionPin: string) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [pin, setPin] = useState('');
   const complete = pin.length === PIN_LENGTH;
 
@@ -66,14 +68,6 @@ export function PaymentConfirmScreen({
           editable={!submitting}
           testID="payment-pin"
         />
-
-        {error ? (
-          <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-            <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-              {error.message}
-            </AppText>
-          </View>
-        ) : null}
 
         <AppText style={[styles.hint, { color: colors.textSubtle }]}>
           Your PIN authorises this payment. Ajo Cloud will never ask for it by phone or message.

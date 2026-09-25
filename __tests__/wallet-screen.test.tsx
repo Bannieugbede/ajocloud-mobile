@@ -104,7 +104,7 @@ it('explains an empty wallet rather than showing a bare list', async () => {
 it('offers a retry rather than a blank screen when the balance will not load', async () => {
   const onRetry = jest.fn();
   const view = await setup({ summary: undefined, error: true, onRetry });
-  await act(async () => fireEvent.press(view.getByRole('button', { name: 'Try again' })));
+  await act(async () => fireEvent.press(view.getByRole('button', { name: /Try again/ })));
   expect(onRetry).toHaveBeenCalledTimes(1);
 });
 

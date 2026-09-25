@@ -64,8 +64,8 @@ export function InviteLandingScreen({
           This invitation isn&apos;t available
         </AppText>
         <AppText style={[styles.centredText, { color: colors.textMuted }]}>
-          {error?.message ??
-            'It may have expired or already been used. Ask whoever sent it for a new one.'}
+          {/* The reason itself arrives as a toast; this is what to do next. */}
+          It may have expired or already been used. Ask whoever sent it for a new one.
         </AppText>
         <AppButton label="Back to my groups" onPress={onDecline} />
       </View>

@@ -27,6 +27,7 @@ export default function CoordinatorApplicationRoute() {
   });
 
   const apply = useMutation({
+    meta: { successMessage: 'Application sent. We’ll review it and let you know.' },
     mutationFn: async (values: Parameters<typeof toApplicationRequest>[0]) => {
       const body = toApplicationRequest(values);
       // Null means a step regressed after the button was enabled. Creating a

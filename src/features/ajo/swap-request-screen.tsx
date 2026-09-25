@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { AppSelect } from '@/components/ui/app-select';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -46,6 +47,7 @@ export function SwapRequestScreen({
   onSubmit: (input: { fromSlotId: string; toSlotId: string; reason?: string }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const { mine, theirs, memberById } = splitSlots(group, viewerUserId);
 
   const [fromSlotId, setFromSlotId] = useState<string | null>(mine[0]?.id ?? null);
@@ -110,12 +112,6 @@ export function SwapRequestScreen({
           autoCapitalize="sentences"
           multiline
         />
-
-        {error ? (
-          <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-            {error.message}
-          </AppText>
-        ) : null}
 
         <AppButton
           label="Send request"

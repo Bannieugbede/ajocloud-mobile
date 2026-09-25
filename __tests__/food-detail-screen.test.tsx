@@ -222,7 +222,7 @@ describe('states', () => {
     // only the tab bar.
     const view = await setup({ programme: undefined, error: true });
     expect(view.getByLabelText('Go back')).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(view.getByRole('button', { name: /Try again/ })).toBeTruthy();
   });
 
   it('shows a skeleton rather than an empty screen while loading', async () => {

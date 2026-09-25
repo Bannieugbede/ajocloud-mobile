@@ -68,8 +68,10 @@ describe('PaymentMethodScreen', () => {
         onContinue={jest.fn()}
       />,
     );
-    expect(view.getByText(/Nothing has been charged/i)).toBeTruthy();
-    fireEvent.press(view.getByRole('button', { name: 'Try again' }));
+    // The reason arrives as a toast; the retry still says it for a screen reader.
+    const retry = view.getByRole('button', { name: /Could not start this payment\. Try again/ });
+    expect(retry.props.accessibilityHint).toMatch(/Nothing has been charged/i);
+    fireEvent.press(retry);
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

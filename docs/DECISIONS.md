@@ -1377,3 +1377,33 @@ would resume whichever the code happened to check first.
 **Food is shared only while `OPEN` or `ACTIVE`.** Those are the only states the
 website's public preview describes. A link to a draft would open on "not
 available".
+
+## Toasts for errors, warnings and successes (2026-09-25)
+
+**A toast of our own rather than a library.** Expo has no toast, and the
+libraries that do bring native modules and animation dependencies for a card
+that slides in and out. `app-toast.tsx` is a store anything can write to and
+one host at the root, built from React Native's `Animated` and `PanResponder`.
+It honours reduced motion, speaks each toast to a screen reader, and uses
+`expo-haptics`, which the app already has.
+
+**Failures reach the toast from the query cache, not from each screen.** A
+`QueryCache` and `MutationCache` `onError` turn every failed load and action
+into a toast, so no screen can forget to report one, and none needs its own
+error card or red text. A load failure offers "Try again". A query or mutation
+can set `meta.errorTitle`, `meta.successMessage`, or `meta.toast: false` when
+its screen explains the failure as content.
+
+**The same message shows once.** A dropped connection fails several queries at
+once; an identical toast already on screen is refreshed, not stacked. That also
+makes it harmless for a screen to raise a message the cache raises too.
+
+**What stays on screen.** Field validation stays under its field; standing
+states (a code shown only once, "due soon", an unavailable invitation) stay,
+because a toast would vanish while they are still true; confirmations stay
+dialogs, since a toast is news, not a decision. Where the error card was, a
+quiet "Try again" remains so a failed screen is never a dead end, and it keeps
+the old title and description as its spoken label.
+
+**Offline is one sticky toast.** It stays until the connection returns, then
+becomes "back online", so money actions never look available while offline.

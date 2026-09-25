@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppChipGroup } from '@/components/ui/app-chip-group';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
+import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
@@ -43,6 +44,7 @@ export function CreatePoolScreen({
   }) => void;
 }) {
   const { colors } = useTheme();
+  useErrorToast(error?.message);
   const [values, setValues] = useState<CreatePoolValues>({
     name: '',
     purpose: '',
@@ -129,14 +131,6 @@ export function CreatePoolScreen({
             . All payments are recorded and can be exported as PDF.
           </AppText>
         </View>
-
-        {error ? (
-          <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-            <AppText accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-              {error.message}
-            </AppText>
-          </View>
-        ) : null}
       </ScrollView>
 
       {/* Pinned rather than trailing the fields: the form is long enough on a
