@@ -171,6 +171,8 @@ describe('joining an Ajo group', () => {
     await act(async () => fireEvent.changeText(view.getByLabelText('Invitation code'), 'abc'));
     await act(async () => fireEvent.press(view.getByText('Verify code')));
     expect(onVerify).not.toHaveBeenCalled();
+    // The button stays tappable so the refusal is stated, not silent.
+    expect(view.getByText(/doesn’t look like an invitation code/)).toBeTruthy();
   });
 
   it('verifies a short code as retyped, in its canonical form', async () => {
@@ -189,6 +191,31 @@ describe('joining an Ajo group', () => {
     await act(async () => fireEvent.changeText(view.getByLabelText('Invitation code'), CODE));
     await act(async () => fireEvent.press(view.getByText('Verify code')));
     expect(onVerify).toHaveBeenCalledWith(CODE);
+  });
+
+  it('verifies the code inside a pasted invitation message', async () => {
+    // The admin shares a message with the link and the code, not the bare
+    // code; pasting all of it must still verify.
+    const onVerify = jest.fn();
+    const view = await setup({ onVerify });
+    await act(async () =>
+      fireEvent.changeText(
+        view.getByLabelText('Invitation code'),
+        'Join "Eko Savings Circle" on Ajo Cloud.\nhttps://ajocloud.com/g/whe4-ntdh27\nInvitation code: whe4-ntdh27',
+      ),
+    );
+    await act(async () => fireEvent.press(view.getByText('Verify code')));
+    expect(onVerify).toHaveBeenCalledWith('WHE4NTDH27');
+  });
+
+  it('verifies a pasted bare link', async () => {
+    const onVerify = jest.fn();
+    const view = await setup({ onVerify });
+    await act(async () =>
+      fireEvent.changeText(view.getByLabelText('Invitation code'), 'ajocloud://g/whe4-ntdh27'),
+    );
+    await act(async () => fireEvent.press(view.getByText('Verify code')));
+    expect(onVerify).toHaveBeenCalledWith('WHE4NTDH27');
   });
 
   it('names the group before asking anyone to commit to it', async () => {
@@ -236,5 +263,91 @@ describe('joining an Ajo group', () => {
     await act(async () => fireEvent.press(view.getByText('Join group')));
 
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ requestedSlots: 2 }));
+  });
+
+  it('moves from the code step to the confirm step', async () => {
+    const view = await setup();
+    expect(view.getByText('Verify code')).toBeTruthy();
+    expect(view.queryByText('Join group')).toBeNull();
+
+    const confirmed = await setup({
+      resolved: { groupId: 'group-1', groupName: 'Eko Savings Circle' },
+    });
+    expect(confirmed.getByText('Join group')).toBeTruthy();
+  });
+
+  it('goes back to the code without forgetting it', async () => {
+    const view = await setup({
+      resolved: { groupId: 'group-1', groupName: 'Eko Savings Circle' },
+      initialInvitationCode: CODE,
+    });
+
+    await act(async () => fireEvent.press(view.getByText('Back')));
+    expect(view.getByText('Verify code')).toBeTruthy();
+    expect(view.getByDisplayValue(CODE)).toBeTruthy();
+  });
+
+  it('does not spend a second request continuing with an unchanged code', async () => {
+    const onVerify = jest.fn();
+    const view = await setup({
+      resolved: { groupId: 'group-1', groupName: 'Eko Savings Circle' },
+      initialInvitationCode: CODE,
+      onVerify,
+    });
+
+    await act(async () => fireEvent.press(view.getByText('Back')));
+    await act(async () => fireEvent.press(view.getByText('Verify code')));
+
+    expect(onVerify).not.toHaveBeenCalled();
+    expect(view.getByText('Join group')).toBeTruthy();
+  });
+
+  it('states the terms from the invitation preview before asking for commitment', async () => {
+    const view = await setup({
+      resolved: {
+        groupId: 'group-1',
+        groupName: 'Eko Savings Circle',
+        preview: {
+          groupName: 'Eko Savings Circle',
+          inviterName: 'Adaeze Okafor',
+          contributionAmountMinor: '2500000',
+          currency: 'NGN',
+          contributionFrequency: 'MONTHLY',
+          memberCount: 8,
+          maxMembers: 12,
+          expiresAt: null,
+        },
+      },
+    });
+
+    expect(view.getByText('YOU ARE JOINING')).toBeTruthy();
+    expect(view.getByText(/₦25,000\.00 every month/)).toBeTruthy();
+    expect(view.getByText(/8 joined · 4 spots left/)).toBeTruthy();
+    expect(view.getByLabelText('Invited by: Adaeze Okafor')).toBeTruthy();
+  });
+
+  it('still joins with the name alone when no preview exists', async () => {
+    // A legacy code may verify without a public preview; joining must not
+    // wait on decoration.
+    const view = await setup({
+      resolved: { groupId: 'group-1', groupName: 'Eko Savings Circle' },
+    });
+
+    expect(view.getByText('YOU ARE JOINING')).toBeTruthy();
+    expect(view.getByText('Join group')).toBeTruthy();
+    expect(view.queryByText(/Invited by/)).toBeNull();
+  });
+
+  it('opens straight on confirm with no way back when the code arrived locked', async () => {
+    // From an invitation link the group was already previewed on the landing
+    // screen, so there is no code step to return to.
+    const view = await setup({
+      codeLocked: true,
+      initialInvitationCode: CODE,
+      resolved: { groupId: 'group-1', groupName: 'Eko Savings Circle' },
+    });
+
+    expect(view.getByText('Join group')).toBeTruthy();
+    expect(view.queryByText('Back')).toBeNull();
   });
 });
