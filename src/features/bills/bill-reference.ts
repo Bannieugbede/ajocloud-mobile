@@ -68,18 +68,3 @@ export function referencePlaceholder(kind: BillReferenceKind | null): string {
       return 'Enter number';
   }
 }
-
-/**
- * One-tap amounts for billers the payer prices themselves. Airtime is usually
- * a round hundred; electricity a round thousand. Each is in naira.
- */
-export function quickAmounts(kind: BillReferenceKind | null): readonly number[] {
-  switch (kind) {
-    case 'phone':
-      return [100, 200, 500, 1_000, 2_000, 5_000];
-    case 'meter':
-      return [1_000, 2_000, 5_000, 10_000, 20_000, 50_000];
-    default:
-      return [];
-  }
-}

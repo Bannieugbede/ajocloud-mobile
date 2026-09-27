@@ -670,6 +670,29 @@ a reference that no longer matches its validation (422), a missing idempotency k
 Not yet built: Food subscription actions, Akawo goal creation, wallet
 fund/withdraw/send, and profile/settings.
 
+## Bill screens redesign (2026-09-27) — COMPLETED
+
+The four bill screens follow the reference designs supplied on 2026-09-27, in
+the app's own theme tokens, each with a native header and back button:
+
+| Screen      | Layout                                                                                    |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| Airtime     | Network badge and phone number; Top up tiles (one tap buys); ₦ amount line with Pay.      |
+| Internet    | Network badge and number; Data plans in All/Daily/Weekly/Monthly tabs as a 3-column grid. |
+| Electricity | Service provider row; Prepaid/Postpaid cards; meter number; amount tiles and ₦ line.      |
+| Cable TV    | Service provider row; smartcard or IUC number; 2-column package grid with validity pills. |
+
+- The network is detected from the phone number's prefix until the payer
+  chooses one; ported numbers can still be changed from the badge.
+- The badge and provider row open `/(tabs)/bills/[categoryId]/providers`, a
+  searchable list. The choice returns with `router.dismissTo`, so the form is
+  not pushed twice; the chosen provider lives in the route's params.
+- The pay screen is now a confirmation: summary card, details (number,
+  verified account name, package, wallet balance), `Pay ₦…` and Change details.
+  It checks the number on arrival and will not pay until it is recognised.
+- The reference's vouchers, cashback, banners, beneficiaries and History link
+  are not built: there is no backend for them.
+
 ## Nigerian bill catalogue (2026-09-27) — COMPLETED
 
 Bills were not usable end to end: there was no Airtime category, the catalogue

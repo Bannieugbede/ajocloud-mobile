@@ -10,17 +10,20 @@ import {
 } from '@/api/endpoints/bill-payments';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
+import { billCategoryKind } from '@/features/bills/bill-catalog-view';
 import { PayBillScreen } from '@/features/bills/pay-bill-screen';
 import type { AppError } from '@/types/errors';
 
 export default function PayBillRoute() {
-  const { categoryId, billerId, productId, customerReference, amountMinor } = useLocalSearchParams<{
-    categoryId: string;
-    billerId: string;
-    productId?: string;
-    customerReference?: string;
-    amountMinor?: string;
-  }>();
+  const { categoryId, categoryName, billerId, productId, customerReference, amountMinor } =
+    useLocalSearchParams<{
+      categoryId: string;
+      categoryName?: string;
+      billerId: string;
+      productId?: string;
+      customerReference?: string;
+      amountMinor?: string;
+    }>();
   const queryClient = useQueryClient();
 
   // One key per mounted flow, so a retried tap reuses the same payment rather
@@ -85,7 +88,7 @@ export default function PayBillRoute() {
   });
 
   if (billers.isPending) return <AppLoadingState label="Loading biller" />;
-  if (billers.isError || !biller) {
+  if (billers.isError || !biller || !customerReference || !amountMinor) {
     return (
       <AppErrorState
         description="Could not load this biller."
@@ -96,24 +99,21 @@ export default function PayBillRoute() {
 
   return (
     <PayBillScreen
+      kind={billCategoryKind(categoryName)}
       biller={biller}
       product={product}
-      {...(customerReference ? { initialReference: customerReference } : {})}
-      {...(amountMinor ? { initialAmountMinor: amountMinor } : {})}
+      customerReference={customerReference}
+      amountMinor={amountMinor}
       validation={validation}
       walletAvailableMinor={summary.data?.availableMinor ?? null}
       validating={validate.isPending}
       paying={pay.isPending}
       validationError={validate.error as AppError | null}
       payError={pay.error as AppError | null}
-      onValidate={(customerReference) => validate.mutate(customerReference)}
-      onChangeReference={() => {
-        // The validation is bound to the exact reference, so editing it makes
-        // the confirmation stale and the backend would refuse the pair.
-        setValidation(null);
-        validate.reset();
-      }}
+      onValidate={(reference) => validate.mutate(reference)}
       onPay={(input) => pay.mutate(input)}
+      // back: the form is still in the stack with what was typed.
+      onEdit={() => router.back()}
     />
   );
 }

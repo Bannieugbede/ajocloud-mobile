@@ -22,6 +22,10 @@ export default function BillsLayout() {
         options={{ title: 'Choose a biller', ...backTo('/(tabs)/bills') }}
       />
       <Stack.Screen
+        name="[categoryId]/providers"
+        options={{ title: 'Choose provider', ...backTo('/(tabs)/bills') }}
+      />
+      <Stack.Screen
         name="[categoryId]/pay"
         options={{ title: 'Pay', ...backTo('/(tabs)/bills') }}
       />

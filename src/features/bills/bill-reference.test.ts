@@ -1,9 +1,4 @@
-import {
-  normaliseReference,
-  quickAmounts,
-  referenceKeyboard,
-  referenceProblem,
-} from './bill-reference';
+import { normaliseReference, referenceKeyboard, referenceProblem } from './bill-reference';
 
 describe('bill references', () => {
   it.each([
@@ -34,11 +29,5 @@ describe('bill references', () => {
     expect(referenceKeyboard('phone')).toBe('phone-pad');
     expect(referenceKeyboard('meter')).toBe('number-pad');
     expect(referenceKeyboard('account')).toBe('default');
-  });
-
-  it('offers quick amounts only where the payer sets the price', () => {
-    expect(quickAmounts('phone')).toContain(500);
-    expect(quickAmounts('meter')).toContain(5_000);
-    expect(quickAmounts('smartcard')).toEqual([]);
   });
 });
