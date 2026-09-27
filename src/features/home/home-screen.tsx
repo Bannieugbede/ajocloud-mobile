@@ -26,6 +26,9 @@ import {
   type UpcomingItem,
 } from './home-data';
 
+/** How many upcoming rows the home dashboard shows. The list is already soonest-first. */
+const UPCOMING_LIMIT = 5;
+
 /** The bill categories the design surfaces first, by the name the API uses. */
 const CATEGORY_SHORTCUTS = ['Airtime', 'Internet', 'Electricity', 'Cable TV'] as const;
 
@@ -175,14 +178,16 @@ export function HomeScreen(props: HomeScreenProps) {
 
       <Section title="Upcoming Activity">
         {props.upcoming.length ? (
-          props.upcoming.map((item) => (
-            <UpcomingRow
-              key={item.id}
-              item={item}
-              now={now}
-              onPress={() => props.onOpenUpcoming(item)}
-            />
-          ))
+          props.upcoming
+            .slice(0, UPCOMING_LIMIT)
+            .map((item) => (
+              <UpcomingRow
+                key={item.id}
+                item={item}
+                now={now}
+                onPress={() => props.onOpenUpcoming(item)}
+              />
+            ))
         ) : (
           <AppCard>
             <AppText style={{ color: colors.textMuted }}>
