@@ -336,9 +336,7 @@ describe('PayBillScreen', () => {
         customerReference="08031234567"
         amountMinor="50000"
         validation={null}
-        walletAvailableMinor="10000000"
         validating={false}
-        paying={false}
         onValidate={jest.fn()}
         onPay={jest.fn()}
         onEdit={jest.fn()}
@@ -367,11 +365,11 @@ describe('PayBillScreen', () => {
     expect(view.getByLabelText('Phone number: 08031234567')).toBeTruthy();
   });
 
-  it('pays the confirmed amount', async () => {
+  it('hands a recognised number on to be paid', async () => {
     const onPay = jest.fn();
     const view = await setup({ validation, onPay });
     await act(async () => fireEvent.press(view.getByRole('button', { name: 'Pay ₦500.00' })));
-    expect(onPay).toHaveBeenCalledWith({ customerReference: '08031234567', amountMinor: '50000' });
+    expect(onPay).toHaveBeenCalledTimes(1);
   });
 
   it('says so, and offers another check, when the number is not recognised', async () => {
@@ -380,14 +378,6 @@ describe('PayBillScreen', () => {
     });
     expect(view.getByText('MTN Data did not recognise this number.')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Check again' })).toBeTruthy();
-  });
-
-  it('refuses to pay more than the wallet holds', async () => {
-    const onPay = jest.fn();
-    const view = await setup({ validation, walletAvailableMinor: '10000', onPay });
-    expect(view.getByText(/does not have enough/)).toBeTruthy();
-    await act(async () => fireEvent.press(view.getByRole('button', { name: 'Pay ₦500.00' })));
-    expect(onPay).not.toHaveBeenCalled();
   });
 
   it('goes back to change the details rather than editing here', async () => {

@@ -670,6 +670,38 @@ a reference that no longer matches its validation (422), a missing idempotency k
 Not yet built: Food subscription actions, Akawo goal creation, wallet
 fund/withdraw/send, and profile/settings.
 
+## Every payment through the shared payment flow (2026-09-27) — COMPLETED
+
+Bills were the one payment outside `usePayment`: the confirmation called
+`POST /bill-payments`, which debited the wallet with no transaction PIN, no
+quoted fee and no top-up path. The backend now pays bills through the payment
+intent (its ADR-014) and the direct route is removed.
+
+| Payment          | Entry point                        | Target               |
+| ---------------- | ---------------------------------- | -------------------- |
+| Ajo contribution | Ajo group, Home upcoming           | `AJO_CONTRIBUTION`   |
+| Akawo pool due   | Akawo pool, Home upcoming          | `AKAWO_POOL_DUE`     |
+| Food enrolment   | Food programme                     | `FOOD_SUBSCRIPTION`  |
+| Bill             | Bill confirmation                  | `BILL_PAYMENT` (new) |
+| Wallet top-up    | Fund wallet, or short while paying | `WALLET_TOPUP`       |
+
+Send and withdraw are transfers out, not payments for something, and keep
+their own PIN-guarded screens.
+
+- The bill confirmation checks the number, then `Pay ₦…` starts the shared
+  flow: quote (with the bill fee), wallet or top-up, PIN, result.
+- The customer's number travels only in the in-memory payment request and the
+  confirm call (`confirmationDetails`), never in a route param.
+- A wallet payment left `PROCESSING` (a bill waiting on its provider) says the
+  money is held and will come back if the bill cannot be completed. A declined
+  bill's Try again returns to Bills, since its quote is spent
+  (`retriesFromStart`).
+
+Validation: backend integration suites for every target pass against Postgres,
+including the new bill-intent suite (success, decline with full refund,
+provider outage then reconciliation, held fee). Mobile: 1,168 tests, typecheck,
+lint. Not yet run end to end on a device against a deployed backend.
+
 ## Bill screens redesign (2026-09-27) — COMPLETED
 
 The four bill screens follow the reference designs supplied on 2026-09-27, in

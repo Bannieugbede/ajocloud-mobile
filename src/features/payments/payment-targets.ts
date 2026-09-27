@@ -75,6 +75,11 @@ const TARGETS: { [K in PaymentIntentTarget['kind']]: TargetConfig<K> } = {
     allowsPartPayment: false,
     refreshes: () => [],
   },
+  BILL_PAYMENT: {
+    fallbackMethods: ['WALLET'],
+    allowsPartPayment: false,
+    refreshes: () => [['bill-payments'], ['bill-payment']],
+  },
 };
 
 function configFor<K extends PaymentIntentTarget['kind']>(kind: K): TargetConfig<K> {
@@ -96,6 +101,25 @@ export function allowsPartPayment(target: PaymentIntentTarget): boolean {
 export function queryKeysAfterPayment(target: PaymentIntentTarget): QueryKey[] {
   const config = configFor(target.kind) as TargetConfig<typeof target.kind>;
   return [...config.refreshes(target as never), ...WALLET_KEYS];
+}
+
+/**
+ * What the confirmation must carry besides the method and PIN. Only a bill
+ * needs anything: the customer's number, which the server does not keep.
+ */
+export function confirmationDetails(target: PaymentIntentTarget): {
+  customerReference?: string;
+} {
+  return target.kind === 'BILL_PAYMENT' ? { customerReference: target.customerReference } : {};
+}
+
+/**
+ * Whether a failed payment is retried by starting again rather than by
+ * returning to its quote. A declined bill has already used its quote, so the
+ * payer goes back to the bill to try again.
+ */
+export function retriesFromStart(target: PaymentIntentTarget): boolean {
+  return target.kind === 'BILL_PAYMENT';
 }
 
 /**

@@ -113,27 +113,9 @@ export function validateBillCustomer(input: {
   });
 }
 
-/**
- * Pays a validated bill from a wallet.
- *
- * Requires `Idempotency-Key`; replaying a key returns the original payment
- * rather than charging again.
- */
-export function createBillPayment(
-  input: {
-    walletId: string;
-    validationId: string;
-    customerReference: string;
-    amountMinor: string;
-  },
-  idempotencyKey: string,
-): Promise<BillPayment> {
-  return client().request('/api/v1/bill-payments', {
-    method: 'POST',
-    body: input,
-    idempotencyKey,
-  });
-}
+// Paying goes through the shared payment flow (`BILL_PAYMENT` in
+// `endpoints/payments.ts`), which asks for the transaction PIN; the direct
+// route is gone (backend ADR-014).
 
 export function listBillPayments(): Promise<BillPayment[]> {
   return client().request('/api/v1/bill-payments');

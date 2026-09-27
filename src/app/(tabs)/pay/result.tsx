@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef } from 'react';
 
 import { getPaymentIntent, type PaymentIntent } from '@/api/endpoints/payments';
-import { queryKeysAfterPayment } from '@/features/payments/payment-targets';
+import { queryKeysAfterPayment, retriesFromStart } from '@/features/payments/payment-targets';
 import { PaymentResultScreen } from '@/features/payments/payment-result-screen';
 import { usePaymentStore } from '@/store/payment-store';
 
@@ -80,6 +80,11 @@ export default function PaymentResultRoute() {
       {...(resume ? { pausedFor: resume.title } : {})}
       onDone={finish}
       onRetry={() => {
+        // A declined bill has spent its quote, so it is retried from the bill.
+        if (request && retriesFromStart(request.target)) {
+          finish();
+          return;
+        }
         // back: returns to the payment screen, which still holds the quote, so
         // a failed attempt is retried rather than restarted.
         router.back();

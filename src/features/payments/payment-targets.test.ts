@@ -2,8 +2,10 @@ import type { PaymentIntentTarget } from '@/api/endpoints/payments';
 
 import {
   allowsPartPayment,
+  confirmationDetails,
   methodsFor,
   queryKeysAfterPayment,
+  retriesFromStart,
   withAmount,
 } from './payment-targets';
 
@@ -71,5 +73,37 @@ describe('withAmount', () => {
     // The server refuses an amount on these; sending one would fail the payment.
     expect(withAmount(akawo, '100')).toEqual(akawo);
     expect(withAmount(food, '100')).toEqual(food);
+  });
+});
+
+describe('bills', () => {
+  const bill: PaymentIntentTarget = {
+    kind: 'BILL_PAYMENT',
+    validationId: 'v1',
+    amountMinor: '100000',
+    customerReference: '08031234567',
+  };
+
+  it('are paid from the wallet when the server does not say', () => {
+    expect(methodsFor({ targetType: 'BILL_PAYMENT' })).toEqual(['WALLET']);
+  });
+
+  it('send the number with the confirmation, and only bills do', () => {
+    expect(confirmationDetails(bill)).toEqual({ customerReference: '08031234567' });
+    expect(confirmationDetails(akawo)).toEqual({});
+  });
+
+  it('keep their amount, which the payer chose', () => {
+    expect(withAmount(bill, null)).toEqual(bill);
+    expect(allowsPartPayment(bill)).toBe(false);
+  });
+
+  it('refresh the bill history once paid', () => {
+    expect(queryKeysAfterPayment(bill)).toEqual(expect.arrayContaining([['bill-payments']]));
+  });
+
+  it('are retried from the bill, since a declined one has spent its quote', () => {
+    expect(retriesFromStart(bill)).toBe(true);
+    expect(retriesFromStart(ajo)).toBe(false);
   });
 });

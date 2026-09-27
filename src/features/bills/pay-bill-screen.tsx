@@ -8,25 +8,27 @@ import type {
 } from '@/api/endpoints/bill-payments';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
-import { useErrorToast } from '@/hooks/use-toast-on-change';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
 import { formatMinorAmount } from '@/utils/money';
 
-import { amountError, canAfford } from './bill-amount';
+import { amountError } from './bill-amount';
 import type { BillCategoryKind } from './bill-catalog-view';
 import { BillSection, ProviderBadge } from './bill-ui';
 
 /**
- * The last look before money moves.
+ * The last look at a bill before it is paid.
  *
  * Everything was chosen on the previous screen, so this one only confirms it.
  * The number is checked with the provider as soon as the screen opens, and Pay
  * stays unavailable until the provider has recognised it: seeing the account
  * holder's name is how a mistyped meter or smartcard is caught. Changing
  * anything goes back to the form rather than editing here, because a
- * validation is bound to the exact number and amount it was made for.
+ * validation is bound to the exact number it was made for.
+ *
+ * Pay hands the bill to the shared payment flow, which shows the fee, checks
+ * the wallet (offering a top-up if it is short) and asks for the PIN.
  */
 export function PayBillScreen({
   kind,
@@ -35,11 +37,8 @@ export function PayBillScreen({
   customerReference,
   amountMinor,
   validation,
-  walletAvailableMinor,
   validating,
-  paying,
   validationError,
-  payError,
   onValidate,
   onPay,
   onEdit,
@@ -50,21 +49,16 @@ export function PayBillScreen({
   customerReference: string;
   amountMinor: string;
   validation: BillCustomerValidation | null;
-  walletAvailableMinor: string | null;
   validating: boolean;
-  paying: boolean;
   validationError?: AppError | null;
-  payError?: AppError | null;
   onValidate: (customerReference: string) => void;
-  onPay: (input: { customerReference: string; amountMinor: string }) => void;
+  onPay: () => void;
   onEdit: () => void;
 }) {
   const { colors } = useTheme();
-  useErrorToast(payError?.message);
 
   const currency = product?.currency ?? 'NGN';
   const amountProblem = amountError(product, amountMinor);
-  const affordable = canAfford(walletAvailableMinor, amountMinor);
   const amount = formatMinorAmount(amountMinor, currency);
 
   const requested = useRef(false);
@@ -74,7 +68,7 @@ export function PayBillScreen({
     onValidate(customerReference);
   }, [customerReference, onValidate, validation]);
 
-  const ready = Boolean(validation) && affordable && !amountProblem && !paying;
+  const ready = Boolean(validation) && !amountProblem;
 
   return (
     <ScrollView
@@ -118,13 +112,6 @@ export function PayBillScreen({
           <Row label={kind === 'electricity' ? 'Meter type' : 'Package'} value={product.name} />
         ) : null}
         <Row label="Amount" value={amount} />
-        {walletAvailableMinor !== null ? (
-          <Row
-            label="Wallet balance"
-            value={formatMinorAmount(walletAvailableMinor, currency)}
-            tone={affordable ? 'default' : 'error'}
-          />
-        ) : null}
       </BillSection>
 
       {validationError && !validation ? (
@@ -141,21 +128,11 @@ export function PayBillScreen({
         </View>
       ) : null}
 
-      {!affordable ? (
-        <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-          Your wallet does not have enough for this. Fund it, then come back.
-        </AppText>
-      ) : null}
       {amountProblem ? <AppText style={{ color: colors.error }}>{amountProblem}</AppText> : null}
 
       <View style={styles.footer}>
-        <AppButton
-          label={`Pay ${amount}`}
-          onPress={() => onPay({ customerReference, amountMinor })}
-          loading={paying}
-          disabled={!ready}
-        />
-        <AppButton label="Change details" variant="outline" onPress={onEdit} disabled={paying} />
+        <AppButton label={`Pay ${amount}`} onPress={onPay} disabled={!ready} />
+        <AppButton label="Change details" variant="outline" onPress={onEdit} />
       </View>
     </ScrollView>
   );

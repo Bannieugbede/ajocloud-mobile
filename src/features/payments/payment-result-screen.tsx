@@ -54,15 +54,26 @@ export function PaymentResultScreen({
         heading: 'Payment complete',
         body: `Your payment for ${title} has been received.`,
       },
-      PROCESSING: {
-        icon: 'time-outline' as const,
-        tint: colors.warning,
-        soft: colors.warningSoft,
-        heading: 'Waiting for your payment',
-        body: pausedFor
-          ? `We will confirm this as soon as the money arrives, and you can then finish paying for ${pausedFor}.`
-          : 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
-      },
+      // From the wallet, PROCESSING means the money is held and a provider
+      // is still answering (a bill). Otherwise it is money on its way in.
+      PROCESSING:
+        intent.method === 'WALLET'
+          ? {
+              icon: 'time-outline' as const,
+              tint: colors.warning,
+              soft: colors.warningSoft,
+              heading: 'Payment in progress',
+              body: `Your money is held while we confirm ${title} with the provider. If it cannot be completed, it goes straight back to your wallet. You can safely leave this screen.`,
+            }
+          : {
+              icon: 'time-outline' as const,
+              tint: colors.warning,
+              soft: colors.warningSoft,
+              heading: 'Waiting for your payment',
+              body: pausedFor
+                ? `We will confirm this as soon as the money arrives, and you can then finish paying for ${pausedFor}.`
+                : 'We will confirm this as soon as the money arrives. You can safely leave this screen.',
+            },
       FAILED: {
         icon: 'close-circle' as const,
         tint: colors.error,

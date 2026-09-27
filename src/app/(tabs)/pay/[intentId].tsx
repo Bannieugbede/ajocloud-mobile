@@ -8,7 +8,7 @@ import {
   type PaymentMethod,
 } from '@/api/endpoints/payments';
 import { PaymentConfirmScreen } from '@/features/payments/payment-confirm-screen';
-import { queryKeysAfterPayment } from '@/features/payments/payment-targets';
+import { confirmationDetails, queryKeysAfterPayment } from '@/features/payments/payment-targets';
 import { usePaymentStore } from '@/store/payment-store';
 import type { AppError } from '@/types/errors';
 
@@ -32,7 +32,15 @@ export default function PaymentConfirmRoute() {
 
   const confirm = useMutation({
     mutationFn: (transactionPin: string) =>
-      confirmPaymentIntent(intentId, { method, transactionPin }, idempotencyKey),
+      confirmPaymentIntent(
+        intentId,
+        {
+          method,
+          transactionPin,
+          ...(request ? confirmationDetails(request.target) : {}),
+        },
+        idempotencyKey,
+      ),
     onSuccess: (result) => {
       // The payment changed the thing being paid for, so its screens refetch.
       // Which screens those are is the target's to say, not this route's.
