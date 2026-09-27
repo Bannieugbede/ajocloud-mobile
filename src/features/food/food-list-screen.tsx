@@ -70,7 +70,6 @@ export function FoodListScreen(props: FoodListScreenProps) {
           styles.container,
           {
             backgroundColor: colors.background,
-            paddingTop: insets.top + spacing.sm,
             // Clears the floating button, so the last card is never left
             // underneath it.
             paddingBottom: spacing.xxl + sizes.touchTarget,
@@ -82,7 +81,6 @@ export function FoodListScreen(props: FoodListScreenProps) {
             refreshing={props.refreshing}
             onRefresh={props.onRefresh}
             tintColor={colors.primary}
-            progressViewOffset={insets.top}
           />
         }
       >

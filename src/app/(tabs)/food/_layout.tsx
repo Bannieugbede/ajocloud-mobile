@@ -7,8 +7,7 @@ export default function FoodLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      {/* Draws its own header; see the note in the Ajo layout. */}
-      <Stack.Screen name="index" options={{ title: 'Food', headerShown: false }} />
+      <Stack.Screen name="index" options={{ title: 'Food Ajo', headerTitleAlign: 'center' }} />
       {/* The photographic header carries the title and runs under the status
           bar, so a navigator header on top of it would draw the name twice.
           The screen supplies its own back control. */}
