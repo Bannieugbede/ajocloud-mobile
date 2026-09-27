@@ -7,9 +7,7 @@ export default function AjoLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      {/* The list draws its own header: it names itself in its first line,
-          and a navigator title above that would print "Ajo" twice. */}
-      <Stack.Screen name="index" options={{ title: 'Ajo', headerShown: false }} />
+      <Stack.Screen name="index" options={{ title: 'My Ajo Groups', headerTitleAlign: 'center' }} />
       <Stack.Screen name="create" options={{ title: 'Create Ajo Group' }} />
       {/* Reached by replace after creating, so back returns to the list rather
           than the form that has already been submitted. */}
