@@ -6,7 +6,7 @@ import { getAjoGroup, getAjoSchedule, listAjoGroups } from '@/api/endpoints/ajo-
 import { listJoinedPools } from '@/api/endpoints/akawo-pools';
 import { getNotificationFeed } from '@/api/endpoints/notifications';
 import { queryKeys } from '@/api/query-keys';
-import { listBillCategories, listBillPayments } from '@/api/endpoints/bill-payments';
+import { listBillCategories } from '@/api/endpoints/bill-payments';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { supportedCategories } from '@/features/bills/saved-bills';
@@ -15,8 +15,6 @@ import {
   buildUpcoming,
   mergeUpcoming,
   poolDuesAsUpcoming,
-  recentQuickPay,
-  type QuickPayItem,
   type UpcomingItem,
 } from '@/features/home/home-data';
 import { usePayment } from '@/features/payments/use-payment';
@@ -33,7 +31,6 @@ export default function HomeRoute() {
   const user = useQuery({ queryKey: ['current-user'], queryFn: getCurrentUser });
   const wallets = useQuery({ queryKey: ['wallets'], queryFn: listWallets });
   const groups = useQuery({ queryKey: ['ajo-groups'], queryFn: listAjoGroups });
-  const payments = useQuery({ queryKey: ['bill-payments'], queryFn: listBillPayments });
   // Same key as the bills screen, so a shortcut tapped on Home opens straight
   // into its category and the bills screen finds the list already loaded.
   const billCategories = useQuery({ queryKey: ['bill-categories'], queryFn: listBillCategories });
@@ -121,8 +118,6 @@ export default function HomeRoute() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduledGroups, scheduleKey]);
 
-  const quickPay = useMemo(() => recentQuickPay(payments.data), [payments.data]);
-
   // Ajo obligations and Akawo dues are one list, ordered by when each falls
   // due rather than by which product it came from.
   const allUpcoming = useMemo(
@@ -148,7 +143,6 @@ export default function HomeRoute() {
       user.refetch(),
       wallets.refetch(),
       groups.refetch(),
-      payments.refetch(),
       summary.refetch(),
       pools.refetch(),
       feed.refetch(),
@@ -199,31 +193,11 @@ export default function HomeRoute() {
     });
   };
 
-  const openQuickPay = (item: QuickPayItem) => {
-    // Reopens the biller with the last amount. The reference is masked in the
-    // history, so it is asked for again, which also stops a repeat silently
-    // paying the wrong meter.
-    if (!item.billerId || !item.categoryId) {
-      router.push('/(tabs)/bills');
-      return;
-    }
-    router.push({
-      pathname: '/(tabs)/bills/[categoryId]',
-      params: {
-        categoryId: item.categoryId,
-        billerId: item.billerId,
-        amountMinor: item.amountMinor,
-        ...(item.categoryName ? { categoryName: item.categoryName } : {}),
-      },
-    });
-  };
-
   return (
     <HomeScreen
       user={user.data}
       groups={groups.data}
       upcoming={allUpcoming}
-      quickPay={quickPay}
       availableMinor={summary.data?.availableMinor}
       currency={summary.data?.currency ?? 'NGN'}
       loading={primary.some((query) => query.isPending)}
@@ -244,7 +218,6 @@ export default function HomeRoute() {
       onOpenUpcoming={openUpcoming}
       onOpenBills={() => router.push('/(tabs)/bills')}
       onOpenCategory={openBillCategory}
-      onQuickPay={openQuickPay}
       onFund={() => router.push('/(tabs)/profile/wallet/fund')}
       onSend={() => router.push('/(tabs)/profile/wallet/send')}
       onWithdraw={() => router.push('/(tabs)/profile/wallet/withdraw')}

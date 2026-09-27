@@ -1,6 +1,5 @@
 import type { AjoCycle, AjoGroupSummary } from '@/api/endpoints/ajo-groups';
 import type { AkawoGoal } from '@/api/endpoints/akawo';
-import type { BillPayment } from '@/api/endpoints/bill-payments';
 
 import {
   buildUpcoming,
@@ -9,7 +8,6 @@ import {
   mergeUpcoming,
   poolDuesAsUpcoming,
   greetingFor,
-  recentQuickPay,
   relativeDueLabel,
   totalAkawoSaved,
   urgencyFor,
@@ -279,86 +277,6 @@ describe('buildUpcoming', () => {
       NOW,
     );
     expect(items.map((item) => item.groupName)).toEqual(['Sooner', 'Later']);
-  });
-});
-
-function payment(overrides: Partial<BillPayment> = {}): BillPayment {
-  return {
-    id: 'pay-1',
-    internalReference: 'REF-1',
-    providerReference: null,
-    customerReferenceMasked: '****7841',
-    verifiedCustomerName: 'C OKAFOR',
-    amountMinor: '2450000',
-    feeMinor: '0',
-    totalDebitMinor: '2450000',
-    currency: 'NGN',
-    status: 'SUCCESSFUL',
-    reconciliationState: 'NOT_REQUIRED',
-    failureReason: null,
-    createdAt: '2026-07-01T00:00:00Z',
-    completedAt: '2026-07-01T00:05:00Z',
-    biller: { id: 'b1', name: 'DSTV', category: { id: 'c1', name: 'Cable TV' } },
-    ...overrides,
-  };
-}
-
-describe('recentQuickPay', () => {
-  it('is empty without history', () => {
-    expect(recentQuickPay(undefined)).toEqual([]);
-    expect(recentQuickPay([])).toEqual([]);
-  });
-
-  it('names the biller rather than the masked reference', () => {
-    expect(recentQuickPay([payment()])[0]).toMatchObject({
-      billerName: 'DSTV',
-      categoryName: 'Cable TV',
-      customerReferenceMasked: '****7841',
-    });
-  });
-
-  it('knows which biller to reopen', () => {
-    expect(recentQuickPay([payment()])[0]).toMatchObject({ categoryId: 'c1' });
-    expect(recentQuickPay([payment()])[0]?.billerId).toBeTruthy();
-  });
-
-  it('offers only payments that actually succeeded', () => {
-    // Re-offering a failed payment implies it worked.
-    expect(
-      recentQuickPay([
-        payment({ id: 'a', status: 'FAILED' }),
-        payment({ id: 'b', status: 'REVERSED', customerReferenceMasked: '****1111' }),
-        payment({ id: 'c', status: 'PENDING', customerReferenceMasked: '****2222' }),
-      ]),
-    ).toEqual([]);
-  });
-
-  it('shows one row per reference, however often it was paid', () => {
-    const items = recentQuickPay([
-      payment({ id: 'jan', completedAt: '2026-01-01T00:00:00Z' }),
-      payment({ id: 'jul', completedAt: '2026-07-01T00:00:00Z' }),
-    ]);
-    expect(items).toHaveLength(1);
-    // The most recent payment of that reference, not the oldest.
-    expect(items[0]?.paymentId).toBe('jul');
-  });
-
-  it('respects the limit', () => {
-    const items = recentQuickPay(
-      [
-        payment({ id: '1', customerReferenceMasked: '****1' }),
-        payment({ id: '2', customerReferenceMasked: '****2' }),
-        payment({ id: '3', customerReferenceMasked: '****3' }),
-      ],
-      2,
-    );
-    expect(items).toHaveLength(2);
-  });
-
-  it('falls back when a payment predates the biller field', () => {
-    const legacy = recentQuickPay([payment({ biller: undefined })])[0];
-    expect(legacy?.billerName).toBe('C OKAFOR');
-    expect(legacy?.categoryName).toBeNull();
   });
 });
 

@@ -1,6 +1,5 @@
 import type { AjoCycle, AjoGroupSummary } from '@/api/endpoints/ajo-groups';
 import type { AkawoGoal } from '@/api/endpoints/akawo';
-import type { BillPayment } from '@/api/endpoints/bill-payments';
 import { sumMinorAmounts } from '@/utils/money';
 
 /**
@@ -212,63 +211,6 @@ function remainderMinor(dueMinor: string, paidMinor: string): string {
 
 function toBigInt(value: string): bigint {
   return /^-?\d+$/.test(value.trim()) ? BigInt(value.trim()) : 0n;
-}
-
-export type QuickPayItem = {
-  billerName: string;
-  /** Names the icon and gives the reference a label. Null on older payments. */
-  categoryName: string | null;
-  customerReferenceMasked: string;
-  amountMinor: string;
-  currency: string;
-  paymentId: string;
-  /** Where the payment can be repeated. Null on payments made before these were returned. */
-  billerId: string | null;
-  categoryId: string | null;
-};
-
-/**
- * Billers worth offering again, newest first.
- *
- * There is no saved-beneficiary API, so this is derived from payment history —
- * only payments that actually completed, because re-offering a failed one
- * suggests it worked. One entry per customer reference: paying the same meter
- * monthly should occupy one row, not twelve.
- */
-export function recentQuickPay(
-  payments: readonly BillPayment[] | undefined,
-  limit = 2,
-): QuickPayItem[] {
-  if (!payments?.length) return [];
-
-  const newestFirst = [...payments]
-    // SUCCESSFUL only: re-offering a failed or reversed payment implies it
-    // worked. This is the exact value the backend's BillPaymentStatus uses.
-    .filter((payment) => payment.status === 'SUCCESSFUL')
-    .sort((a, b) => (b.completedAt ?? b.createdAt).localeCompare(a.completedAt ?? a.createdAt));
-
-  const seen = new Set<string>();
-  const items: QuickPayItem[] = [];
-  for (const payment of newestFirst) {
-    if (seen.has(payment.customerReferenceMasked)) continue;
-    seen.add(payment.customerReferenceMasked);
-    items.push({
-      // The biller's name, which is what a person recognises. The verified
-      // customer name and the masked reference are fallbacks for a payment
-      // made before the API returned the biller.
-      billerName:
-        payment.biller?.name ?? payment.verifiedCustomerName ?? payment.customerReferenceMasked,
-      categoryName: payment.biller?.category.name ?? null,
-      customerReferenceMasked: payment.customerReferenceMasked,
-      amountMinor: payment.amountMinor,
-      currency: payment.currency,
-      paymentId: payment.id,
-      billerId: payment.biller?.id ?? null,
-      categoryId: payment.biller?.category.id ?? null,
-    });
-    if (items.length === limit) break;
-  }
-  return items;
 }
 
 /** The greeting for the time of day, as a person would say it. */

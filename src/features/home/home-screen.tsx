@@ -22,7 +22,6 @@ import {
   greetingFor,
   relativeDueLabel,
   type CategoryTone,
-  type QuickPayItem,
   type UpcomingItem,
 } from './home-data';
 
@@ -44,7 +43,6 @@ export type HomeScreenProps = {
   user?: CurrentUser;
   groups?: AjoGroupSummary[];
   upcoming: UpcomingItem[];
-  quickPay: QuickPayItem[];
   /** Spendable balance in minor units, or undefined while unknown. */
   availableMinor?: string;
   currency: string;
@@ -65,7 +63,6 @@ export type HomeScreenProps = {
   onOpenUpcoming: (item: UpcomingItem) => void;
   onOpenBills: () => void;
   onOpenCategory: (categoryName: string) => void;
-  onQuickPay: (item: QuickPayItem) => void;
   onFund?: () => void;
   onSend: () => void;
   onWithdraw: () => void;
@@ -170,10 +167,6 @@ export function HomeScreen(props: HomeScreenProps) {
             <CategoryShortcut key={name} name={name} onPress={() => props.onOpenCategory(name)} />
           ))}
         </View>
-
-        {props.quickPay.map((item) => (
-          <QuickPayCard key={item.paymentId} item={item} onPress={() => props.onQuickPay(item)} />
-        ))}
       </Section>
 
       <Section title="Upcoming Activity">
@@ -364,40 +357,6 @@ function CategoryShortcut({ name, onPress }: { name: string; onPress: () => void
         {name}
       </AppText>
     </Pressable>
-  );
-}
-
-function QuickPayCard({ item, onPress }: { item: QuickPayItem; onPress: () => void }) {
-  const { colors } = useTheme();
-  const tone = useToneColors(categoryTone(item.categoryName ?? ''));
-
-  return (
-    <AppCard
-      onPress={onPress}
-      accessibilityLabel={`Pay ${item.billerName} again, last paid ${formatMinorAmount(
-        item.amountMinor,
-        item.currency,
-      )}`}
-      style={styles.listCard}
-    >
-      <View style={[styles.listIcon, { backgroundColor: tone.background }]}>
-        <Ionicons name={categoryIcon(item.categoryName ?? '')} size={20} color={tone.text} />
-      </View>
-      <View style={styles.listText}>
-        <AppText weight="semibold" numberOfLines={1}>
-          {item.billerName}
-        </AppText>
-        <AppText style={{ color: colors.textMuted }} numberOfLines={1}>
-          {item.customerReferenceMasked}
-        </AppText>
-      </View>
-      <View style={styles.listRight}>
-        <AppAmount amountMinor={item.amountMinor} currency={item.currency} />
-        <AppText weight="semibold" style={{ color: colors.primary, fontSize: fontSizes.caption }}>
-          Quick Pay
-        </AppText>
-      </View>
-    </AppCard>
   );
 }
 

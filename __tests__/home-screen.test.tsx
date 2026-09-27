@@ -50,7 +50,6 @@ function props(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
     user,
     groups: [group],
     upcoming: [contribution],
-    quickPay: [],
     availableMinor: '84732050',
     currency: 'NGN',
     loading: false,
@@ -69,7 +68,6 @@ function props(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
     onOpenUpcoming: jest.fn(),
     onOpenBills: jest.fn(),
     onOpenCategory: jest.fn(),
-    onQuickPay: jest.fn(),
     onSend: jest.fn(),
     onWithdraw: jest.fn(),
     ...overrides,
@@ -244,33 +242,6 @@ it('enables Fund once funding is available', async () => {
 
   await act(async () => fireEvent.press(view.getByLabelText('Fund')));
   expect(onFund).toHaveBeenCalledTimes(1);
-});
-
-it('offers a recently paid biller by name', async () => {
-  const onQuickPay = jest.fn();
-  const view = await render(
-    <HomeScreen
-      {...props({
-        quickPay: [
-          {
-            billerName: 'DSTV',
-            categoryName: 'Cable TV',
-            customerReferenceMasked: '****7841',
-            amountMinor: '2450000',
-            currency: 'NGN',
-            paymentId: 'pay-1',
-            billerId: 'biller-1',
-            categoryId: 'category-1',
-          },
-        ],
-        onQuickPay,
-      })}
-    />,
-  );
-
-  expect(view.getByText('DSTV')).toBeTruthy();
-  await act(async () => fireEvent.press(view.getByLabelText(/Pay DSTV again/)));
-  expect(onQuickPay).toHaveBeenCalledTimes(1);
 });
 
 it('says nothing is due rather than showing an empty list', async () => {
