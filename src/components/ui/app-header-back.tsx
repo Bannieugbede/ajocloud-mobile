@@ -25,7 +25,18 @@ import { sizes, spacing } from '@/theme';
  * is none — the screen that logically contains this one, not the one the member
  * happened to arrive from.
  */
-export function AppHeaderBack({ fallback }: { fallback: Href }) {
+export function AppHeaderBack({
+  fallback,
+  always = false,
+}: {
+  fallback: Href;
+  /**
+   * Always replace with `fallback`, ignoring history. For a screen that ends a
+   * flow, such as a receipt, where going back would reopen the steps that led
+   * to it.
+   */
+  always?: boolean;
+}) {
   const { colors } = useTheme();
   const navigation = useNavigation();
 
@@ -35,7 +46,7 @@ export function AppHeaderBack({ fallback }: { fallback: Href }) {
       accessibilityLabel="Go back"
       hitSlop={spacing.sm}
       onPress={() => {
-        if (navigation.canGoBack()) router.back();
+        if (!always && navigation.canGoBack()) router.back();
         else router.replace(fallback);
       }}
       style={({ pressed }) => [styles.back, { opacity: pressed ? 0.6 : 1 }]}
@@ -52,9 +63,9 @@ export function AppHeaderBack({ fallback }: { fallback: Href }) {
  * Replaces the native one rather than sitting beside it, so a screen cannot end
  * up with two chevrons when it does happen to have history.
  */
-export function backTo(fallback: Href) {
+export function backTo(fallback: Href, { always = false }: { always?: boolean } = {}) {
   return {
-    headerLeft: () => <AppHeaderBack fallback={fallback} />,
+    headerLeft: () => <AppHeaderBack fallback={fallback} always={always} />,
     headerBackVisible: false,
   };
 }

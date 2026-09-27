@@ -110,7 +110,6 @@ describe('naming the reference', () => {
 describe('drawing a category', () => {
   it('gives each of the design’s categories its own colour', () => {
     expect(categoryTone('Electricity')).toBe('electricity');
-    expect(categoryTone('Water')).toBe('water');
     expect(categoryTone('Cable TV')).toBe('tv');
     expect(categoryTone('Internet')).toBe('internet');
     expect(categoryTone('Airtime')).toBe('phone');
@@ -123,7 +122,6 @@ describe('drawing a category', () => {
   it('gives every category an icon', () => {
     for (const name of [
       'Electricity',
-      'Water',
       'Cable TV',
       'Internet',
       'Airtime',

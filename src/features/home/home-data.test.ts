@@ -317,6 +317,11 @@ describe('recentQuickPay', () => {
     });
   });
 
+  it('knows which biller to reopen', () => {
+    expect(recentQuickPay([payment()])[0]).toMatchObject({ categoryId: 'c1' });
+    expect(recentQuickPay([payment()])[0]?.billerId).toBeTruthy();
+  });
+
   it('offers only payments that actually succeeded', () => {
     // Re-offering a failed payment implies it worked.
     expect(
@@ -492,9 +497,9 @@ describe('mergeUpcoming', () => {
 describe('categoryTone and categoryIcon', () => {
   it.each([
     ['Electricity', 'warning', 'flash-outline'],
-    ['Water', 'info', 'water-outline'],
+    ['Airtime', 'primary', 'phone-portrait-outline'],
     ['Cable TV', 'secondary', 'tv-outline'],
-    ['Internet', 'primary', 'wifi-outline'],
+    ['Internet', 'info', 'wifi-outline'],
   ])('%s is drawn %s with %s', (name, tone, icon) => {
     expect(categoryTone(name)).toBe(tone);
     expect(categoryIcon(name)).toBe(icon);

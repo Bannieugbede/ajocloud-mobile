@@ -7,26 +7,62 @@ import { PayBillScreen } from '@/features/bills/pay-bill-screen';
 
 const fixedProduct: BillProduct = {
   id: 'p1',
-  providerCode: 'DEV_MTN_500',
-  name: 'MTN ₦500 Airtime',
+  providerCode: 'MTN-DATA-1GB-1D',
+  name: '1GB',
   minimumMinor: null,
   maximumMinor: null,
   fixedAmountMinor: '50000',
   currency: 'NGN',
+  validity: '1 day',
+};
+
+const secondPlan: BillProduct = {
+  ...fixedProduct,
+  id: 'p3',
+  providerCode: 'MTN-DATA-2GB-30D',
+  name: '2GB',
+  fixedAmountMinor: '150000',
+  validity: '30 days',
 };
 
 const openProduct: BillProduct = {
   ...fixedProduct,
   id: 'p2',
+  providerCode: 'MTN-VTU',
   name: 'Airtime top-up',
+  minimumMinor: '5000',
+  maximumMinor: '5000000',
   fixedAmountMinor: null,
+  validity: null,
 };
 
 const biller: BillBiller = {
   id: 'b1',
-  providerCode: 'DEV_MTN',
-  name: 'MTN Airtime',
+  providerCode: 'MTN-DATA',
+  name: 'MTN Data',
+  referenceKind: 'phone',
+  referenceLabel: 'Phone number',
   products: [fixedProduct],
+};
+
+const airtime: BillBiller = { ...biller, id: 'b3', name: 'MTN', products: [openProduct] };
+
+const prepaid: BillProduct = {
+  ...openProduct,
+  id: 'p4',
+  providerCode: 'EKEDC-PREPAID',
+  name: 'Prepaid meter',
+  minimumMinor: '100000',
+  maximumMinor: '50000000',
+};
+
+const meterBiller: BillBiller = {
+  id: 'b2',
+  providerCode: 'EKEDC',
+  name: 'Eko Electric (EKEDC)',
+  referenceKind: 'meter',
+  referenceLabel: 'Meter number',
+  products: [prepaid, { ...prepaid, id: 'p5', name: 'Postpaid account' }],
 };
 
 const validation = {
@@ -56,12 +92,10 @@ const payment: BillPayment = {
 };
 
 describe('BillerListScreen', () => {
-  const twoProducts: BillBiller = { ...biller, products: [fixedProduct, openProduct] };
-
   const setup = async (props: Partial<Parameters<typeof BillerListScreen>[0]> = {}) =>
     await render(
       <BillerListScreen
-        categoryName="Electricity"
+        categoryName="Internet"
         billers={[biller]}
         loading={false}
         error={false}
@@ -73,79 +107,126 @@ describe('BillerListScreen', () => {
 
   it('lists the providers as a single choice', async () => {
     const view = await setup();
-    expect(view.getByLabelText('MTN Airtime')).toBeTruthy();
+    expect(view.getByLabelText('MTN Data')).toBeTruthy();
   });
 
   it('marks the chosen provider as selected, not merely coloured', async () => {
     const view = await setup();
-    const row = view.getByLabelText('MTN Airtime');
-    await act(async () => fireEvent.press(row));
-    expect(row.props.accessibilityState.selected).toBe(true);
+    const tile = view.getByLabelText('MTN Data');
+    await act(async () => fireEvent.press(tile));
+    expect(view.getByLabelText('MTN Data').props.accessibilityState.selected).toBe(true);
   });
 
-  it('names the reference the way the payer’s own bill does', async () => {
+  it('names the reference the way the biller does', async () => {
     // "Reference" is correct and useless; someone checking they are paying the
     // right account needs the words printed on their bill.
-    const view = await setup();
+    const view = await setup({ categoryName: 'Electricity', billers: [meterBiller] });
+    await act(async () => fireEvent.press(view.getByLabelText('Eko Electric (EKEDC)')));
     expect(view.getByLabelText('Meter number')).toBeTruthy();
   });
 
-  it('shows a fixed product at its exact price rather than asking for an amount', async () => {
+  it('shows a single package at its exact price rather than asking for an amount', async () => {
     const view = await setup();
-    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Data')));
     expect(view.getByText('₦500.00')).toBeTruthy();
     expect(view.queryByLabelText('Amount (₦)')).toBeNull();
   });
 
-  it('asks for an amount when the product does not fix one', async () => {
-    const view = await setup({ billers: [{ ...biller, products: [openProduct] }] });
-    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
-    expect(view.getByLabelText('Amount (₦)')).toBeTruthy();
+  it('lists data plans with their price and how long they last', async () => {
+    const view = await setup({ billers: [{ ...biller, products: [fixedProduct, secondPlan] }] });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Data')));
+    expect(view.getByLabelText('2GB. 30 days. ₦1,500.00')).toBeTruthy();
   });
 
-  it('offers the packages when a biller has more than one', async () => {
-    const view = await setup({ billers: [twoProducts] });
-    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
-    expect(view.getByLabelText('Airtime top-up. Any amount')).toBeTruthy();
+  it('switches between prepaid and postpaid rather than listing them as packages', async () => {
+    const view = await setup({ categoryName: 'Electricity', billers: [meterBiller] });
+    await act(async () => fireEvent.press(view.getByLabelText('Eko Electric (EKEDC)')));
+    expect(view.getByText('Prepaid meter')).toBeTruthy();
+    expect(view.getByText('Postpaid account')).toBeTruthy();
+    expect(view.queryByText('PACKAGE')).toBeNull();
+  });
+
+  it('offers quick airtime amounts that fill the amount', async () => {
+    const view = await setup({ categoryName: 'Airtime', billers: [airtime] });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN')));
+    await act(async () => fireEvent.press(view.getByText('₦500.00')));
+    expect(view.getByLabelText('Amount (₦)').props.value).toBe('500');
   });
 
   it('will not continue before a provider and a reference are given', async () => {
-    // Disabled rather than erroring: nothing is wrong yet, the payer simply has
-    // not finished.
     const onContinue = jest.fn();
     const view = await setup({ onContinue });
     await act(async () => fireEvent.press(view.getByText('Continue')));
     expect(onContinue).not.toHaveBeenCalled();
   });
 
-  it('carries the provider, reference and amount to the confirmation', async () => {
+  it('explains a phone number that is too short', async () => {
     const onContinue = jest.fn();
-    const view = await setup({ billers: [{ ...biller, products: [openProduct] }], onContinue });
+    const view = await setup({ onContinue });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN Data')));
+    await act(async () => fireEvent.changeText(view.getByLabelText('Phone number'), '0803123'));
+    await act(async () => fireEvent.press(view.getByText('Continue')));
+    expect(onContinue).not.toHaveBeenCalled();
+    expect(view.getByText(/11-digit phone number/)).toBeTruthy();
+  });
 
-    await act(async () => fireEvent.press(view.getByLabelText('MTN Airtime')));
+  it('sends a phone number in the one form the backend stores', async () => {
+    const onContinue = jest.fn();
+    const view = await setup({ categoryName: 'Airtime', billers: [airtime], onContinue });
+    await act(async () => fireEvent.press(view.getByLabelText('MTN')));
+    await act(async () =>
+      fireEvent.changeText(view.getByLabelText('Phone number'), '+234 803 123 4567'),
+    );
+    await act(async () => fireEvent.changeText(view.getByLabelText('Amount (₦)'), '1000'));
+    await act(async () => fireEvent.press(view.getByText('Continue')));
+    expect(onContinue).toHaveBeenCalledWith(
+      expect.objectContaining({ customerReference: '08031234567', amountMinor: '100000' }),
+    );
+  });
+
+  it('carries the meter, type and amount to the confirmation', async () => {
+    const onContinue = jest.fn();
+    const view = await setup({
+      categoryName: 'Electricity',
+      billers: [meterBiller],
+      onContinue,
+    });
+
+    await act(async () => fireEvent.press(view.getByLabelText('Eko Electric (EKEDC)')));
+    await act(async () => fireEvent.press(view.getByText('Prepaid meter')));
     await act(async () => fireEvent.changeText(view.getByLabelText('Meter number'), '04223344556'));
     await act(async () => fireEvent.changeText(view.getByLabelText('Amount (₦)'), '15000'));
     await act(async () => fireEvent.press(view.getByText('Continue')));
 
     expect(onContinue).toHaveBeenCalledWith(
-      expect.objectContaining({ customerReference: '04223344556', amountMinor: '1500000' }),
+      expect.objectContaining({
+        customerReference: '04223344556',
+        amountMinor: '1500000',
+        product: expect.objectContaining({ id: 'p4' }),
+      }),
     );
   });
 
   it('preselects the provider and amount when a saved bill is repeated', async () => {
     const view = await setup({
-      billers: [{ ...biller, products: [openProduct] }],
-      initialBillerId: 'b1',
-      initialAmountMinor: '1500000',
+      categoryName: 'Airtime',
+      billers: [airtime],
+      initialBillerId: 'b3',
+      initialAmountMinor: '150000',
     });
-    expect(view.getByLabelText('MTN Airtime').props.accessibilityState.selected).toBe(true);
-    expect(view.getByDisplayValue('15000')).toBeTruthy();
+    expect(view.getByLabelText('MTN').props.accessibilityState.selected).toBe(true);
+    expect(view.getByDisplayValue('1500')).toBeTruthy();
   });
 
   it('still asks for the reference when repeating, since it is only ever masked', async () => {
     // The history holds "••2293", which is not a meter number. Asking again is
     // also what stops a repeat quietly paying the wrong meter.
-    const view = await setup({ initialBillerId: 'b1', initialAmountMinor: '1500000' });
+    const view = await setup({
+      categoryName: 'Electricity',
+      billers: [meterBiller],
+      initialBillerId: 'b2',
+      initialAmountMinor: '1500000',
+    });
     expect(view.getByLabelText('Meter number').props.value).toBe('');
   });
 });
@@ -156,7 +237,6 @@ describe('PayBillScreen', () => {
       <PayBillScreen
         biller={biller}
         product={fixedProduct}
-        categoryName="Airtime"
         validation={null}
         walletAvailableMinor="10000000"
         validating={false}
@@ -168,9 +248,21 @@ describe('PayBillScreen', () => {
       />,
     );
 
-  it('names the reference field for the category rather than saying "reference"', async () => {
+  it('names the reference field the way the biller does', async () => {
     const view = await setup();
     expect(view.getByLabelText('Phone number')).toBeTruthy();
+  });
+
+  it('checks a number carried from the previous step without a second tap', async () => {
+    const onValidate = jest.fn();
+    await setup({ onValidate, initialReference: '08031234567' });
+    expect(onValidate).toHaveBeenCalledTimes(1);
+    expect(onValidate).toHaveBeenCalledWith('08031234567');
+  });
+
+  it('says how long a package lasts', async () => {
+    const view = await setup();
+    expect(view.getByText('Lasts 1 day')).toBeTruthy();
   });
 
   it('does not ask for an amount before the number is checked', async () => {
@@ -199,7 +291,7 @@ describe('PayBillScreen', () => {
 
   it('shows a fixed amount rather than asking for one', async () => {
     const view = await setup({ validation });
-    expect(view.getByText(/fixed amount set by MTN Airtime/i)).toBeTruthy();
+    expect(view.getByText(/fixed amount set by MTN Data/i)).toBeTruthy();
     expect(view.queryByLabelText('Amount')).toBeNull();
   });
 

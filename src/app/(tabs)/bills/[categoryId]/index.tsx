@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 
 import { listBillers } from '@/api/endpoints/bill-payments';
 import { BillerListScreen } from '@/features/bills/biller-list-screen';
@@ -21,30 +21,35 @@ export default function BillersRoute() {
   });
 
   return (
-    <BillerListScreen
-      billers={billers.data}
-      {...(categoryName ? { categoryName } : {})}
-      {...(billerId ? { initialBillerId: billerId } : {})}
-      {...(amountMinor ? { initialAmountMinor: amountMinor } : {})}
-      loading={billers.isPending}
-      error={billers.isError}
-      onRetry={() => void billers.refetch()}
-      onContinue={({ biller, product, customerReference, amountMinor: chosen }) =>
-        // push: the payer can back out to change the provider or the amount.
-        // The reference travels as a param because the next screen validates it
-        // against the biller before anything is charged.
-        router.push({
-          pathname: '/(tabs)/bills/[categoryId]/pay',
-          params: {
-            categoryId,
-            billerId: biller.id,
-            customerReference,
-            amountMinor: chosen,
-            ...(product ? { productId: product.id } : {}),
-            ...(categoryName ? { categoryName } : {}),
-          },
-        })
-      }
-    />
+    <>
+      {/* The category is the screen's title, so "Airtime" reads as where the
+          payer is rather than a generic "Choose a biller". */}
+      {categoryName ? <Stack.Screen options={{ title: categoryName }} /> : null}
+      <BillerListScreen
+        billers={billers.data}
+        {...(categoryName ? { categoryName } : {})}
+        {...(billerId ? { initialBillerId: billerId } : {})}
+        {...(amountMinor ? { initialAmountMinor: amountMinor } : {})}
+        loading={billers.isPending}
+        error={billers.isError}
+        onRetry={() => void billers.refetch()}
+        onContinue={({ biller, product, customerReference, amountMinor: chosen }) =>
+          // push: the payer can back out to change the provider or the amount.
+          // The reference travels as a param because the next screen validates it
+          // against the biller before anything is charged.
+          router.push({
+            pathname: '/(tabs)/bills/[categoryId]/pay',
+            params: {
+              categoryId,
+              billerId: biller.id,
+              customerReference,
+              amountMinor: chosen,
+              ...(product ? { productId: product.id } : {}),
+              ...(categoryName ? { categoryName } : {}),
+            },
+          })
+        }
+      />
+    </>
   );
 }

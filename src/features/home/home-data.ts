@@ -222,6 +222,9 @@ export type QuickPayItem = {
   amountMinor: string;
   currency: string;
   paymentId: string;
+  /** Where the payment can be repeated. Null on payments made before these were returned. */
+  billerId: string | null;
+  categoryId: string | null;
 };
 
 /**
@@ -260,6 +263,8 @@ export function recentQuickPay(
       amountMinor: payment.amountMinor,
       currency: payment.currency,
       paymentId: payment.id,
+      billerId: payment.biller?.id ?? null,
+      categoryId: payment.biller?.category.id ?? null,
     });
     if (items.length === limit) break;
   }
@@ -308,7 +313,7 @@ export type CategoryTone = 'warning' | 'info' | 'secondary' | 'primary';
 export function categoryTone(name: string): CategoryTone {
   const lower = name.toLowerCase();
   if (lower.includes('electric') || lower.includes('power')) return 'warning';
-  if (lower.includes('water')) return 'info';
+  if (lower.includes('internet') || lower.includes('data')) return 'info';
   if (lower.includes('tv') || lower.includes('cable')) return 'secondary';
   return 'primary';
 }
@@ -316,10 +321,10 @@ export function categoryTone(name: string): CategoryTone {
 /** The icon a bill category is drawn with, matching its tone. */
 export function categoryIcon(
   name: string,
-): 'flash-outline' | 'water-outline' | 'tv-outline' | 'wifi-outline' | 'receipt-outline' {
+): 'flash-outline' | 'phone-portrait-outline' | 'tv-outline' | 'wifi-outline' | 'receipt-outline' {
   const lower = name.toLowerCase();
   if (lower.includes('electric') || lower.includes('power')) return 'flash-outline';
-  if (lower.includes('water')) return 'water-outline';
+  if (lower.includes('airtime')) return 'phone-portrait-outline';
   if (lower.includes('tv') || lower.includes('cable')) return 'tv-outline';
   if (lower.includes('internet') || lower.includes('data')) return 'wifi-outline';
   return 'receipt-outline';

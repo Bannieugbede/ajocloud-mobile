@@ -79,13 +79,12 @@ function byNewest(left: BillPayment, right: BillPayment): number {
   return Date.parse(right.createdAt) - Date.parse(left.createdAt);
 }
 
-export type CategoryTone = 'electricity' | 'water' | 'tv' | 'internet' | 'phone' | 'other';
+export type CategoryTone = 'electricity' | 'tv' | 'internet' | 'phone' | 'other';
 
 /** Which of the design's colours a category is drawn in. */
 export function categoryTone(name: string): CategoryTone {
   const lower = name.toLowerCase();
   if (lower.includes('electric') || lower.includes('power')) return 'electricity';
-  if (lower.includes('water')) return 'water';
   if (lower.includes('tv') || lower.includes('cable')) return 'tv';
   if (lower.includes('internet') || lower.includes('broadband')) return 'internet';
   if (lower.includes('airtime') || lower.includes('data') || lower.includes('phone')) {
@@ -98,7 +97,6 @@ export function categoryTone(name: string): CategoryTone {
 export function categoryIcon(name: string): React.ComponentProps<typeof Ionicons>['name'] {
   const lower = name.toLowerCase();
   if (lower.includes('electric') || lower.includes('power')) return 'flash-outline';
-  if (lower.includes('water')) return 'water-outline';
   if (lower.includes('tv') || lower.includes('cable')) return 'tv-outline';
   if (lower.includes('internet') || lower.includes('broadband')) return 'wifi-outline';
   if (lower.includes('data')) return 'wifi-outline';

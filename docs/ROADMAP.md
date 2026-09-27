@@ -670,6 +670,44 @@ a reference that no longer matches its validation (422), a missing idempotency k
 Not yet built: Food subscription actions, Akawo goal creation, wallet
 fund/withdraw/send, and profile/settings.
 
+## Nigerian bill catalogue (2026-09-27) — COMPLETED
+
+Bills were not usable end to end: there was no Airtime category, the catalogue
+the backend refreshed disagreed with the one it seeded, Home's shortcuts and
+Quick Pay only opened the bills home, and Water was offered with nothing behind
+it. The backend now serves one defined catalogue (see its
+`docs/bill-payments.md`) and the app is built around it.
+
+- **Categories:** Airtime, Internet, Electricity and Cable TV, in that order.
+  Water is removed from the app and retired by the backend.
+- **Airtime:** MTN, Airtel, Glo and 9mobile as provider tiles, a phone number,
+  and quick amounts (₦100 – ₦5,000) within the ₦50 – ₦50,000 limits.
+- **Internet:** the four networks' data plans plus Smile and Spectranet. Each
+  package lists its price and how long it lasts, cheapest first.
+- **Electricity:** all twelve DisCos as a list, Prepaid/Postpaid as a switch,
+  meter number, and quick amounts.
+- **Cable TV:** DStv, GOtv and StarTimes with their bouquets at fixed prices.
+- The number field takes its label ("IUC number", "Spectranet customer ID"),
+  keyboard and shape rules from the biller rather than guessing from the
+  category name. Phone numbers are sent as `0803…` however they were typed.
+- The pay screen checks a number carried from the previous step without a
+  second tap, and says how long a package lasts.
+- Home's shortcuts open their category directly, and Quick Pay reopens the
+  biller with the last amount (the reference is still asked for, since history
+  only holds it masked).
+- The biller screen used to compare the naira figure against kobo limits, so a
+  minimum or maximum was off by 100×; amounts are now converted first.
+
+Files: `src/features/bills/biller-list-screen.tsx`, `pay-bill-screen.tsx`,
+`bill-reference.ts` (new), `saved-bills.ts`, `bill-amount.ts`,
+`src/api/endpoints/bill-payments.ts`, `src/app/(tabs)/bills/[categoryId]/*`,
+`src/app/(tabs)/home/index.tsx`, `src/features/home/home-data.ts`, and the
+Home shortcut list in `home-screen.tsx`.
+
+Tests: `__tests__/bill-screens.test.tsx` (packages, prepaid/postpaid, quick
+amounts, phone normalisation, the automatic check), `bill-reference.test.ts`,
+and the Home quick-pay derivation. Not yet run on a device or simulator.
+
 ## Food, Akawo goals, wallet and profile (2026-09-02)
 
 | Screen                                | Route                             |

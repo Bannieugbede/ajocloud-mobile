@@ -19,9 +19,10 @@
 - Referral rewards are live: `GET /api/v1/referrals/me` returns the released reward total in minor
   units. Rewards are issued on a settled first deposit and reversed if that deposit reverses
   (backend ADR-012).
-- Bill payment history now returns the biller and its category, which is what Quick Pay names.
-  A saved-beneficiary API is still missing: Quick Pay is derived from history and cannot prefill a
-  customer reference, so tapping one opens the bills home rather than resuming the exact payment.
+- Bill payment history returns the biller, its category and the package, which is what Quick Pay
+  names and reopens. Billers now return `referenceKind` and `referenceLabel`, and packages return
+  `validity`. A saved-beneficiary API is still missing: Quick Pay reopens the biller with the last
+  amount but cannot prefill the customer reference, which history only holds masked.
 - Upcoming contribution and payout activity is assembled client-side from `GET /ajo-groups`,
   `GET /ajo-groups/:id` and `GET /ajo-groups/:id/schedule`, one pair of requests per group and
   bounded to the first four. A composed dashboard feed would replace that fan-out.

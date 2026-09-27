@@ -37,6 +37,18 @@ describe('the header back control', () => {
     expect(router.back).not.toHaveBeenCalled();
   });
 
+  it('leaves a finished flow for its home even when there is history', async () => {
+    // A receipt's history is the flow that produced it; going back into it
+    // would offer to pay again.
+    mockCanGoBack.mockReturnValue(true);
+    const view = await render(<AppHeaderBack fallback="/(tabs)/bills" always />);
+
+    await act(async () => fireEvent.press(view.getByLabelText('Go back')));
+
+    expect(router.replace).toHaveBeenCalledWith('/(tabs)/bills');
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
   it('is reachable at the full touch target', async () => {
     const view = await render(<AppHeaderBack fallback="/(tabs)/home" />);
     const button = view.getByTestId('header-back-button');

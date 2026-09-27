@@ -139,8 +139,6 @@ function tonePalette(tone: CategoryTone, colors: ReturnType<typeof useTheme>['co
   switch (tone) {
     case 'electricity':
       return { accent: colors.warning, soft: colors.warningSoft };
-    case 'water':
-      return { accent: colors.info, soft: colors.infoSoft };
     case 'tv':
       return { accent: colors.secondary, soft: colors.secondarySoft };
     case 'internet':

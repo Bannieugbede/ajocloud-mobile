@@ -17,12 +17,25 @@ export type BillProduct = {
   /** When set, the amount must equal this exactly — it is not a default. */
   fixedAmountMinor: string | null;
   currency: string;
+  /** How long a package lasts, e.g. "30 days". Null for top-ups and meters. */
+  validity: string | null;
 };
+
+/**
+ * What a biller knows its customer by. Decides the keyboard, the placeholder,
+ * and how the number is tidied before it is sent. Null on billers the backend
+ * has not classified, which are treated as a free-form reference.
+ */
+export type BillReferenceKind = 'phone' | 'meter' | 'smartcard' | 'account';
 
 export type BillBiller = {
   id: string;
   providerCode: string;
   name: string;
+  referenceKind: BillReferenceKind | null;
+  /** The field's label, e.g. "Meter number" or "IUC number". */
+  referenceLabel: string;
+  /** Cheapest first. */
   products: BillProduct[];
 };
 
@@ -63,6 +76,8 @@ export type BillPayment = {
   completedAt: string | null;
   /** Who was paid. Present so a past payment can be offered again by name. */
   biller?: { id: string; name: string; category: { id: string; name: string } };
+  /** The package paid for, when the biller has more than one. */
+  product?: { id: string; name: string } | null;
   receipt?: BillPaymentReceipt;
 };
 

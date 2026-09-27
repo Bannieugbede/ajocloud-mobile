@@ -18,6 +18,7 @@ const base: BillProduct = {
   maximumMinor: null,
   fixedAmountMinor: null,
   currency: 'NGN',
+  validity: null,
 };
 
 const fixed: BillProduct = { ...base, fixedAmountMinor: '50000' };
@@ -131,7 +132,7 @@ describe('referenceLabel', () => {
     ['Airtime', 'Phone number'],
     ['Electricity', 'Meter number'],
     ['Cable TV', 'Smartcard number'],
-    ['Water', 'Account number'],
+    ['Internet', 'Account number'],
   ])('names the field for %s', (category, expected) => {
     expect(referenceLabel(category)).toBe(expected);
   });

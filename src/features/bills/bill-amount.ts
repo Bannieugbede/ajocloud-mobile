@@ -80,7 +80,6 @@ export function referenceLabel(categoryName: string | undefined): string {
   if (name.includes('airtime') || name.includes('data')) return 'Phone number';
   if (name.includes('electric') || name.includes('power')) return 'Meter number';
   if (name.includes('tv') || name.includes('cable')) return 'Smartcard number';
-  if (name.includes('water')) return 'Account number';
   if (name.includes('internet') || name.includes('broadband')) return 'Account number';
   if (name.includes('school') || name.includes('fees')) return 'Student ID';
   if (name.includes('insur')) return 'Policy number';

@@ -27,7 +27,7 @@ import {
 } from './home-data';
 
 /** The bill categories the design surfaces first, by the name the API uses. */
-const CATEGORY_SHORTCUTS = ['Electricity', 'Water', 'Cable TV', 'Internet'] as const;
+const CATEGORY_SHORTCUTS = ['Airtime', 'Internet', 'Electricity', 'Cable TV'] as const;
 
 type WalletAction = {
   label: string;

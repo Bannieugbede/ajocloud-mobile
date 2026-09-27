@@ -259,6 +259,8 @@ it('offers a recently paid biller by name', async () => {
             amountMinor: '2450000',
             currency: 'NGN',
             paymentId: 'pay-1',
+            billerId: 'biller-1',
+            categoryId: 'category-1',
           },
         ],
         onQuickPay,

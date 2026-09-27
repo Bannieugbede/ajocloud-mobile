@@ -6,7 +6,7 @@ import { getAjoGroup, getAjoSchedule, listAjoGroups } from '@/api/endpoints/ajo-
 import { listJoinedPools } from '@/api/endpoints/akawo-pools';
 import { getNotificationFeed } from '@/api/endpoints/notifications';
 import { queryKeys } from '@/api/query-keys';
-import { listBillPayments } from '@/api/endpoints/bill-payments';
+import { listBillCategories, listBillPayments } from '@/api/endpoints/bill-payments';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { HomeScreen } from '@/features/home/home-screen';
@@ -33,6 +33,9 @@ export default function HomeRoute() {
   const wallets = useQuery({ queryKey: ['wallets'], queryFn: listWallets });
   const groups = useQuery({ queryKey: ['ajo-groups'], queryFn: listAjoGroups });
   const payments = useQuery({ queryKey: ['bill-payments'], queryFn: listBillPayments });
+  // Same key as the bills screen, so a shortcut tapped on Home opens straight
+  // into its category and the bills screen finds the list already loaded.
+  const billCategories = useQuery({ queryKey: ['bill-categories'], queryFn: listBillCategories });
   // Akawo pool dues belong on the same list as Ajo contributions: both are
   // money owed by a date, and splitting them would hide one behind a tab.
   const pools = useQuery({
@@ -179,11 +182,39 @@ export default function HomeRoute() {
     router.push({ pathname: '/(tabs)/ajo/[groupId]', params: { groupId: item.groupId } });
   };
 
-  const openQuickPay = (_item: QuickPayItem) => {
-    // The pay screen is reached by category and biller; a saved reference
-    // cannot be prefilled until a beneficiaries API exists, so this opens the
-    // bills home rather than pretending to resume the exact payment.
-    router.push('/(tabs)/bills');
+  const openBillCategory = (name: string) => {
+    const category = billCategories.data?.find(
+      (candidate) => candidate.name.toLowerCase() === name.toLowerCase(),
+    );
+    // Until the categories arrive, or if one is retired, the bills screen is
+    // the honest place to land.
+    if (!category) {
+      router.push('/(tabs)/bills');
+      return;
+    }
+    router.push({
+      pathname: '/(tabs)/bills/[categoryId]',
+      params: { categoryId: category.id, categoryName: category.name },
+    });
+  };
+
+  const openQuickPay = (item: QuickPayItem) => {
+    // Reopens the biller with the last amount. The reference is masked in the
+    // history, so it is asked for again, which also stops a repeat silently
+    // paying the wrong meter.
+    if (!item.billerId || !item.categoryId) {
+      router.push('/(tabs)/bills');
+      return;
+    }
+    router.push({
+      pathname: '/(tabs)/bills/[categoryId]',
+      params: {
+        categoryId: item.categoryId,
+        billerId: item.billerId,
+        amountMinor: item.amountMinor,
+        ...(item.categoryName ? { categoryName: item.categoryName } : {}),
+      },
+    });
   };
 
   return (
@@ -211,7 +242,7 @@ export default function HomeRoute() {
       }
       onOpenUpcoming={openUpcoming}
       onOpenBills={() => router.push('/(tabs)/bills')}
-      onOpenCategory={() => router.push('/(tabs)/bills')}
+      onOpenCategory={openBillCategory}
       onQuickPay={openQuickPay}
       onFund={() => router.push('/(tabs)/profile/wallet/fund')}
       onSend={() => router.push('/(tabs)/profile/wallet/send')}

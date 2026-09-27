@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import type {
@@ -15,13 +15,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, spacing } from '@/theme';
 import type { AppError } from '@/types/errors';
 import { formatMinorAmount, minorToMajor } from '@/utils/money';
+import { amountError, canAfford, isFixedAmount, resolveAmountMinor } from './bill-amount';
 import {
-  amountError,
-  canAfford,
-  isFixedAmount,
-  referenceLabel,
-  resolveAmountMinor,
-} from './bill-amount';
+  normaliseReference,
+  referenceKeyboard,
+  referencePlaceholder,
+  referenceProblem,
+} from './bill-reference';
 
 /**
  * Paying a bill, in the order the backend requires.
@@ -35,7 +35,6 @@ import {
 export function PayBillScreen({
   biller,
   product,
-  categoryName,
   initialReference = '',
   initialAmountMinor,
   validation,
@@ -50,7 +49,6 @@ export function PayBillScreen({
 }: {
   biller: BillBiller;
   product: BillProduct | null;
-  categoryName?: string;
   /** Carried from the biller screen, where both were already chosen. */
   initialReference?: string;
   initialAmountMinor?: string;
@@ -74,12 +72,23 @@ export function PayBillScreen({
   );
   const [touched, setTouched] = useState(false);
 
-  const label = referenceLabel(categoryName);
+  const kind = biller.referenceKind;
   const fixed = isFixedAmount(product);
   const amountMinor = resolveAmountMinor(product, amountMajor);
   const amountProblem = amountError(product, amountMinor);
   const affordable = canAfford(walletAvailableMinor, amountMinor);
-  const referenceReady = reference.trim().length >= 3;
+  const referenceIssue = referenceProblem(kind, reference);
+
+  // A number carried from the previous step was already typed and checked for
+  // shape there, so it is confirmed with the provider straight away rather
+  // than making the payer tap a second button to see whose meter it is.
+  const autoValidated = useRef(false);
+  useEffect(() => {
+    if (autoValidated.current || validation || !initialReference) return;
+    if (referenceProblem(kind, initialReference)) return;
+    autoValidated.current = true;
+    onValidate(normaliseReference(kind, initialReference));
+  }, [initialReference, kind, onValidate, validation]);
 
   return (
     <KeyboardAvoidingView
@@ -94,9 +103,12 @@ export function PayBillScreen({
         <AppText weight="semibold" style={styles.title}>
           {product ? `${biller.name} · ${product.name}` : biller.name}
         </AppText>
+        {product?.validity ? (
+          <AppText style={{ color: colors.textMuted }}>Lasts {product.validity}</AppText>
+        ) : null}
 
         <AppInput
-          label={label}
+          label={biller.referenceLabel}
           value={reference}
           onChangeText={(value) => {
             setReference(value);
@@ -104,10 +116,12 @@ export function PayBillScreen({
             // validation to the exact reference and would refuse the pair.
             if (validation) onChangeReference();
           }}
-          keyboardType="number-pad"
-          autoCapitalize="none"
+          keyboardType={referenceKeyboard(kind)}
+          placeholder={referencePlaceholder(kind)}
+          autoCapitalize="characters"
           autoCorrect={false}
           editable={!paying}
+          error={reference.trim() && referenceIssue ? referenceIssue : undefined}
         />
 
         {validation ? (
@@ -123,9 +137,9 @@ export function PayBillScreen({
         ) : (
           <AppButton
             label="Check this number"
-            onPress={() => onValidate(reference.trim())}
+            onPress={() => onValidate(normaliseReference(kind, reference))}
             loading={validating}
-            disabled={!referenceReady || validating}
+            disabled={Boolean(referenceIssue) || validating}
           />
         )}
 
@@ -169,7 +183,7 @@ export function PayBillScreen({
                     setTouched(true);
                     return;
                   }
-                  onPay({ customerReference: reference.trim(), amountMinor });
+                  onPay({ customerReference: normaliseReference(kind, reference), amountMinor });
                 }}
                 loading={paying}
                 disabled={paying || !affordable}
