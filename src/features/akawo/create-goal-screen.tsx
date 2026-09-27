@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { AkawoGoalType, CreateAkawoGoalInput } from '@/api/endpoints/akawo';
 import { AppButton } from '@/components/ui/app-button';
@@ -55,67 +57,63 @@ export function CreateGoalScreen({
   const show = (key: keyof GoalValues) => (touched ? errors[key] : undefined);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
+      <AppInput
+        label="What are you saving for?"
+        value={values.name}
+        onChangeText={set('name')}
+        placeholder="e.g. School fees"
+        autoCapitalize="sentences"
+        error={show('name')}
+      />
+
+      <AppSelect
+        label="Kind of goal"
+        value={values.type}
+        options={TYPES}
+        onChange={(value) => set('type')(value)}
+      />
+      <AppText style={{ color: colors.textMuted }}>{TYPE_HELP[values.type]}</AppText>
+
+      {needsTarget(values.type) ? (
         <AppInput
-          label="What are you saving for?"
-          value={values.name}
-          onChangeText={set('name')}
-          placeholder="e.g. School fees"
-          autoCapitalize="sentences"
-          error={show('name')}
+          label="Amount you are saving towards"
+          value={values.targetMajor}
+          onChangeText={set('targetMajor')}
+          placeholder="50000"
+          keyboardType="decimal-pad"
+          error={show('targetMajor')}
         />
+      ) : null}
 
-        <AppSelect
-          label="Kind of goal"
-          value={values.type}
-          options={TYPES}
-          onChange={(value) => set('type')(value)}
-        />
-        <AppText style={{ color: colors.textMuted }}>{TYPE_HELP[values.type]}</AppText>
+      <AppInput
+        label={needsDate(values.type) ? 'Unlocks on' : 'Target date (optional)'}
+        value={values.targetDate}
+        onChangeText={set('targetDate')}
+        placeholder="YYYY-MM-DD"
+        autoCapitalize="none"
+        error={show('targetDate')}
+      />
 
-        {needsTarget(values.type) ? (
-          <AppInput
-            label="Amount you are saving towards"
-            value={values.targetMajor}
-            onChangeText={set('targetMajor')}
-            placeholder="50000"
-            keyboardType="decimal-pad"
-            error={show('targetMajor')}
-          />
-        ) : null}
-
-        <AppInput
-          label={needsDate(values.type) ? 'Unlocks on' : 'Target date (optional)'}
-          value={values.targetDate}
-          onChangeText={set('targetDate')}
-          placeholder="YYYY-MM-DD"
-          autoCapitalize="none"
-          error={show('targetDate')}
-        />
-
-        <AppButton
-          label="Create goal"
-          onPress={() => {
-            const request = toGoalRequest(values, now);
-            if (!request || hasGoalErrors(errors)) {
-              setTouched(true);
-              return;
-            }
-            onSubmit(request);
-          }}
-          loading={submitting}
-          disabled={submitting}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AppButton
+        label="Create goal"
+        onPress={() => {
+          const request = toGoalRequest(values, now);
+          if (!request || hasGoalErrors(errors)) {
+            setTouched(true);
+            return;
+          }
+          onSubmit(request);
+        }}
+        loading={submitting}
+        disabled={submitting}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

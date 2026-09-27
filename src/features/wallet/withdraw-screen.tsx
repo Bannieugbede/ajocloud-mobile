@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { LinkedBankAccount } from '@/api/endpoints/kyc';
 import { AppButton } from '@/components/ui/app-button';
@@ -62,72 +64,68 @@ export function WithdrawScreen({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppCard>
-          <AppText style={{ color: colors.textMuted }}>Available to withdraw</AppText>
-          <AppText weight="bold" style={styles.balance}>
-            {formatMinorAmount(availableMinor ?? '0', currency)}
-          </AppText>
-        </AppCard>
-
-        <AppSelect
-          label="Pay into"
-          value={bankAccountId}
-          options={accounts.map((account) => ({
-            value: account.id,
-            label: `${account.bankName} · ${account.accountMasked}`,
-          }))}
-          onChange={setBankAccountId}
-          searchable={accounts.length > 8}
-        />
-
-        <AppInput
-          label="Amount"
-          value={amountMajor}
-          onChangeText={setAmountMajor}
-          placeholder="5000"
-          keyboardType="decimal-pad"
-          error={touched && amountProblem ? amountProblem : undefined}
-        />
-
-        <AppInput
-          label="Transaction PIN"
-          value={pin}
-          onChangeText={setPin}
-          keyboardType="number-pad"
-          secureTextEntry
-          maxLength={4}
-          textContentType="password"
-          error={touched && !/^\d{4}$/.test(pin) ? 'Enter your 4-digit PIN.' : undefined}
-        />
-
-        <AppText style={{ color: colors.textMuted }}>
-          We will hold this amount aside and pay it out to your bank. It leaves your available
-          balance straight away, and can take a little while to arrive.
+      <AppCard>
+        <AppText style={{ color: colors.textMuted }}>Available to withdraw</AppText>
+        <AppText weight="bold" style={styles.balance}>
+          {formatMinorAmount(availableMinor ?? '0', currency)}
         </AppText>
+      </AppCard>
 
-        <AppButton
-          label="Request payout"
-          onPress={() => {
-            if (!ready || !amountMinor || !bankAccountId) {
-              setTouched(true);
-              return;
-            }
-            onSubmit({ bankAccountId, amountMinor, transactionPin: pin });
-          }}
-          loading={submitting}
-          disabled={submitting}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AppSelect
+        label="Pay into"
+        value={bankAccountId}
+        options={accounts.map((account) => ({
+          value: account.id,
+          label: `${account.bankName} · ${account.accountMasked}`,
+        }))}
+        onChange={setBankAccountId}
+        searchable={accounts.length > 8}
+      />
+
+      <AppInput
+        label="Amount"
+        value={amountMajor}
+        onChangeText={setAmountMajor}
+        placeholder="5000"
+        keyboardType="decimal-pad"
+        error={touched && amountProblem ? amountProblem : undefined}
+      />
+
+      <AppInput
+        label="Transaction PIN"
+        value={pin}
+        onChangeText={setPin}
+        keyboardType="number-pad"
+        secureTextEntry
+        maxLength={4}
+        textContentType="password"
+        error={touched && !/^\d{4}$/.test(pin) ? 'Enter your 4-digit PIN.' : undefined}
+      />
+
+      <AppText style={{ color: colors.textMuted }}>
+        We will hold this amount aside and pay it out to your bank. It leaves your available balance
+        straight away, and can take a little while to arrive.
+      </AppText>
+
+      <AppButton
+        label="Request payout"
+        onPress={() => {
+          if (!ready || !amountMinor || !bankAccountId) {
+            setTouched(true);
+            return;
+          }
+          onSubmit({ bankAccountId, amountMinor, transactionPin: pin });
+        }}
+        loading={submitting}
+        disabled={submitting}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

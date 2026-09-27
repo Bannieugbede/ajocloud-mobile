@@ -1,13 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState, type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { BillBiller, BillProduct } from '@/api/endpoints/bill-payments';
 import { AppSegmented } from '@/components/ui/app-segmented';
@@ -128,18 +123,14 @@ export function BillCategoryScreen({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        {body}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {body}
+    </AppKeyboardScrollView>
   );
 }
 

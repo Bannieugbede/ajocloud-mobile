@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -12,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { useTheme } from '@/hooks/use-theme';
 import { fontFamilies, fontSizes, radius, sizes, spacing } from '@/theme';
+import { AppKeyboardAvoidingView } from './app-keyboard';
 import { AppText } from './app-text';
 
 export type SelectOption = { value: string; label: string };
@@ -141,7 +143,14 @@ export function AppSelect({
         presentationStyle="pageSheet"
         visible={open}
       >
-        <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+        {/* On iOS this is a page sheet, which starts below the top of the
+            screen and throws off a keyboard-avoiding view's measurements; the
+            list makes room natively instead. Android's modal is full-screen. */}
+        <AppKeyboardAvoidingView
+          ignoreHeader
+          enabled={Platform.OS === 'android'}
+          style={[styles.sheet, { backgroundColor: colors.background }]}
+        >
           <View style={styles.sheetHeader}>
             <AppText accessibilityRole="header" weight="bold" style={styles.sheetTitle}>
               {label}
@@ -185,6 +194,8 @@ export function AppSelect({
             data={visible}
             keyExtractor={(item) => item.value}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            automaticallyAdjustKeyboardInsets
             ListEmptyComponent={
               <AppText style={[styles.empty, { color: colors.textMuted }]}>
                 Nothing matches that search.
@@ -192,7 +203,7 @@ export function AppSelect({
             }
             renderItem={renderOption}
           />
-        </View>
+        </AppKeyboardAvoidingView>
       </Modal>
     </View>
   );

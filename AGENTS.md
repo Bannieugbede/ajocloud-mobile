@@ -45,6 +45,10 @@ must never be introduced. Run `bun run validate:terminology` before handing off 
   Custom headers require a documented product reason. Centralize shared Stack options.
 - Use native Stack and tab navigation, safe areas, scrolling, modals, keyboard handling, Android
   back behavior, gestures, alerts, pull-to-refresh, loading feedback, and accessibility semantics.
+- Never write `KeyboardAvoidingView` in a screen. Forms use `AppKeyboardScrollView` (keeps the
+  focused field visible, offsets for the native header, `footer` for an action that rises with the
+  keyboard); lists with a search box use `AppKeyboardAvoidingView`; bottom sheets use
+  `AppBottomSheet`. All live in `src/components/ui`.
 - Do not use fixed phone frames or fixed content heights. Support small and large phones, cutouts,
   font scaling, keyboards, and appropriate landscape behavior.
 

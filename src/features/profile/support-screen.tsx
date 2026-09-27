@@ -1,13 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
@@ -51,115 +46,111 @@ export function SupportScreen({
   const messageValid = message.trim().length >= MIN_MESSAGE;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.channels}>
-          {/* Deliberately not labelled "Live Chat": messages are answered by
+      <View style={styles.channels}>
+        {/* Deliberately not labelled "Live Chat": messages are answered by
               email, and promising a reply time we do not measure would be a
               promise the product cannot keep. */}
-          <ChannelTile
-            icon="mail-outline"
-            title="Message us"
-            detail="We reply by email"
-            tone="primary"
-          />
-          <ChannelTile
-            icon="mail-open-outline"
-            title="Email support"
-            detail={supportAddress ?? 'Not configured'}
-            tone="secondary"
-            onPress={supportAddress ? onEmailSupport : undefined}
-          />
-        </View>
+        <ChannelTile
+          icon="mail-outline"
+          title="Message us"
+          detail="We reply by email"
+          tone="primary"
+        />
+        <ChannelTile
+          icon="mail-open-outline"
+          title="Email support"
+          detail={supportAddress ?? 'Not configured'}
+          tone="secondary"
+          onPress={supportAddress ? onEmailSupport : undefined}
+        />
+      </View>
 
-        {sent ? (
-          <AppCard>
-            <View style={styles.sentHead}>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={20}
-                color={colors.success}
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-              />
-              <AppText accessibilityRole="header" weight="semibold">
-                Thanks — we have your message
-              </AppText>
-            </View>
-            <AppText style={{ color: colors.textMuted }}>
-              Support will reply to the email address on your account.
-            </AppText>
-            <AppButton label="Send another" variant="outline" onPress={onStartAnother} />
-          </AppCard>
-        ) : (
-          <>
-            <AppText weight="semibold" style={[styles.section, { color: colors.textMuted }]}>
-              SEND A MESSAGE
-            </AppText>
-
-            <AppInput
-              label="Subject"
-              value={subject}
-              onChangeText={setSubject}
-              placeholder="e.g. A payment did not arrive"
-              autoCapitalize="sentences"
-              error={touched && !subjectValid ? 'Give your message a short subject.' : undefined}
+      {sent ? (
+        <AppCard>
+          <View style={styles.sentHead}>
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={20}
+              color={colors.success}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
             />
+            <AppText accessibilityRole="header" weight="semibold">
+              Thanks — we have your message
+            </AppText>
+          </View>
+          <AppText style={{ color: colors.textMuted }}>
+            Support will reply to the email address on your account.
+          </AppText>
+          <AppButton label="Send another" variant="outline" onPress={onStartAnother} />
+        </AppCard>
+      ) : (
+        <>
+          <AppText weight="semibold" style={[styles.section, { color: colors.textMuted }]}>
+            SEND A MESSAGE
+          </AppText>
 
-            <AppInput
-              label="Message"
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Describe your issue or question…"
-              autoCapitalize="sentences"
-              multiline
-              numberOfLines={6}
-              maxLength={5000}
-              style={styles.message}
-              error={
-                touched && !messageValid
-                  ? `Please write at least ${MIN_MESSAGE} characters so we can help.`
-                  : undefined
+          <AppInput
+            label="Subject"
+            value={subject}
+            onChangeText={setSubject}
+            placeholder="e.g. A payment did not arrive"
+            autoCapitalize="sentences"
+            error={touched && !subjectValid ? 'Give your message a short subject.' : undefined}
+          />
+
+          <AppInput
+            label="Message"
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Describe your issue or question…"
+            autoCapitalize="sentences"
+            multiline
+            numberOfLines={6}
+            maxLength={5000}
+            style={styles.message}
+            error={
+              touched && !messageValid
+                ? `Please write at least ${MIN_MESSAGE} characters so we can help.`
+                : undefined
+            }
+          />
+
+          <AppButton
+            label="Send Message"
+            onPress={() => {
+              if (!subjectValid || !messageValid) {
+                setTouched(true);
+                return;
               }
-            />
-
-            <AppButton
-              label="Send Message"
-              onPress={() => {
-                if (!subjectValid || !messageValid) {
-                  setTouched(true);
-                  return;
-                }
-                onSubmit({ subject: subject.trim(), message: message.trim() });
-              }}
-              loading={submitting}
-              disabled={submitting}
-            />
-          </>
-        )}
-
-        <AppText weight="semibold" style={[styles.section, { color: colors.textMuted }]}>
-          FAQS
-        </AppText>
-
-        {FAQS.map((faq) => (
-          <FaqRow
-            key={faq.id}
-            question={faq.question}
-            answer={faq.answer}
-            open={openFaq === faq.id}
-            onToggle={() => setOpenFaq((current) => (current === faq.id ? null : faq.id))}
+              onSubmit({ subject: subject.trim(), message: message.trim() });
+            }}
+            loading={submitting}
+            disabled={submitting}
           />
-        ))}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </>
+      )}
+
+      <AppText weight="semibold" style={[styles.section, { color: colors.textMuted }]}>
+        FAQS
+      </AppText>
+
+      {FAQS.map((faq) => (
+        <FaqRow
+          key={faq.id}
+          question={faq.question}
+          answer={faq.answer}
+          open={openFaq === faq.id}
+          onToggle={() => setOpenFaq((current) => (current === faq.id ? null : faq.id))}
+        />
+      ))}
+    </AppKeyboardScrollView>
   );
 }
 

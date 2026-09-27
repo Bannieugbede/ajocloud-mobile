@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
@@ -57,83 +59,79 @@ export function SecurityScreen({
   const locked = lockedUntil !== null && new Date(lockedUntil).getTime() > renderedAt;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        {biometricsAvailable ? (
-          <AppSection title="UNLOCKING">
-            <AppToggleRow
-              title="Unlock with biometrics"
-              description="Use your fingerprint or face to open the app. Payments still need your PIN."
-              value={biometricsEnabled}
-              onValueChange={onToggleBiometrics}
-            />
-          </AppSection>
-        ) : null}
-
-        <AppSection title={hasPin ? 'CHANGE YOUR TRANSACTION PIN' : 'SET A TRANSACTION PIN'}>
-          <AppCard style={styles.form}>
-            {locked ? (
-              <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
-                <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
-                  Too many wrong attempts. Try again after {dateAndTime(lockedUntil)}.
-                </AppText>
-              </View>
-            ) : null}
-
-            {hasPin ? (
-              <AppInput
-                label="Current PIN"
-                value={currentPin}
-                onChangeText={setCurrentPin}
-                keyboardType="number-pad"
-                secureTextEntry
-                maxLength={4}
-                error={touched && !four(currentPin) ? 'Enter your current 4-digit PIN.' : undefined}
-              />
-            ) : null}
-
-            <AppInput
-              label="New PIN"
-              value={pin}
-              onChangeText={setPin}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={4}
-              error={touched && !four(pin) ? 'Choose a 4-digit PIN.' : undefined}
-            />
-            <AppInput
-              label="Confirm new PIN"
-              value={confirmPin}
-              onChangeText={setConfirmPin}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={4}
-              error={touched && !matches ? 'Those PINs do not match.' : undefined}
-            />
-
-            <AppButton
-              label={hasPin ? 'Change PIN' : 'Set PIN'}
-              onPress={() => {
-                if (!ready) {
-                  setTouched(true);
-                  return;
-                }
-                onSubmit({ pin, ...(hasPin ? { currentPin } : {}) });
-              }}
-              loading={submitting}
-              disabled={submitting || locked}
-            />
-          </AppCard>
+      {biometricsAvailable ? (
+        <AppSection title="UNLOCKING">
+          <AppToggleRow
+            title="Unlock with biometrics"
+            description="Use your fingerprint or face to open the app. Payments still need your PIN."
+            value={biometricsEnabled}
+            onValueChange={onToggleBiometrics}
+          />
         </AppSection>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      ) : null}
+
+      <AppSection title={hasPin ? 'CHANGE YOUR TRANSACTION PIN' : 'SET A TRANSACTION PIN'}>
+        <AppCard style={styles.form}>
+          {locked ? (
+            <View style={[styles.notice, { backgroundColor: colors.errorSoft }]}>
+              <AppText style={{ color: colors.error }} accessibilityLiveRegion="polite">
+                Too many wrong attempts. Try again after {dateAndTime(lockedUntil)}.
+              </AppText>
+            </View>
+          ) : null}
+
+          {hasPin ? (
+            <AppInput
+              label="Current PIN"
+              value={currentPin}
+              onChangeText={setCurrentPin}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={4}
+              error={touched && !four(currentPin) ? 'Enter your current 4-digit PIN.' : undefined}
+            />
+          ) : null}
+
+          <AppInput
+            label="New PIN"
+            value={pin}
+            onChangeText={setPin}
+            keyboardType="number-pad"
+            secureTextEntry
+            maxLength={4}
+            error={touched && !four(pin) ? 'Choose a 4-digit PIN.' : undefined}
+          />
+          <AppInput
+            label="Confirm new PIN"
+            value={confirmPin}
+            onChangeText={setConfirmPin}
+            keyboardType="number-pad"
+            secureTextEntry
+            maxLength={4}
+            error={touched && !matches ? 'Those PINs do not match.' : undefined}
+          />
+
+          <AppButton
+            label={hasPin ? 'Change PIN' : 'Set PIN'}
+            onPress={() => {
+              if (!ready) {
+                setTouched(true);
+                return;
+              }
+              onSubmit({ pin, ...(hasPin ? { currentPin } : {}) });
+            }}
+            loading={submitting}
+            disabled={submitting || locked}
+          />
+        </AppCard>
+      </AppSection>
+    </AppKeyboardScrollView>
   );
 }
 

@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { PoolPreview } from '@/api/endpoints/akawo-pools';
 import { AppAmount } from '@/components/ui/app-amount';
@@ -50,113 +52,105 @@ export function JoinPoolScreen({
   const detailsReady = fullName.trim().length >= 2 && reference.trim().length >= 1;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        {!preview ? (
-          <View style={styles.intro}>
-            <AppMedallion icon="people-outline" shape="rounded" />
+      {!preview ? (
+        <View style={styles.intro}>
+          <AppMedallion icon="people-outline" shape="rounded" />
+          <AppText style={{ color: colors.textMuted }}>
+            Enter the pool code shared by your organiser to see what you are being asked to pay
+            before you join.
+          </AppText>
+        </View>
+      ) : null}
+
+      <AppInput
+        label="POOL CODE"
+        value={joinCode}
+        onChangeText={(value) => {
+          setJoinCode(value.toUpperCase());
+          if (preview) onClearPreview();
+        }}
+        placeholder="AKW-XXXXX"
+        autoCapitalize="characters"
+        autoCorrect={false}
+        editable={!preview}
+      />
+
+      {!preview ? (
+        <AppButton
+          label="Find Pool"
+          loading={looking}
+          disabled={!codeReady}
+          onPress={() => onLookup(joinCode.trim())}
+        />
+      ) : null}
+
+      {preview ? (
+        <>
+          <View style={[styles.summary, { backgroundColor: colors.primarySoft }]}>
+            <AppText style={[styles.summaryLabel, { color: colors.primary }]}>
+              YOU ARE JOINING
+            </AppText>
+            <AppText weight="bold" style={styles.summaryName}>
+              {preview.name}
+            </AppText>
+            {preview.purpose ? (
+              <AppText style={{ color: colors.textMuted }}>{preview.purpose}</AppText>
+            ) : null}
             <AppText style={{ color: colors.textMuted }}>
-              Enter the pool code shared by your organiser to see what you are being asked to pay
-              before you join.
+              Organised by {preview.organiserName}
+            </AppText>
+            <AppAmount amountMinor={preview.amountMinor} currency={preview.currency} size="title" />
+            <AppText style={{ color: colors.textMuted }}>
+              Due {deadlineLabel(preview.dueAt)}
             </AppText>
           </View>
-        ) : null}
 
-        <AppInput
-          label="POOL CODE"
-          value={joinCode}
-          onChangeText={(value) => {
-            setJoinCode(value.toUpperCase());
-            if (preview) onClearPreview();
-          }}
-          placeholder="AKW-XXXXX"
-          autoCapitalize="characters"
-          autoCorrect={false}
-          editable={!preview}
-        />
-
-        {!preview ? (
-          <AppButton
-            label="Find Pool"
-            loading={looking}
-            disabled={!codeReady}
-            onPress={() => onLookup(joinCode.trim())}
+          <AppInput
+            label="YOUR FULL NAME"
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="Ada Okafor"
+            autoCapitalize="words"
+            error={touched && fullName.trim().length < 2 ? 'Enter your full name.' : undefined}
           />
-        ) : null}
 
-        {preview ? (
-          <>
-            <View style={[styles.summary, { backgroundColor: colors.primarySoft }]}>
-              <AppText style={[styles.summaryLabel, { color: colors.primary }]}>
-                YOU ARE JOINING
-              </AppText>
-              <AppText weight="bold" style={styles.summaryName}>
-                {preview.name}
-              </AppText>
-              {preview.purpose ? (
-                <AppText style={{ color: colors.textMuted }}>{preview.purpose}</AppText>
-              ) : null}
-              <AppText style={{ color: colors.textMuted }}>
-                Organised by {preview.organiserName}
-              </AppText>
-              <AppAmount
-                amountMinor={preview.amountMinor}
-                currency={preview.currency}
-                size="title"
-              />
-              <AppText style={{ color: colors.textMuted }}>
-                Due {deadlineLabel(preview.dueAt)}
-              </AppText>
-            </View>
+          <AppInput
+            label={preview.referenceLabel.toUpperCase()}
+            value={reference}
+            onChangeText={setReference}
+            placeholder={`Your ${preview.referenceLabel.toLowerCase()}`}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            error={
+              touched && reference.trim().length < 1
+                ? `Enter your ${preview.referenceLabel.toLowerCase()}.`
+                : undefined
+            }
+          />
 
-            <AppInput
-              label="YOUR FULL NAME"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Ada Okafor"
-              autoCapitalize="words"
-              error={touched && fullName.trim().length < 2 ? 'Enter your full name.' : undefined}
-            />
-
-            <AppInput
-              label={preview.referenceLabel.toUpperCase()}
-              value={reference}
-              onChangeText={setReference}
-              placeholder={`Your ${preview.referenceLabel.toLowerCase()}`}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              error={
-                touched && reference.trim().length < 1
-                  ? `Enter your ${preview.referenceLabel.toLowerCase()}.`
-                  : undefined
-              }
-            />
-
-            <AppButton
-              label="Join pool"
-              loading={joining}
-              onPress={() => {
-                setTouched(true);
-                if (!detailsReady) return;
-                onJoin({
-                  joinCode: joinCode.trim(),
-                  fullName: fullName.trim(),
-                  reference: reference.trim(),
-                });
-              }}
-            />
-            <AppButton label="Use a different code" variant="ghost" onPress={onClearPreview} />
-          </>
-        ) : null}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <AppButton
+            label="Join pool"
+            loading={joining}
+            onPress={() => {
+              setTouched(true);
+              if (!detailsReady) return;
+              onJoin({
+                joinCode: joinCode.trim(),
+                fullName: fullName.trim(),
+                reference: reference.trim(),
+              });
+            }}
+          />
+          <AppButton label="Use a different code" variant="ghost" onPress={onClearPreview} />
+        </>
+      ) : null}
+    </AppKeyboardScrollView>
   );
 }
 

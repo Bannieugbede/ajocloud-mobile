@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
 
+import { AppBottomSheet } from './app-bottom-sheet';
 import { AppText } from './app-text';
 
 export type SheetAction = {
@@ -45,110 +45,51 @@ export function AppActionSheet({
   testID?: string;
 }) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent
+    <AppBottomSheet
       visible={visible}
-      testID={testID}
+      title={title}
+      onClose={onClose}
+      {...(testID ? { testID } : {})}
     >
-      {/* The scrim is a button in its own right: tapping outside a sheet to
-          dismiss it is the gesture people already have. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Close ${title.toLowerCase()}`}
-        onPress={onClose}
-        style={[styles.scrim, { backgroundColor: colors.scrim }]}
-      />
-
-      <View
-        style={[
-          styles.sheet,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            paddingBottom: insets.bottom + spacing.md,
-          },
-        ]}
-      >
-        <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />
-
-        <View style={styles.header}>
-          <AppText accessibilityRole="header" weight="bold" style={styles.title}>
-            {title}
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-            hitSlop={spacing.sm}
-            onPress={onClose}
-          >
-            <Ionicons name="close" size={24} color={colors.textMuted} />
-          </Pressable>
-        </View>
-
-        {actions.map((action) => (
-          <Pressable
-            key={action.label}
-            accessibilityRole="button"
-            accessibilityLabel={
-              action.description ? `${action.label}. ${action.description}` : action.label
-            }
-            onPress={() => {
-              // Closed before the action runs, so a handler that navigates does
-              // not leave a sheet mounted over the screen it moved to.
-              onClose();
-              action.onPress();
-            }}
-            style={({ pressed }) => [
-              styles.action,
-              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: colors.primarySoft }]}>
-              <Ionicons name={action.icon} size={22} color={colors.primary} />
-            </View>
-            <View style={styles.actionText}>
-              <AppText weight="semibold">{action.label}</AppText>
-              {action.description ? (
-                <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-                  {action.description}
-                </AppText>
-              ) : null}
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSubtle} />
-          </Pressable>
-        ))}
-      </View>
-    </Modal>
+      {actions.map((action) => (
+        <Pressable
+          key={action.label}
+          accessibilityRole="button"
+          accessibilityLabel={
+            action.description ? `${action.label}. ${action.description}` : action.label
+          }
+          onPress={() => {
+            // Closed before the action runs, so a handler that navigates does
+            // not leave a sheet mounted over the screen it moved to.
+            onClose();
+            action.onPress();
+          }}
+          style={({ pressed }) => [
+            styles.action,
+            { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: colors.primarySoft }]}>
+            <Ionicons name={action.icon} size={22} color={colors.primary} />
+          </View>
+          <View style={styles.actionText}>
+            <AppText weight="semibold">{action.label}</AppText>
+            {action.description ? (
+              <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+                {action.description}
+              </AppText>
+            ) : null}
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSubtle} />
+        </Pressable>
+      ))}
+    </AppBottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1 },
-  sheet: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    borderTopWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  handle: {
-    alignSelf: 'center',
-    borderRadius: radius.pill,
-    height: 4,
-    marginBottom: spacing.xs,
-    width: 40,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  title: { fontSize: fontSizes.title - 2 },
   action: {
     alignItems: 'center',
     borderRadius: radius.lg,

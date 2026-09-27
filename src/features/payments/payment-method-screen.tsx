@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import type { PaymentIntent, PaymentMethod } from '@/api/endpoints/payments';
@@ -132,191 +134,187 @@ export function PaymentMethodScreen({
       : null;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppHero
-          label="PAYING"
-          amountMinor={intent.totalMinor}
-          currency={intent.currency}
-          meta={[title, subtitle].filter(Boolean).join(' · ')}
-        />
+      <AppHero
+        label="PAYING"
+        amountMinor={intent.totalMinor}
+        currency={intent.currency}
+        meta={[title, subtitle].filter(Boolean).join(' · ')}
+      />
 
-        {owedMinor !== undefined && onChangeAmount ? (
-          <AppCard tone="muted" style={styles.amountCard}>
-            <View style={styles.breakdownRow}>
-              <AppText style={{ color: colors.textMuted }}>Still owed</AppText>
-              <AppText weight="semibold">{formatMinorAmount(owedMinor, intent.currency)}</AppText>
-            </View>
+      {owedMinor !== undefined && onChangeAmount ? (
+        <AppCard tone="muted" style={styles.amountCard}>
+          <View style={styles.breakdownRow}>
+            <AppText style={{ color: colors.textMuted }}>Still owed</AppText>
+            <AppText weight="semibold">{formatMinorAmount(owedMinor, intent.currency)}</AppText>
+          </View>
 
-            {editingAmount ? (
-              <View style={styles.partForm}>
-                <AppInput
-                  label="How much would you like to pay now?"
-                  value={partAmount}
-                  onChangeText={setPartAmount}
-                  keyboardType="decimal-pad"
-                  autoFocus
-                  error={partMessage ?? undefined}
-                  testID="payment-part-amount"
-                />
-                <View style={styles.inlineActions}>
-                  <AppButton
-                    label="Use this amount"
-                    loading={updatingAmount}
-                    disabled={updatingAmount}
-                    onPress={() => {
-                      setPartTouched(true);
-                      const minor = majorToMinor(partAmount.trim());
-                      if (partProblem || minor === null) return;
-                      setEditingAmount(false);
-                      // Paying everything is not a part payment: ask for the
-                      // whole debt, so the quote reads the owed amount itself.
-                      onChangeAmount(minor === owedMinor ? null : minor);
-                    }}
-                    style={styles.grow}
-                  />
-                  <AppButton
-                    label="Cancel"
-                    variant="ghost"
-                    disabled={updatingAmount}
-                    onPress={() => setEditingAmount(false)}
-                  />
-                </View>
-              </View>
-            ) : (
+          {editingAmount ? (
+            <View style={styles.partForm}>
+              <AppInput
+                label="How much would you like to pay now?"
+                value={partAmount}
+                onChangeText={setPartAmount}
+                keyboardType="decimal-pad"
+                autoFocus
+                error={partMessage ?? undefined}
+                testID="payment-part-amount"
+              />
               <View style={styles.inlineActions}>
-                <AppText style={[styles.meta, styles.grow, { color: colors.textMuted }]}>
-                  {payingPart
-                    ? `Paying ${formatMinorAmount(intent.amountMinor, intent.currency)} now. The rest stays owed.`
-                    : 'You can pay part of it now and the rest later.'}
-                </AppText>
                 <AppButton
-                  label={payingPart ? 'Pay all' : 'Pay part'}
-                  variant="ghost"
+                  label="Use this amount"
                   loading={updatingAmount}
                   disabled={updatingAmount}
                   onPress={() => {
-                    if (payingPart) {
-                      onChangeAmount(null);
-                      return;
-                    }
-                    setPartAmount('');
-                    setPartTouched(false);
-                    setEditingAmount(true);
+                    setPartTouched(true);
+                    const minor = majorToMinor(partAmount.trim());
+                    if (partProblem || minor === null) return;
+                    setEditingAmount(false);
+                    // Paying everything is not a part payment: ask for the
+                    // whole debt, so the quote reads the owed amount itself.
+                    onChangeAmount(minor === owedMinor ? null : minor);
                   }}
+                  style={styles.grow}
+                />
+                <AppButton
+                  label="Cancel"
+                  variant="ghost"
+                  disabled={updatingAmount}
+                  onPress={() => setEditingAmount(false)}
                 />
               </View>
-            )}
-          </AppCard>
-        ) : null}
-
-        {/* The fee is shown separately rather than folded into one number, so
-            the member can see exactly what the platform charges. */}
-        {intent.feeMinor !== '0' ? (
-          <AppCard tone="muted">
-            <View style={styles.breakdownRow}>
-              <AppText style={{ color: colors.textMuted }}>Amount</AppText>
-              <AppText>{formatMinorAmount(intent.amountMinor, intent.currency)}</AppText>
             </View>
-            <View style={styles.breakdownRow}>
-              <AppText style={{ color: colors.textMuted }}>Fee</AppText>
-              <AppText>{formatMinorAmount(intent.feeMinor, intent.currency)}</AppText>
-            </View>
-            <AppDivider />
-            <View style={styles.breakdownRow}>
-              <AppText weight="semibold">Total</AppText>
-              <AppText weight="semibold">
-                {formatMinorAmount(intent.totalMinor, intent.currency)}
+          ) : (
+            <View style={styles.inlineActions}>
+              <AppText style={[styles.meta, styles.grow, { color: colors.textMuted }]}>
+                {payingPart
+                  ? `Paying ${formatMinorAmount(intent.amountMinor, intent.currency)} now. The rest stays owed.`
+                  : 'You can pay part of it now and the rest later.'}
               </AppText>
+              <AppButton
+                label={payingPart ? 'Pay all' : 'Pay part'}
+                variant="ghost"
+                loading={updatingAmount}
+                disabled={updatingAmount}
+                onPress={() => {
+                  if (payingPart) {
+                    onChangeAmount(null);
+                    return;
+                  }
+                  setPartAmount('');
+                  setPartTouched(false);
+                  setEditingAmount(true);
+                }}
+              />
             </View>
-          </AppCard>
-        ) : null}
+          )}
+        </AppCard>
+      ) : null}
 
-        <AppText accessibilityRole="header" weight="semibold">
-          {methods.length > 1 ? 'How would you like to pay?' : 'Paying with'}
-        </AppText>
+      {/* The fee is shown separately rather than folded into one number, so
+            the member can see exactly what the platform charges. */}
+      {intent.feeMinor !== '0' ? (
+        <AppCard tone="muted">
+          <View style={styles.breakdownRow}>
+            <AppText style={{ color: colors.textMuted }}>Amount</AppText>
+            <AppText>{formatMinorAmount(intent.amountMinor, intent.currency)}</AppText>
+          </View>
+          <View style={styles.breakdownRow}>
+            <AppText style={{ color: colors.textMuted }}>Fee</AppText>
+            <AppText>{formatMinorAmount(intent.feeMinor, intent.currency)}</AppText>
+          </View>
+          <AppDivider />
+          <View style={styles.breakdownRow}>
+            <AppText weight="semibold">Total</AppText>
+            <AppText weight="semibold">
+              {formatMinorAmount(intent.totalMinor, intent.currency)}
+            </AppText>
+          </View>
+        </AppCard>
+      ) : null}
 
-        {methods.map((option) => {
-          const details = METHODS[option];
-          const selected = method === option;
-          const disabled = unavailable(option);
-          return (
-            <AppCard
-              key={option}
-              onPress={disabled ? undefined : () => setChosen(option)}
-              accessibilityLabel={details.label}
-              style={[
-                styles.method,
-                { borderColor: selected ? colors.primary : colors.border },
-                disabled && styles.disabled,
-              ]}
-            >
-              <View style={styles.methodRow}>
+      <AppText accessibilityRole="header" weight="semibold">
+        {methods.length > 1 ? 'How would you like to pay?' : 'Paying with'}
+      </AppText>
+
+      {methods.map((option) => {
+        const details = METHODS[option];
+        const selected = method === option;
+        const disabled = unavailable(option);
+        return (
+          <AppCard
+            key={option}
+            onPress={disabled ? undefined : () => setChosen(option)}
+            accessibilityLabel={details.label}
+            style={[
+              styles.method,
+              { borderColor: selected ? colors.primary : colors.border },
+              disabled && styles.disabled,
+            ]}
+          >
+            <View style={styles.methodRow}>
+              <Ionicons
+                name={details.icon}
+                size={22}
+                color={selected ? colors.primary : colors.textMuted}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              />
+              <View style={styles.methodText}>
+                <AppText weight="medium">{details.label}</AppText>
+                <AppText style={[styles.meta, { color: colors.textMuted }]}>
+                  {option === 'WALLET' && walletAvailableMinor !== undefined
+                    ? `${formatMinorAmount(walletAvailableMinor, intent.currency)} available`
+                    : details.description}
+                </AppText>
+              </View>
+              {selected ? (
                 <Ionicons
-                  name={details.icon}
-                  size={22}
-                  color={selected ? colors.primary : colors.textMuted}
+                  name="checkmark-circle"
+                  size={20}
+                  color={colors.primary}
                   accessibilityElementsHidden
                   importantForAccessibility="no"
                 />
-                <View style={styles.methodText}>
-                  <AppText weight="medium">{details.label}</AppText>
-                  <AppText style={[styles.meta, { color: colors.textMuted }]}>
-                    {option === 'WALLET' && walletAvailableMinor !== undefined
-                      ? `${formatMinorAmount(walletAvailableMinor, intent.currency)} available`
-                      : details.description}
-                  </AppText>
-                </View>
-                {selected ? (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={colors.primary}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no"
-                  />
-                ) : null}
-              </View>
-            </AppCard>
-          );
-        })}
+              ) : null}
+            </View>
+          </AppCard>
+        );
+      })}
 
-        {/* Standing state rather than a toast: it stays true, and actionable,
+      {/* Standing state rather than a toast: it stays true, and actionable,
             for as long as the member is on this screen. */}
-        {shortfall !== null ? (
-          <View
-            style={[styles.notice, { backgroundColor: colors.warningSoft }]}
-            testID="payment-shortfall"
-          >
-            <AppText weight="semibold" accessibilityLiveRegion="polite">
-              Your wallet is {formatMinorAmount(shortfall, intent.currency)} short
-            </AppText>
-            <AppText style={{ color: colors.textMuted }}>
-              Add money to your wallet, then come back to finish this payment. It will be waiting
-              for you.
-            </AppText>
-            {onTopUp ? (
-              <AppButton label="Add money" variant="outline" onPress={() => onTopUp(shortfall)} />
-            ) : null}
-          </View>
-        ) : null}
+      {shortfall !== null ? (
+        <View
+          style={[styles.notice, { backgroundColor: colors.warningSoft }]}
+          testID="payment-shortfall"
+        >
+          <AppText weight="semibold" accessibilityLiveRegion="polite">
+            Your wallet is {formatMinorAmount(shortfall, intent.currency)} short
+          </AppText>
+          <AppText style={{ color: colors.textMuted }}>
+            Add money to your wallet, then come back to finish this payment. It will be waiting for
+            you.
+          </AppText>
+          {onTopUp ? (
+            <AppButton label="Add money" variant="outline" onPress={() => onTopUp(shortfall)} />
+          ) : null}
+        </View>
+      ) : null}
 
-        <AppButton
-          label="Continue"
-          disabled={method === null || updatingAmount}
-          onPress={() => {
-            if (method) onContinue(method);
-          }}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AppButton
+        label="Continue"
+        disabled={method === null || updatingAmount}
+        onPress={() => {
+          if (method) onContinue(method);
+        }}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

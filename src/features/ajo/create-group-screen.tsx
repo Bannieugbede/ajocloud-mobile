@@ -1,12 +1,7 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { CreateAjoGroupInput } from '@/api/endpoints/ajo-groups';
 import { AppButton } from '@/components/ui/app-button';
@@ -117,170 +112,166 @@ export function CreateGroupScreen({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.progress}>
-          <AppStepProgress total={CREATE_GROUP_STEPS.length} current={stepIndex + 1} />
-          <AppText weight="semibold" style={[styles.stepLabel, { color: colors.textMuted }]}>
-            STEP {stepIndex + 1}: {STEP_LABELS[step]}
-          </AppText>
-        </View>
+      <View style={styles.progress}>
+        <AppStepProgress total={CREATE_GROUP_STEPS.length} current={stepIndex + 1} />
+        <AppText weight="semibold" style={[styles.stepLabel, { color: colors.textMuted }]}>
+          STEP {stepIndex + 1}: {STEP_LABELS[step]}
+        </AppText>
+      </View>
 
-        {step === 'basics' ? (
-          <>
-            <AppInput
-              label="Group name"
-              value={values.name}
-              onChangeText={(value) => set('name', value)}
-              placeholder="e.g. Eko Savings Circle"
-              autoCapitalize="words"
-              error={show('name')}
-            />
+      {step === 'basics' ? (
+        <>
+          <AppInput
+            label="Group name"
+            value={values.name}
+            onChangeText={(value) => set('name', value)}
+            placeholder="e.g. Eko Savings Circle"
+            autoCapitalize="words"
+            error={show('name')}
+          />
 
-            <FieldLabel>GROUP TYPE</FieldLabel>
-            <View style={styles.modes}>
-              {MODES.map((option) => (
-                <ModeCard
-                  key={option.value}
-                  title={option.title}
-                  description={option.description}
-                  selected={values.mode === option.value}
-                  onPress={() => set('mode', option.value)}
-                />
-              ))}
-            </View>
-
-            <AppChipGroup
-              label="FREQUENCY"
-              options={FREQUENCIES.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
-              value={values.frequency}
-              onChange={(value) => set('frequency', value)}
-              scroll
-            />
-
-            <AppChipGroup
-              label={`DURATION — ${durationLabel(values.duration, values.frequency)}`}
-              options={DURATION_OPTIONS.map((option) => ({
-                value: option,
-                label: `${String(option)}${unit.short}`,
-              }))}
-              value={values.duration}
-              onChange={(value) => set('duration', value)}
-              hint={`Maximum 12 ${unit.many}`}
-            />
-          </>
-        ) : null}
-
-        {step === 'members' ? (
-          <>
-            <FieldLabel>MAXIMUM MEMBERS</FieldLabel>
-            <AppStepper
-              label="Maximum members"
-              value={values.maxSlots}
-              unit="members"
-              hint={`Up to ${MAX_MEMBERS.toLocaleString()} members`}
-              onDecrement={() => set('maxSlots', stepMembers(values.maxSlots, -1))}
-              onIncrement={() => set('maxSlots', stepMembers(values.maxSlots, 1))}
-              canDecrement={(parseMembers(values.maxSlots) ?? MIN_MEMBERS) > MIN_MEMBERS}
-              canIncrement={(parseMembers(values.maxSlots) ?? MIN_MEMBERS) < MAX_MEMBERS}
-            />
-            {show('maxSlots') ? <ErrorLine>{show('maxSlots')}</ErrorLine> : null}
-
-            <AppToggleRow
-              title="Multiple Slots"
-              description="Members hold multiple positions"
-              value={values.multipleSlots}
-              onValueChange={(next) => {
-                setValues((current) => ({
-                  ...current,
-                  multipleSlots: next,
-                  // Turning it off must not leave a request for two positions
-                  // behind, which would then fail validation invisibly.
-                  requestedSlots: next ? current.requestedSlots : '1',
-                }));
-                setTouched(false);
-              }}
-            />
-
-            {values.multipleSlots ? (
-              <AppInput
-                label="Positions you are taking"
-                value={values.requestedSlots}
-                onChangeText={(value) => set('requestedSlots', value)}
-                keyboardType="number-pad"
-                error={show('requestedSlots')}
+          <FieldLabel>GROUP TYPE</FieldLabel>
+          <View style={styles.modes}>
+            {MODES.map((option) => (
+              <ModeCard
+                key={option.value}
+                title={option.title}
+                description={option.description}
+                selected={values.mode === option.value}
+                onPress={() => set('mode', option.value)}
               />
-            ) : null}
+            ))}
+          </View>
 
-            <CoverageNotice values={values} />
-          </>
-        ) : null}
+          <AppChipGroup
+            label="FREQUENCY"
+            options={FREQUENCIES.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            value={values.frequency}
+            onChange={(value) => set('frequency', value)}
+            scroll
+          />
 
-        {step === 'amounts' ? (
-          <>
+          <AppChipGroup
+            label={`DURATION — ${durationLabel(values.duration, values.frequency)}`}
+            options={DURATION_OPTIONS.map((option) => ({
+              value: option,
+              label: `${String(option)}${unit.short}`,
+            }))}
+            value={values.duration}
+            onChange={(value) => set('duration', value)}
+            hint={`Maximum 12 ${unit.many}`}
+          />
+        </>
+      ) : null}
+
+      {step === 'members' ? (
+        <>
+          <FieldLabel>MAXIMUM MEMBERS</FieldLabel>
+          <AppStepper
+            label="Maximum members"
+            value={values.maxSlots}
+            unit="members"
+            hint={`Up to ${MAX_MEMBERS.toLocaleString()} members`}
+            onDecrement={() => set('maxSlots', stepMembers(values.maxSlots, -1))}
+            onIncrement={() => set('maxSlots', stepMembers(values.maxSlots, 1))}
+            canDecrement={(parseMembers(values.maxSlots) ?? MIN_MEMBERS) > MIN_MEMBERS}
+            canIncrement={(parseMembers(values.maxSlots) ?? MIN_MEMBERS) < MAX_MEMBERS}
+          />
+          {show('maxSlots') ? <ErrorLine>{show('maxSlots')}</ErrorLine> : null}
+
+          <AppToggleRow
+            title="Multiple Slots"
+            description="Members hold multiple positions"
+            value={values.multipleSlots}
+            onValueChange={(next) => {
+              setValues((current) => ({
+                ...current,
+                multipleSlots: next,
+                // Turning it off must not leave a request for two positions
+                // behind, which would then fail validation invisibly.
+                requestedSlots: next ? current.requestedSlots : '1',
+              }));
+              setTouched(false);
+            }}
+          />
+
+          {values.multipleSlots ? (
             <AppInput
-              label={
-                values.mode === 'FLEXIBLE_UNIT'
-                  ? 'Contribution per unit (₦)'
-                  : 'Contribution per slot (₦)'
-              }
-              value={values.amountMajor}
-              onChangeText={(value) => set('amountMajor', value)}
-              placeholder="25000"
-              keyboardType="decimal-pad"
-              error={show('amountMajor')}
-            />
-
-            <AppChipGroup
-              label="GRACE PERIOD"
-              hint="How long a late contribution is tolerated before it counts as late."
-              options={GRACE_DAY_OPTIONS.map((option) => ({
-                value: option,
-                label: `${String(option)}d`,
-              }))}
-              value={values.graceDays}
-              onChange={(value) => set('graceDays', value)}
-              tone="warning"
-            />
-
-            <PayoutNotice values={values} />
-          </>
-        ) : null}
-
-        {step === 'review' ? <Review values={values} /> : null}
-
-        <View style={styles.actions}>
-          {stepIndex > 0 ? (
-            <AppButton
-              label="Back"
-              variant="outline"
-              onPress={() => {
-                setStepIndex((index) => index - 1);
-                setTouched(false);
-              }}
-              style={styles.action}
+              label="Positions you are taking"
+              value={values.requestedSlots}
+              onChangeText={(value) => set('requestedSlots', value)}
+              keyboardType="number-pad"
+              error={show('requestedSlots')}
             />
           ) : null}
+
+          <CoverageNotice values={values} />
+        </>
+      ) : null}
+
+      {step === 'amounts' ? (
+        <>
+          <AppInput
+            label={
+              values.mode === 'FLEXIBLE_UNIT'
+                ? 'Contribution per unit (₦)'
+                : 'Contribution per slot (₦)'
+            }
+            value={values.amountMajor}
+            onChangeText={(value) => set('amountMajor', value)}
+            placeholder="25000"
+            keyboardType="decimal-pad"
+            error={show('amountMajor')}
+          />
+
+          <AppChipGroup
+            label="GRACE PERIOD"
+            hint="How long a late contribution is tolerated before it counts as late."
+            options={GRACE_DAY_OPTIONS.map((option) => ({
+              value: option,
+              label: `${String(option)}d`,
+            }))}
+            value={values.graceDays}
+            onChange={(value) => set('graceDays', value)}
+            tone="warning"
+          />
+
+          <PayoutNotice values={values} />
+        </>
+      ) : null}
+
+      {step === 'review' ? <Review values={values} /> : null}
+
+      <View style={styles.actions}>
+        {stepIndex > 0 ? (
           <AppButton
-            label={isLast ? 'Launch Group' : 'Continue'}
-            onPress={advance}
-            loading={submitting}
-            disabled={submitting}
+            label="Back"
+            variant="outline"
+            onPress={() => {
+              setStepIndex((index) => index - 1);
+              setTouched(false);
+            }}
             style={styles.action}
           />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        ) : null}
+        <AppButton
+          label={isLast ? 'Launch Group' : 'Continue'}
+          onPress={advance}
+          loading={submitting}
+          disabled={submitting}
+          style={styles.action}
+        />
+      </View>
+    </AppKeyboardScrollView>
   );
 }
 

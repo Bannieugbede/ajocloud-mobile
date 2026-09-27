@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { PaymentIntent, PaymentMethod } from '@/api/endpoints/payments';
 import { AppAmount } from '@/components/ui/app-amount';
@@ -43,44 +45,40 @@ export function PaymentConfirmScreen({
   const complete = pin.length === PIN_LENGTH;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.summary}>
-          <AppText style={{ color: colors.textMuted }}>You are paying</AppText>
-          <AppAmount amountMinor={intent.totalMinor} currency={intent.currency} size="heading" />
-          <AppText style={{ color: colors.textMuted }}>
-            for {title} with {methodLabels[method]}
-          </AppText>
-        </View>
-
-        <PinInput
-          label="Enter your transaction PIN"
-          value={pin}
-          onChange={setPin}
-          autoFocus
-          editable={!submitting}
-          testID="payment-pin"
-        />
-
-        <AppText style={[styles.hint, { color: colors.textSubtle }]}>
-          Your PIN authorises this payment. Ajo Cloud will never ask for it by phone or message.
+      <View style={styles.summary}>
+        <AppText style={{ color: colors.textMuted }}>You are paying</AppText>
+        <AppAmount amountMinor={intent.totalMinor} currency={intent.currency} size="heading" />
+        <AppText style={{ color: colors.textMuted }}>
+          for {title} with {methodLabels[method]}
         </AppText>
+      </View>
 
-        <AppButton
-          label="Confirm payment"
-          loading={submitting}
-          disabled={!complete}
-          onPress={() => onConfirm(pin)}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <PinInput
+        label="Enter your transaction PIN"
+        value={pin}
+        onChange={setPin}
+        autoFocus
+        editable={!submitting}
+        testID="payment-pin"
+      />
+
+      <AppText style={[styles.hint, { color: colors.textSubtle }]}>
+        Your PIN authorises this payment. Ajo Cloud will never ask for it by phone or message.
+      </AppText>
+
+      <AppButton
+        label="Confirm payment"
+        loading={submitting}
+        disabled={!complete}
+        onPress={() => onConfirm(pin)}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

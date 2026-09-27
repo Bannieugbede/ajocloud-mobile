@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
@@ -38,51 +40,47 @@ export function EditProfileScreen({
   const changed = firstName.trim() !== initialFirst || lastName.trim() !== initialLast;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppInput
-          label="First name"
-          value={firstName}
-          onChangeText={setFirstName}
-          autoCapitalize="words"
-          error={touched && !firstValid ? 'Enter your first name.' : undefined}
-        />
-        <AppInput
-          label="Last name"
-          value={lastName}
-          onChangeText={setLastName}
-          autoCapitalize="words"
-          error={touched && !lastValid ? 'Enter your last name.' : undefined}
-        />
+      <AppInput
+        label="First name"
+        value={firstName}
+        onChangeText={setFirstName}
+        autoCapitalize="words"
+        error={touched && !firstValid ? 'Enter your first name.' : undefined}
+      />
+      <AppInput
+        label="Last name"
+        value={lastName}
+        onChangeText={setLastName}
+        autoCapitalize="words"
+        error={touched && !lastValid ? 'Enter your last name.' : undefined}
+      />
 
-        {/* Read-only: changing it would move the account, and verification is
+      {/* Read-only: changing it would move the account, and verification is
             tied to the address that was confirmed. */}
-        <AppInput label="Email" value={email} editable={false} onChangeText={() => {}} />
-        <AppText style={{ color: colors.textMuted }}>
-          Contact support if you need to change the email on your account.
-        </AppText>
+      <AppInput label="Email" value={email} editable={false} onChangeText={() => {}} />
+      <AppText style={{ color: colors.textMuted }}>
+        Contact support if you need to change the email on your account.
+      </AppText>
 
-        <AppButton
-          label="Save changes"
-          onPress={() => {
-            if (!firstValid || !lastValid) {
-              setTouched(true);
-              return;
-            }
-            onSubmit({ firstName: firstName.trim(), lastName: lastName.trim() });
-          }}
-          loading={submitting}
-          disabled={submitting || !changed}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AppButton
+        label="Save changes"
+        onPress={() => {
+          if (!firstValid || !lastValid) {
+            setTouched(true);
+            return;
+          }
+          onSubmit({ firstName: firstName.trim(), lastName: lastName.trim() });
+        }}
+        loading={submitting}
+        disabled={submitting || !changed}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

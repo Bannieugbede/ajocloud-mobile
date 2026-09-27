@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { GroupInvitePreview } from '@/api/endpoints/ajo-groups';
 import { AppButton } from '@/components/ui/app-button';
@@ -128,127 +130,123 @@ export function JoinGroupScreen({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppStepProgress total={JOIN_STEPS.length} current={stepIndex + 1} />
+      <AppStepProgress total={JOIN_STEPS.length} current={stepIndex + 1} />
 
-        {stepIndex === 0 ? (
-          <>
-            <View style={styles.hero}>
-              <View
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                style={[styles.medallion, { backgroundColor: colors.primarySoft }]}
-              >
-                <Ionicons name="person-add-outline" size={22} color={colors.primary} />
-              </View>
-
-              <View style={styles.heroText}>
-                <AppText weight="bold" style={styles.heading}>
-                  Join with a code
-                </AppText>
-                <AppText style={{ color: colors.textMuted }}>
-                  Enter the invitation code from your group admin to check the group and join.
-                </AppText>
-              </View>
+      {stepIndex === 0 ? (
+        <>
+          <View style={styles.hero}>
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+              style={[styles.medallion, { backgroundColor: colors.primarySoft }]}
+            >
+              <Ionicons name="person-add-outline" size={22} color={colors.primary} />
             </View>
 
-            <AppInput
-              label="Invitation code"
-              value={code}
-              onChangeText={(value) => {
-                setCode(value);
-                setTouched(false);
-              }}
-              placeholder="e.g. 7KQ3MZP2AC"
-              autoCapitalize="none"
-              autoCorrect={false}
-              // Autocorrect would break a code. Capitalisation is left alone because
-              // invitations from before short links are case-sensitive.
-              spellCheck={false}
-              error={
-                touched && !codeValid
-                  ? 'That doesn’t look like an invitation code. Check it and try again.'
-                  : undefined
-              }
+            <View style={styles.heroText}>
+              <AppText weight="bold" style={styles.heading}>
+                Join with a code
+              </AppText>
+              <AppText style={{ color: colors.textMuted }}>
+                Enter the invitation code from your group admin to check the group and join.
+              </AppText>
+            </View>
+          </View>
+
+          <AppInput
+            label="Invitation code"
+            value={code}
+            onChangeText={(value) => {
+              setCode(value);
+              setTouched(false);
+            }}
+            placeholder="e.g. 7KQ3MZP2AC"
+            autoCapitalize="none"
+            autoCorrect={false}
+            // Autocorrect would break a code. Capitalisation is left alone because
+            // invitations from before short links are case-sensitive.
+            spellCheck={false}
+            error={
+              touched && !codeValid
+                ? 'That doesn’t look like an invitation code. Check it and try again.'
+                : undefined
+            }
+          />
+
+          <AppButton
+            label="Verify code"
+            onPress={verifyNow}
+            loading={verifying}
+            // Never disabled for a bad-looking code: the button is what says
+            // so, via the field error. A button that goes dead without
+            // explanation reads as broken.
+            disabled={verifying}
+          />
+        </>
+      ) : null}
+
+      {stepIndex === 1 && resolved ? (
+        <>
+          <ConfirmSummary
+            groupName={resolved.groupName}
+            preview={resolved.preview ?? null}
+            loadingPreview={loadingPreview}
+          />
+
+          <AppToggleRow
+            title="Take more than one position"
+            description="Hold several positions in the rotation"
+            value={multiple}
+            onValueChange={(next) => {
+              setMultiple(next);
+              if (!next) setSlots('1');
+            }}
+          />
+
+          {multiple ? (
+            <AppStepper
+              label="Positions you want"
+              value={slots}
+              unit="positions"
+              hint="The admin may cap how many one member can hold."
+              onDecrement={() => setSlots(String(Math.max(1, slotsValue - 1)))}
+              onIncrement={() => setSlots(String(slotsValue + 1))}
+              canDecrement={slotsValue > 1}
             />
+          ) : null}
 
-            <AppButton
-              label="Verify code"
-              onPress={verifyNow}
-              loading={verifying}
-              // Never disabled for a bad-looking code: the button is what says
-              // so, via the field error. A button that goes dead without
-              // explanation reads as broken.
-              disabled={verifying}
-            />
-          </>
-        ) : null}
-
-        {stepIndex === 1 && resolved ? (
-          <>
-            <ConfirmSummary
-              groupName={resolved.groupName}
-              preview={resolved.preview ?? null}
-              loadingPreview={loadingPreview}
-            />
-
-            <AppToggleRow
-              title="Take more than one position"
-              description="Hold several positions in the rotation"
-              value={multiple}
-              onValueChange={(next) => {
-                setMultiple(next);
-                if (!next) setSlots('1');
-              }}
-            />
-
-            {multiple ? (
-              <AppStepper
-                label="Positions you want"
-                value={slots}
-                unit="positions"
-                hint="The admin may cap how many one member can hold."
-                onDecrement={() => setSlots(String(Math.max(1, slotsValue - 1)))}
-                onIncrement={() => setSlots(String(slotsValue + 1))}
-                canDecrement={slotsValue > 1}
-              />
-            ) : null}
-
-            <View style={styles.actions}>
-              {codeLocked ? null : (
-                <AppButton
-                  label="Back"
-                  variant="outline"
-                  onPress={() => setStepIndex(0)}
-                  style={styles.action}
-                />
-              )}
+          <View style={styles.actions}>
+            {codeLocked ? null : (
               <AppButton
-                label="Join group"
-                onPress={() =>
-                  onSubmit({
-                    groupId: resolved.groupId,
-                    invitationCode: canonical ?? trimmed,
-                    requestedSlots: Math.max(1, slotsValue),
-                  })
-                }
-                loading={submitting}
-                disabled={submitting}
+                label="Back"
+                variant="outline"
+                onPress={() => setStepIndex(0)}
                 style={styles.action}
               />
-            </View>
-          </>
-        ) : null}
-      </ScrollView>
-    </KeyboardAvoidingView>
+            )}
+            <AppButton
+              label="Join group"
+              onPress={() =>
+                onSubmit({
+                  groupId: resolved.groupId,
+                  invitationCode: canonical ?? trimmed,
+                  requestedSlots: Math.max(1, slotsValue),
+                })
+              }
+              loading={submitting}
+              disabled={submitting}
+              style={styles.action}
+            />
+          </View>
+        </>
+      ) : null}
+    </AppKeyboardScrollView>
   );
 }
 

@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import type { AjoGroupDetail } from '@/api/endpoints/ajo-groups';
 import { AppButton } from '@/components/ui/app-button';
@@ -74,63 +76,59 @@ export function SwapRequestScreen({
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AppKeyboardScrollView
       style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppText style={{ color: colors.textMuted }}>
-          Everyone affected has to agree before positions change, so this is a request rather than a
-          swap.
-        </AppText>
+      <AppText style={{ color: colors.textMuted }}>
+        Everyone affected has to agree before positions change, so this is a request rather than a
+        swap.
+      </AppText>
 
-        <AppSelect
-          label="Your position"
-          value={fromSlotId}
-          options={mine.map((slot) => ({ value: slot.id, label: label(slot) }))}
-          onChange={setFromSlotId}
-        />
+      <AppSelect
+        label="Your position"
+        value={fromSlotId}
+        options={mine.map((slot) => ({ value: slot.id, label: label(slot) }))}
+        onChange={setFromSlotId}
+      />
 
-        <AppSelect
-          label="Position you want"
-          value={toSlotId}
-          options={theirs.map((slot) => ({ value: slot.id, label: label(slot) }))}
-          onChange={setToSlotId}
-          placeholder="Choose a position"
-          searchable={theirs.length > 8}
-        />
+      <AppSelect
+        label="Position you want"
+        value={toSlotId}
+        options={theirs.map((slot) => ({ value: slot.id, label: label(slot) }))}
+        onChange={setToSlotId}
+        placeholder="Choose a position"
+        searchable={theirs.length > 8}
+      />
 
-        <AppInput
-          label="Why? (optional)"
-          value={reason}
-          onChangeText={setReason}
-          placeholder="This helps the other member decide"
-          autoCapitalize="sentences"
-          multiline
-        />
+      <AppInput
+        label="Why? (optional)"
+        value={reason}
+        onChangeText={setReason}
+        placeholder="This helps the other member decide"
+        autoCapitalize="sentences"
+        multiline
+      />
 
-        <AppButton
-          label="Send request"
-          onPress={() => {
-            if (!fromSlotId || !toSlotId) return;
-            const trimmed = reason.trim();
-            onSubmit({
-              fromSlotId,
-              toSlotId,
-              // Omitted rather than sent blank: the backend requires at least 3
-              // characters when the field is present.
-              ...(trimmed.length >= 3 ? { reason: trimmed } : {}),
-            });
-          }}
-          loading={submitting}
-          disabled={!canSubmit}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AppButton
+        label="Send request"
+        onPress={() => {
+          if (!fromSlotId || !toSlotId) return;
+          const trimmed = reason.trim();
+          onSubmit({
+            fromSlotId,
+            toSlotId,
+            // Omitted rather than sent blank: the backend requires at least 3
+            // characters when the field is present.
+            ...(trimmed.length >= 3 ? { reason: trimmed } : {}),
+          });
+        }}
+        loading={submitting}
+        disabled={!canSubmit}
+      />
+    </AppKeyboardScrollView>
   );
 }
 

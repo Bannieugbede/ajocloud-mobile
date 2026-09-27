@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppKeyboardScrollView } from '@/components/ui/app-keyboard';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppChipGroup } from '@/components/ui/app-chip-group';
@@ -62,102 +64,101 @@ export function CreatePoolScreen({
     setValues((current) => ({ ...current, [key]: value }));
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.flex}
-    >
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-      >
-        <AppInput
-          label="POOL TITLE"
-          value={values.name}
-          onChangeText={set('name')}
-          placeholder="e.g. 2024/2025 Departmental Dues"
-          autoCapitalize="sentences"
-          error={problem === 'name' ? (message ?? undefined) : undefined}
-        />
-
-        <AppInput
-          label="DESCRIPTION"
-          value={values.purpose}
-          onChangeText={set('purpose')}
-          placeholder="What is this collection for? What will the money be used for?"
-          autoCapitalize="sentences"
-          multiline
-        />
-
-        <AppInput
-          label="AMOUNT PER MEMBER (₦)"
-          value={values.amountMajor}
-          onChangeText={set('amountMajor')}
-          placeholder="5000"
-          keyboardType="decimal-pad"
-          error={problem === 'amount' ? (message ?? undefined) : undefined}
-        />
-
-        <AppChipGroup
-          label="PAYMENT DUE DATE"
-          options={DUE_OPTIONS}
-          value={values.dueDays}
-          onChange={(dueDays) => setValues((current) => ({ ...current, dueDays }))}
-          hint={dueDatePreview(values.dueDays)}
-          scroll
-        />
-
-        <AppInput
-          label="MEMBERS IDENTIFY THEMSELVES WITH"
-          value={values.referenceLabel}
-          onChangeText={set('referenceLabel')}
-          placeholder="Matric number"
-          autoCapitalize="words"
-        />
-
-        <View style={[styles.info, { backgroundColor: colors.primarySoft }]}>
-          <Ionicons
-            name="information-circle-outline"
-            size={18}
-            color={colors.primary}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
+    <AppKeyboardScrollView
+      // Pinned rather than trailing the fields: the form is long enough on a
+      // small phone that the action would otherwise sit below the fold. It
+      // rises with the keyboard, so it stays reachable while typing.
+      footer={
+        <View
+          style={[
+            styles.footer,
+            { backgroundColor: colors.surface, borderTopColor: colors.border },
+          ]}
+        >
+          <AppButton
+            label="Create Pool"
+            loading={submitting}
+            onPress={() => {
+              setTouched(true);
+              if (problem !== null || amountMinor === null) return;
+              const dueAt = dueDateFrom(values.dueDays);
+              onSubmit({
+                name: values.name.trim(),
+                amountMinor,
+                ...(values.purpose.trim() ? { purpose: values.purpose.trim() } : {}),
+                ...(values.referenceLabel.trim()
+                  ? { referenceLabel: values.referenceLabel.trim() }
+                  : {}),
+                ...(dueAt ? { dueAt } : {}),
+              });
+            }}
           />
-          <AppText style={[styles.infoText, { color: colors.primary }]}>
-            Members join with a code using their full name and{' '}
-            {values.referenceLabel.trim()
-              ? values.referenceLabel.trim().toLowerCase()
-              : 'reference'}
-            . All payments are recorded and can be exported as PDF.
-          </AppText>
         </View>
-      </ScrollView>
+      }
+      style={styles.flex}
+      contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+    >
+      <AppInput
+        label="POOL TITLE"
+        value={values.name}
+        onChangeText={set('name')}
+        placeholder="e.g. 2024/2025 Departmental Dues"
+        autoCapitalize="sentences"
+        error={problem === 'name' ? (message ?? undefined) : undefined}
+      />
 
-      {/* Pinned rather than trailing the fields: the form is long enough on a
-          small phone that the action would otherwise sit below the fold. */}
-      <View
-        style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}
-      >
-        <AppButton
-          label="Create Pool"
-          loading={submitting}
-          onPress={() => {
-            setTouched(true);
-            if (problem !== null || amountMinor === null) return;
-            const dueAt = dueDateFrom(values.dueDays);
-            onSubmit({
-              name: values.name.trim(),
-              amountMinor,
-              ...(values.purpose.trim() ? { purpose: values.purpose.trim() } : {}),
-              ...(values.referenceLabel.trim()
-                ? { referenceLabel: values.referenceLabel.trim() }
-                : {}),
-              ...(dueAt ? { dueAt } : {}),
-            });
-          }}
+      <AppInput
+        label="DESCRIPTION"
+        value={values.purpose}
+        onChangeText={set('purpose')}
+        placeholder="What is this collection for? What will the money be used for?"
+        autoCapitalize="sentences"
+        multiline
+      />
+
+      <AppInput
+        label="AMOUNT PER MEMBER (₦)"
+        value={values.amountMajor}
+        onChangeText={set('amountMajor')}
+        placeholder="5000"
+        keyboardType="decimal-pad"
+        error={problem === 'amount' ? (message ?? undefined) : undefined}
+      />
+
+      <AppChipGroup
+        label="PAYMENT DUE DATE"
+        options={DUE_OPTIONS}
+        value={values.dueDays}
+        onChange={(dueDays) => setValues((current) => ({ ...current, dueDays }))}
+        hint={dueDatePreview(values.dueDays)}
+        scroll
+      />
+
+      <AppInput
+        label="MEMBERS IDENTIFY THEMSELVES WITH"
+        value={values.referenceLabel}
+        onChangeText={set('referenceLabel')}
+        placeholder="Matric number"
+        autoCapitalize="words"
+      />
+
+      <View style={[styles.info, { backgroundColor: colors.primarySoft }]}>
+        <Ionicons
+          name="information-circle-outline"
+          size={18}
+          color={colors.primary}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
         />
+        <AppText style={[styles.infoText, { color: colors.primary }]}>
+          Members join with a code using their full name and{' '}
+          {values.referenceLabel.trim() ? values.referenceLabel.trim().toLowerCase() : 'reference'}.
+          All payments are recorded and can be exported as PDF.
+        </AppText>
       </View>
-    </KeyboardAvoidingView>
+    </AppKeyboardScrollView>
   );
 }
 

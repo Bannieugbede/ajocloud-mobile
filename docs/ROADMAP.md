@@ -670,6 +670,31 @@ a reference that no longer matches its validation (422), a missing idempotency k
 Not yet built: Food subscription actions, Akawo goal creation, wallet
 fund/withdraw/send, and profile/settings.
 
+## Keyboard handling for every screen and sheet (2026-09-28) — COMPLETED
+
+Inputs hid behind the keyboard because every form repeated
+`KeyboardAvoidingView behavior={ios ? 'padding' : undefined}` with no offset:
+on iOS it lifted short by the native header's height, and on Android
+`undefined` relied on window resizing, which edge-to-edge disables.
+
+- `AppKeyboardScrollView` (`src/components/ui/app-keyboard.tsx`): pads on both
+  platforms, offsets by the header it actually sits under, scrolls the focused
+  field into view as the keyboard opens (and, on iOS, as focus moves between
+  fields), dismisses on drag, and keeps taps working. `footer` holds a pinned
+  action that rises with the keyboard. Plain JavaScript: no native module, so no
+  new dev build.
+- `AppKeyboardAvoidingView` for layouts that are not a scrolling form.
+- `AppBottomSheet` (`app-bottom-sheet.tsx`): the shared sheet (scrim, handle,
+  title, close, safe area) that rises with the keyboard and scrolls when tall.
+  `AppActionSheet` is now built on it. `AppSelect`'s picker makes room for the
+  keyboard too.
+- All 18 form screens moved over, including the registration and auth wrappers,
+  payments, wallet, Akawo, Ajo, Food, profile and bills.
+
+Not changed: the start sheet in `ajo-list-screen.tsx` still draws its own
+modal and has no inputs; it can move to `AppBottomSheet` when that file is next
+edited. Not yet checked on a device.
+
 ## Every payment through the shared payment flow (2026-09-27) — COMPLETED
 
 Bills were the one payment outside `usePayment`: the confirmation called
