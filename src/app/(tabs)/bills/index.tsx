@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 
 import { listBillCategories, listBillPayments } from '@/api/endpoints/bill-payments';
 import { BillsHomeScreen } from '@/features/bills/bills-home-screen';
+import { supportedCategories } from '@/features/bills/saved-bills';
 
 export default function BillsRoute() {
   const categories = useQuery({
@@ -16,7 +17,7 @@ export default function BillsRoute() {
 
   return (
     <BillsHomeScreen
-      categories={categories.data}
+      {...(categories.data ? { categories: supportedCategories(categories.data) } : {})}
       // Not pre-sliced: the screen derives saved bills from the whole history,
       // and five payments to one biller would otherwise leave nothing to
       // derive from.

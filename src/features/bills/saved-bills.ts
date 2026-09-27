@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 
-import type { BillPayment } from '@/api/endpoints/bill-payments';
+import type { BillCategory, BillPayment } from '@/api/endpoints/bill-payments';
 
 // Re-exported rather than redefined: two functions naming the same field would
 // eventually disagree, and a smart card labelled "Reference" on one screen and
@@ -104,4 +104,33 @@ export function categoryIcon(name: string): React.ComponentProps<typeof Ionicons
   if (lower.includes('school') || lower.includes('fees')) return 'book-outline';
   if (lower.includes('insur')) return 'shield-outline';
   return 'receipt-outline';
+}
+
+/**
+ * The categories Ajo Cloud offers, in the order they are shown, with the
+ * provider code the backend's catalogue gives each.
+ */
+export const SUPPORTED_CATEGORIES = [
+  { name: 'Airtime', code: 'AIRTIME' },
+  { name: 'Internet', code: 'INTERNET' },
+  { name: 'Electricity', code: 'ELECTRICITY' },
+  { name: 'Cable TV', code: 'CABLE_TV' },
+] as const;
+
+/**
+ * The categories to show: only the four offered, each once, in order.
+ *
+ * The backend retires anything else, but a server running an older catalogue
+ * can still return a retired category (Water) or the same one twice under two
+ * codes. Neither should reach the payer. Where a name appears twice, the one
+ * with the catalogue's own code is kept, since that is the one with billers.
+ */
+export function supportedCategories(categories: readonly BillCategory[] = []): BillCategory[] {
+  return SUPPORTED_CATEGORIES.flatMap(({ name, code }) => {
+    const matches = categories.filter(
+      (category) => category.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    const chosen = matches.find((category) => category.providerCode === code) ?? matches[0];
+    return chosen ? [chosen] : [];
+  });
 }

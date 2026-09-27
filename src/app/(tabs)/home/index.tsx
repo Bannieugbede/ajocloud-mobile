@@ -9,6 +9,7 @@ import { queryKeys } from '@/api/query-keys';
 import { listBillCategories, listBillPayments } from '@/api/endpoints/bill-payments';
 import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
+import { supportedCategories } from '@/features/bills/saved-bills';
 import { HomeScreen } from '@/features/home/home-screen';
 import {
   buildUpcoming,
@@ -183,7 +184,7 @@ export default function HomeRoute() {
   };
 
   const openBillCategory = (name: string) => {
-    const category = billCategories.data?.find(
+    const category = supportedCategories(billCategories.data).find(
       (candidate) => candidate.name.toLowerCase() === name.toLowerCase(),
     );
     // Until the categories arrive, or if one is retired, the bills screen is

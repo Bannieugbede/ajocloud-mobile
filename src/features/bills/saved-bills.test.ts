@@ -1,6 +1,7 @@
 import type { BillPayment } from '@/api/endpoints/bill-payments';
 
 import {
+  supportedCategories,
   categoryIcon,
   categoryTone,
   recentPayments,
@@ -104,6 +105,43 @@ describe('naming the reference', () => {
 
   it('falls back to something honest for a category it does not know', () => {
     expect(referenceLabel('Levies')).toBe('Customer reference');
+  });
+});
+
+describe('supportedCategories', () => {
+  const category = (id: string, name: string, providerCode: string) => ({
+    id,
+    name,
+    providerCode,
+    expiresAt: '2099-01-01T00:00:00.000Z',
+  });
+
+  it('shows only the four offered categories, in order, whatever the server sends', () => {
+    const shown = supportedCategories([
+      category('w', 'Water', 'WATER'),
+      category('c', 'Cable TV', 'CABLE_TV'),
+      category('e', 'Electricity', 'ELECTRICITY'),
+      category('i', 'Internet', 'INTERNET'),
+      category('a', 'Airtime', 'AIRTIME'),
+    ]);
+    expect(shown.map((entry) => entry.name)).toEqual([
+      'Airtime',
+      'Internet',
+      'Electricity',
+      'Cable TV',
+    ]);
+  });
+
+  it('shows a category listed twice once, keeping the catalogue’s own', () => {
+    const shown = supportedCategories([
+      category('old', 'Electricity', 'electricity'),
+      category('new', 'Electricity', 'ELECTRICITY'),
+    ]);
+    expect(shown.map((entry) => entry.id)).toEqual(['new']);
+  });
+
+  it('shows nothing rather than failing when there is nothing', () => {
+    expect(supportedCategories(undefined)).toEqual([]);
   });
 });
 
