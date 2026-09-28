@@ -18,7 +18,10 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
-        tabBarActiveTintColor: colors.primary,
+        // Teal, not primary: the brand navy is near-black and reads the same
+        // as the muted inactive tint, so an active tab tinted with it never
+        // looks active.
+        tabBarActiveTintColor: colors.secondary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontFamily: fontFamilies.medium },
