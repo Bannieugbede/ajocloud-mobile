@@ -72,7 +72,7 @@ describe('IdentityDocumentStep', () => {
     const view = await render(<IdentityDocumentStep onVerified={jest.fn()} />, {
       wrapper: Wrapper,
     });
-    await fireEvent.changeText(view.getByLabelText('BVN number'), '22345678901');
+    await fireEvent.changeText(view.getByLabelText('NIN number'), '22345678901');
     await fireEvent.press(view.getByRole('button', { name: 'Verify' }));
     await waitFor(() =>
       expect(currentToasts()[0]).toMatchObject({
@@ -88,10 +88,10 @@ describe('IdentityDocumentStep', () => {
     const view = await render(<IdentityDocumentStep onVerified={jest.fn()} />, {
       wrapper: Wrapper,
     });
-    await fireEvent.changeText(view.getByLabelText('BVN number'), '223456');
+    await fireEvent.changeText(view.getByLabelText('NIN number'), '223456');
     await fireEvent.press(view.getByRole('button', { name: 'Verify' }));
     await waitFor(() =>
-      expect(currentToasts()[0]).toMatchObject({ tone: 'error', message: 'Your BVN is 11 digits' }),
+      expect(currentToasts()[0]).toMatchObject({ tone: 'error', message: 'Your NIN is 11 digits' }),
     );
     expect(verifyIdentity).not.toHaveBeenCalled();
     await view.unmount();
@@ -108,34 +108,24 @@ describe('IdentityDocumentStep', () => {
       wrapper: Wrapper,
     });
 
-    const field = view.getByLabelText('BVN number');
+    const field = view.getByLabelText('NIN number');
     await fireEvent.changeText(field, '22345678901');
     await fireEvent.press(
       view.getByRole('checkbox', {
-        name: 'I allow Ajo Cloud to verify my BVN with the identity authority',
+        name: 'I allow Ajo Cloud to verify my NIN with the identity authority',
       }),
     );
     await fireEvent.press(view.getByRole('button', { name: 'Verify' }));
 
     await waitFor(() => expect(verifyIdentity).toHaveBeenCalledTimes(1));
     expect(jest.mocked(verifyIdentity).mock.calls[0]?.[0]).toEqual({
-      kind: 'BVN',
+      kind: 'NIN',
       identityNumber: '22345678901',
       consent: true,
     });
     // The number must not linger in the field once it has been sent.
-    await waitFor(() => expect(view.getByLabelText('BVN number').props.value).toBe(''));
+    await waitFor(() => expect(view.getByLabelText('NIN number').props.value).toBe(''));
     expect(onVerified).toHaveBeenCalled();
-    await view.unmount();
-  });
-
-  it('clears a typed number when the scheme is switched', async () => {
-    const view = await render(<IdentityDocumentStep onVerified={jest.fn()} />, {
-      wrapper: Wrapper,
-    });
-    await fireEvent.changeText(view.getByLabelText('BVN number'), '22345678901');
-    await fireEvent.press(view.getByRole('tab', { name: 'NIN' }));
-    expect(view.getByLabelText('NIN number').props.value).toBe('');
     await view.unmount();
   });
 
@@ -143,7 +133,7 @@ describe('IdentityDocumentStep', () => {
     const view = await render(<IdentityDocumentStep onVerified={jest.fn()} />, {
       wrapper: Wrapper,
     });
-    const field = view.getByLabelText('BVN number');
+    const field = view.getByLabelText('NIN number');
     await fireEvent.changeText(field, '22a34-567 8901');
     expect(field.props.value).toBe('22345678901');
     await view.unmount();

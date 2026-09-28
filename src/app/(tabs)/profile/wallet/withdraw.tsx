@@ -7,8 +7,9 @@ import { getWalletSummary, listWallets, requestWithdrawal } from '@/api/endpoint
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
 import { WithdrawScreen } from '@/features/wallet/withdraw-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function WithdrawRoute() {
+function WithdrawRouteContent() {
   const queryClient = useQueryClient();
   const [idempotencyKey] = useState(
     () => `wdl-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -58,5 +59,14 @@ export default function WithdrawRoute() {
       onAddAccount={() => router.push('/(auth)/bank-account')}
       onSubmit={(input) => withdraw.mutate(input)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `withdrawal` needs (ADR-015). */
+export default function WithdrawRoute() {
+  return (
+    <KycGate action="withdrawal">
+      <WithdrawRouteContent />
+    </KycGate>
   );
 }

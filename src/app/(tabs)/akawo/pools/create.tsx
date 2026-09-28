@@ -4,8 +4,9 @@ import { router } from 'expo-router';
 import { createAkawoPool } from '@/api/endpoints/akawo-pools';
 import { CreatePoolScreen } from '@/features/akawo/create-pool-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function CreatePoolRoute() {
+function CreatePoolRouteContent() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: createAkawoPool,
@@ -32,5 +33,14 @@ export default function CreatePoolRoute() {
       error={mutation.error as AppError | null}
       onSubmit={(values) => mutation.mutate(values)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `akawo-pool.create` needs (ADR-015). */
+export default function CreatePoolRoute() {
+  return (
+    <KycGate action="akawo-pool.create">
+      <CreatePoolRouteContent />
+    </KycGate>
   );
 }

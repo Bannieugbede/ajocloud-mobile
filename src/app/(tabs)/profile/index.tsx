@@ -76,7 +76,7 @@ export default function ProfileRoute() {
       onOpenAppearance={() => router.push('/(tabs)/profile/appearance')}
       onOpenFees={() => router.push('/(tabs)/profile/fees')}
       onOpenSupport={() => router.push('/(tabs)/profile/support')}
-      onCompleteKyc={() => router.push('/(auth)/verify-identity')}
+      onCompleteKyc={() => router.push('/(tabs)/profile/verification')}
       onSignOut={() => signOut.mutate()}
     />
   );

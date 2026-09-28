@@ -14,8 +14,9 @@ import {
 } from '@/features/food/coordinator-application-form';
 import { CoordinatorApplicationScreen } from '@/features/food/coordinator-application-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function CoordinatorApplicationRoute() {
+function CoordinatorApplicationRouteContent() {
   const queryClient = useQueryClient();
   const banks = useQuery({ queryKey: ['kyc', 'banks'], queryFn: listBanks });
   // Read rather than assume: a previous attempt that created a draft and then
@@ -65,5 +66,14 @@ export default function CoordinatorApplicationRoute() {
       error={apply.error as AppError | null}
       onSubmit={(values) => apply.mutate(values)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `food-coordinator.apply` needs (ADR-015). */
+export default function CoordinatorApplicationRoute() {
+  return (
+    <KycGate action="food-coordinator.apply">
+      <CoordinatorApplicationRouteContent />
+    </KycGate>
   );
 }

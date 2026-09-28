@@ -23,6 +23,8 @@ export default function SecurityRoute() {
     mutationFn: (input: { pin: string; currentPin?: string }) => setTransactionPin(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['transaction-pin'] });
+      // A PIN is part of verification stage 2.
+      void queryClient.invalidateQueries({ queryKey: ['kyc-status'] });
     },
   });
 

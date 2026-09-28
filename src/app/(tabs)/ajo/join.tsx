@@ -9,8 +9,9 @@ import {
 } from '@/api/endpoints/ajo-groups';
 import { JoinGroupScreen, type ResolvedGroup } from '@/features/ajo/join-group-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function JoinAjoGroupRoute() {
+function JoinAjoGroupRouteContent() {
   const queryClient = useQueryClient();
   // Present when the screen was reached from an invitation link, which already
   // carries both values; absent when the code is being typed in by hand.
@@ -81,5 +82,14 @@ export default function JoinAjoGroupRoute() {
       onVerify={(code) => verify.mutate(code)}
       onSubmit={(input) => join.mutate(input)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `ajo.join` needs (ADR-015). */
+export default function JoinAjoGroupRoute() {
+  return (
+    <KycGate action="ajo.join">
+      <JoinAjoGroupRouteContent />
+    </KycGate>
   );
 }

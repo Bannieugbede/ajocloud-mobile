@@ -4,8 +4,9 @@ import { router } from 'expo-router';
 import { createAkawoGoal, type CreateAkawoGoalInput } from '@/api/endpoints/akawo';
 import { CreateGoalScreen } from '@/features/akawo/create-goal-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function CreateAkawoGoalRoute() {
+function CreateAkawoGoalRouteContent() {
   const queryClient = useQueryClient();
 
   const create = useMutation({
@@ -24,5 +25,14 @@ export default function CreateAkawoGoalRoute() {
       error={create.error as AppError | null}
       onSubmit={(input) => create.mutate(input)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `akawo-goal.create` needs (ADR-015). */
+export default function CreateAkawoGoalRoute() {
+  return (
+    <KycGate action="akawo-goal.create">
+      <CreateAkawoGoalRouteContent />
+    </KycGate>
   );
 }

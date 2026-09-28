@@ -185,7 +185,7 @@ export function PersonalDetailsStep({ onSaved }: { onSaved: () => void }) {
 }
 
 /** Inserts the slashes as the user types, so they only enter digits. */
-function formatDateInput(text: string): string {
+export function formatDateInput(text: string): string {
   const digits = text.replace(/\D/g, '').slice(0, 8);
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
@@ -196,7 +196,7 @@ function formatDateInput(text: string): string {
  * Parses DD/MM/YYYY and rejects dates that do not exist, such as 31/02/2000,
  * which `new Date` would silently roll into March.
  */
-function parseDate(value: string): Date | null {
+export function parseDate(value: string): Date | null {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
   if (!match) return null;
   const day = Number(match[1]);
@@ -213,7 +213,7 @@ function parseDate(value: string): Date | null {
   return date;
 }
 
-function isOldEnough(dateOfBirth: Date): boolean {
+export function isOldEnough(dateOfBirth: Date): boolean {
   const eligibleFrom = new Date(dateOfBirth);
   eligibleFrom.setUTCFullYear(eligibleFrom.getUTCFullYear() + MINIMUM_AGE_YEARS);
   return eligibleFrom.getTime() <= Date.now();

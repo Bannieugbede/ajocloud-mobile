@@ -6,8 +6,9 @@ import { joinAkawoPool, previewPool, type PoolPreview } from '@/api/endpoints/ak
 import { JoinPoolScreen } from '@/features/akawo/join-pool-screen';
 import { normalisePoolCode } from '@/services/incoming-link';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function JoinPoolRoute() {
+function JoinPoolRouteContent() {
   const queryClient = useQueryClient();
   const [preview, setPreview] = useState<PoolPreview | null>(null);
   // A code from a shared link. Validated before use: a link is anyone's to write.
@@ -56,5 +57,14 @@ export default function JoinPoolRoute() {
         join.reset();
       }}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `akawo-pool.join` needs (ADR-015). */
+export default function JoinPoolRoute() {
+  return (
+    <KycGate action="akawo-pool.join">
+      <JoinPoolRouteContent />
+    </KycGate>
   );
 }

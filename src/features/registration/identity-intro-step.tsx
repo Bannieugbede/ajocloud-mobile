@@ -15,8 +15,8 @@ const REQUIREMENTS = [
   },
   {
     icon: 'card-outline',
-    title: 'BVN or NIN',
-    detail: 'Either one is enough. We only keep the last 4 digits.',
+    title: 'NIN',
+    detail: 'Checked with the identity authority. We only keep the last 4 digits.',
   },
   {
     icon: 'business-outline',

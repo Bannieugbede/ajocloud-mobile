@@ -6,8 +6,9 @@ import { getWalletSummary, listWallets, sendToWallet } from '@/api/endpoints/wal
 import { AppErrorState, AppLoadingState } from '@/components/ui/app-state';
 import { SendMoneyScreen } from '@/features/wallet/send-money-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function SendMoneyRoute() {
+function SendMoneyRouteContent() {
   const queryClient = useQueryClient();
   // One key per mounted flow, so a retried tap reuses the same transfer rather
   // than sending twice. Lazy initialiser: Date.now during render is impure.
@@ -69,5 +70,14 @@ export default function SendMoneyRoute() {
       error={send.error as AppError | null}
       onSubmit={(input) => send.mutate(input)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `wallet.send` needs (ADR-015). */
+export default function SendMoneyRoute() {
+  return (
+    <KycGate action="wallet.send">
+      <SendMoneyRouteContent />
+    </KycGate>
   );
 }

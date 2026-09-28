@@ -4,8 +4,9 @@ import { router } from 'expo-router';
 import { createAjoGroup, type CreateAjoGroupInput } from '@/api/endpoints/ajo-groups';
 import { CreateGroupScreen } from '@/features/ajo/create-group-screen';
 import type { AppError } from '@/types/errors';
+import { KycGate } from '@/features/kyc/kyc-gate';
 
-export default function CreateAjoGroupRoute() {
+function CreateAjoGroupRouteContent() {
   const queryClient = useQueryClient();
 
   const create = useMutation({
@@ -32,5 +33,14 @@ export default function CreateAjoGroupRoute() {
       error={create.error as AppError | null}
       onSubmit={(input) => create.mutate(input)}
     />
+  );
+}
+
+/** Shown once the member has reached the stage `ajo.create` needs (ADR-015). */
+export default function CreateAjoGroupRoute() {
+  return (
+    <KycGate action="ajo.create">
+      <CreateAjoGroupRouteContent />
+    </KycGate>
   );
 }

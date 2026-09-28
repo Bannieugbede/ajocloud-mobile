@@ -1,5 +1,35 @@
 # Architectural Decision Log
 
+## 2026-09-28 — Staged verification gates screens as well as the server
+
+- **Context:** The backend now gates every capability behind a verification stage
+  (ajocloud-backend ADR-015):
+  - Stage 1 lets members join groups and pay.
+  - Stage 2 (PIN, NIN, NIN document) lets them withdraw and send money.
+  - Stage 3 (an address matching the NIN record) lets them create and run groups.
+  - A refusal is a 403 with the code `KYC_STAGE_REQUIRED`.
+- **Chosen approach:**
+  - `KycGate` wraps each gated route (create or join a group or pool, create a
+    savings goal, withdraw, send, apply as coordinator). A locked member sees
+    which stage is needed and a way to reach it, instead of a form the server
+    would refuse.
+  - Payments are gated once, in `usePayment().start`, and the food subscription
+    at its button.
+  - `/(tabs)/profile/verification` shows the three stages, their requirements
+    and what each unlocks. Stage forms are routes beneath it; the PIN reuses
+    Security.
+  - The action table comes from the server with the status, and a local copy is
+    only the fallback.
+- **Consequences:**
+  - The server is the authority: the app fails closed when the status cannot
+    load, and opens when it talks to an API that predates stages and enforces
+    none.
+  - The NIN document is chosen from the photo library at quality 0.4. It needs
+    no permission prompt and no new native module; a camera option would need
+    one and a rebuild.
+  - Registration offers NIN only, since a BVN counts towards no stage.
+- **Status:** Accepted.
+
 ## 2026-08-19 — Google sign-in reuses the backend's browser OAuth flow
 
 - **Context:** Google sign-in was required on web and mobile, with one shared flow.

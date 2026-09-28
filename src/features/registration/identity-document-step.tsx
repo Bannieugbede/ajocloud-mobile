@@ -12,8 +12,12 @@ import type { AppError } from '@/types/errors';
 import { fontSizes, radius, sizes, spacing } from '@/theme';
 import { StepScreen } from './step-screen';
 
+/**
+ * NIN only: it is what verification stage 2 rests on (ADR-015). A BVN still
+ * verifies on the server but counts towards no stage, so it is not offered.
+ * The tab strip is kept for when a second scheme counts again.
+ */
 const TABS: readonly { kind: IdentityKind; label: string; hint: string }[] = [
-  { kind: 'BVN', label: 'BVN', hint: 'Dial *565*0# on your registered line to see yours.' },
   { kind: 'NIN', label: 'NIN', hint: 'Dial *346# or check your NIN slip.' },
 ];
 
@@ -29,7 +33,7 @@ export function IdentityDocumentStep({
   onVerified: (result: { maskedIdentifier: string; requiresReview: boolean }) => void;
 }) {
   const { colors } = useTheme();
-  const [kind, setKind] = useState<IdentityKind>('BVN');
+  const [kind, setKind] = useState<IdentityKind>('NIN');
   const [identityNumber, setIdentityNumber] = useState('');
   const [consent, setConsent] = useState(false);
   const [validationError, setValidationError] = useState<string | undefined>();
@@ -64,39 +68,41 @@ export function IdentityDocumentStep({
     <StepScreen
       step="identity-document"
       title="Verify your identity"
-      description="Enter either your BVN or your NIN. We check it with the identity authority and keep only the last 4 digits."
+      description="Enter your NIN. We check it with the identity authority and keep only the last 4 digits."
       error={validationError ?? (mutation.error as AppError | null)?.message}
     >
       <View style={styles.form}>
-        <View
-          accessibilityRole="tablist"
-          style={[styles.tabs, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        >
-          {TABS.map((tab) => {
-            const selected = tab.kind === kind;
-            return (
-              <Pressable
-                key={tab.kind}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                onPress={() => {
-                  setKind(tab.kind);
-                  // Never carry a number typed for one scheme into the other.
-                  setIdentityNumber('');
-                  setValidationError(undefined);
-                }}
-                style={[styles.tab, selected && { backgroundColor: colors.primary }]}
-              >
-                <AppText
-                  weight="semibold"
-                  style={{ color: selected ? colors.textInverse : colors.textMuted }}
+        {TABS.length > 1 ? (
+          <View
+            accessibilityRole="tablist"
+            style={[styles.tabs, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          >
+            {TABS.map((tab) => {
+              const selected = tab.kind === kind;
+              return (
+                <Pressable
+                  key={tab.kind}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    setKind(tab.kind);
+                    // Never carry a number typed for one scheme into the other.
+                    setIdentityNumber('');
+                    setValidationError(undefined);
+                  }}
+                  style={[styles.tab, selected && { backgroundColor: colors.primary }]}
                 >
-                  {tab.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <AppText
+                    weight="semibold"
+                    style={{ color: selected ? colors.textInverse : colors.textMuted }}
+                  >
+                    {tab.label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
         <AppInput
           label={`${kind} number`}

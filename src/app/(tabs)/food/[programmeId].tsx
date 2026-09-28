@@ -14,6 +14,7 @@ import { usePayment } from '@/features/payments/use-payment';
 import { toast } from '@/components/ui/app-toast';
 import { foodShareMessage, shareContent } from '@/services/share-links';
 import type { AppError } from '@/types/errors';
+import { useKycCheck } from '@/features/kyc/kyc-gate';
 
 export default function FoodProgrammeRoute() {
   const { programmeId } = useLocalSearchParams<{ programmeId: string }>();
@@ -48,6 +49,7 @@ export default function FoodProgrammeRoute() {
       returnTo: `/(tabs)/food/${programmeId}`,
     });
 
+  const kyc = useKycCheck();
   const subscribe = useMutation({
     mutationFn: (packageId: string) => subscribeToProgramme(programmeId, { packageId }),
     onSuccess: (enrolment) => {
@@ -96,7 +98,9 @@ export default function FoodProgrammeRoute() {
         void subscriptions.refetch();
       }}
       onRetry={() => void programme.refetch()}
-      onSubscribe={(packageId) => subscribe.mutate(packageId)}
+      onSubscribe={(packageId) => {
+        if (kyc.ensure('food.subscribe')) subscribe.mutate(packageId);
+      }}
       onUnsubscribe={() => unsubscribe.mutate()}
       {...(owed?.payable && subscription ? { onPay: () => pay(subscription) } : {})}
       {...(shareable ? { onShare: () => void shareContent(shareable) } : {})}
