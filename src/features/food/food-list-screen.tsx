@@ -4,14 +4,9 @@ import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type {
-  FoodCoordinatorApplication,
-  FoodProgramme,
-  FoodSubscription,
-} from '@/api/endpoints/food-ajo';
+import type { FoodProgramme, FoodSubscription } from '@/api/endpoints/food-ajo';
 import { AppActionSheet } from '@/components/ui/app-action-sheet';
 import { AppBadge } from '@/components/ui/app-badge';
-import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppFab } from '@/components/ui/app-fab';
 import { AppSegmented } from '@/components/ui/app-segmented';
@@ -24,19 +19,17 @@ import { longDate } from '@/utils/dates';
 import { formatMinorAmount } from '@/utils/money';
 import { statusLabel } from '@/utils/status';
 
-import { coordinatorInvitation, fulfilmentLabel, placesLeft } from './programme-summary';
+import { fulfilmentLabel, placesLeft } from './programme-summary';
 
 export type FoodListScreenProps = {
   programmes?: FoodProgramme[];
   subscriptions?: FoodSubscription[];
-  applications?: FoodCoordinatorApplication[];
   loading: boolean;
   error: boolean;
   refreshing: boolean;
   onRefresh: () => void;
   onRetry: () => void;
   onOpen: (id: string) => void;
-  onApplyAsCoordinator: () => void;
   /** Starts a new programme, for a member who coordinates one. */
   onCreate: () => void;
   /** Joins an existing programme by its code. */
@@ -59,7 +52,6 @@ export function FoodListScreen(props: FoodListScreenProps) {
 
   const joinedIds = new Set((props.subscriptions ?? []).map((entry) => entry.groupId));
   const browsable = (props.programmes ?? []).filter((programme) => !joinedIds.has(programme.id));
-  const invitation = coordinatorInvitation(props.applications);
   const active = props.subscriptions ?? [];
   const showingPackages = tab === 'packages';
 
@@ -91,23 +83,6 @@ export function FoodListScreen(props: FoodListScreenProps) {
           onChange={setTab}
           testID="food-tabs"
         />
-
-        {/* The coordinator invitation belongs with the programmes to browse,
-            not with the plans someone already holds. */}
-        {showingPackages ? (
-          <View style={[styles.coordinator, { backgroundColor: colors.warningSoft }]}>
-            <View style={[styles.coordinatorIcon, { backgroundColor: colors.surface }]}>
-              <Ionicons name="star-outline" size={20} color={colors.warning} />
-            </View>
-            <View style={styles.coordinatorText}>
-              <AppText weight="semibold">{invitation.title}</AppText>
-              <AppText style={{ color: colors.textMuted }}>{invitation.description}</AppText>
-            </View>
-            {invitation.canApply ? (
-              <AppButton label="Apply" variant="outline" onPress={props.onApplyAsCoordinator} />
-            ) : null}
-          </View>
-        ) : null}
 
         {props.loading ? (
           <>
@@ -331,22 +306,6 @@ function ProgrammeCard({ programme, onPress }: { programme: FoodProgramme; onPre
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xxl },
-
-  coordinator: {
-    alignItems: 'center',
-    borderRadius: radius.lg,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  coordinatorIcon: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  coordinatorText: { flex: 1, gap: 2 },
 
   section: { gap: spacing.sm },
   sectionTitle: { fontSize: fontSizes.body },
