@@ -44,10 +44,9 @@ function props(overrides: Partial<ProfileMenuScreenProps> = {}): ProfileMenuScre
     loading: false,
     signingOut: false,
     themePreference: 'system',
-    onCopyReferralCode: jest.fn(),
-    onShareReferralCode: jest.fn(),
     onOpenSettings: jest.fn(),
     onOpenBankAccounts: jest.fn(),
+    onOpenReferrals: jest.fn(),
     onOpenTransactions: jest.fn(),
     onOpenAppearance: jest.fn(),
     onOpenFees: jest.fn(),
@@ -69,9 +68,9 @@ it('shows the three wallet figures', async () => {
   const view = await render(<ProfileMenuScreen {...props()} />);
   expect(view.getByText('₦847,320.50')).toBeTruthy();
   expect(view.getByText('₦234,500.00')).toBeTruthy();
-  // Twice on purpose: the Rewards tile and the referral card's "earned" are
-  // the same figure, and both are read from the released reward total.
-  expect(view.getAllByText('₦6,000.00')).toHaveLength(2);
+  // The Rewards tile reads the released reward total; the code and its
+  // earnings live on the Referrals screen now.
+  expect(view.getAllByText('₦6,000.00')).toHaveLength(1);
 });
 
 it('says a balance is unavailable rather than showing zero', async () => {
@@ -80,43 +79,12 @@ it('says a balance is unavailable rather than showing zero', async () => {
   expect(view.getByText('Unavailable')).toBeTruthy();
 });
 
-it('shows the referral code with its invite count and earnings', async () => {
-  const view = await render(<ProfileMenuScreen {...props()} />);
-  expect(view.getByText('AJO-CH2SOM')).toBeTruthy();
+it('opens referrals from the menu row', async () => {
+  const onOpenReferrals = jest.fn();
+  const view = await render(<ProfileMenuScreen {...props({ onOpenReferrals })} />);
   expect(view.getByText(/12 invites/)).toBeTruthy();
-});
-
-it('copies the referral code', async () => {
-  const onCopyReferralCode = jest.fn();
-  const view = await render(<ProfileMenuScreen {...props({ onCopyReferralCode })} />);
-  await act(async () => fireEvent.press(view.getByLabelText('Copy referral code AJO-CH2SOM')));
-  expect(onCopyReferralCode).toHaveBeenCalledWith('AJO-CH2SOM');
-});
-
-it('shares the referral code', async () => {
-  const onShareReferralCode = jest.fn();
-  const view = await render(<ProfileMenuScreen {...props({ onShareReferralCode })} />);
-  await act(async () =>
-    fireEvent.press(view.getByRole('button', { name: 'Invite friends and earn' })),
-  );
-  expect(onShareReferralCode).toHaveBeenCalledWith('AJO-CH2SOM');
-});
-
-it('explains the absence of a code rather than showing an empty box', async () => {
-  const view = await render(
-    <ProfileMenuScreen
-      {...props({
-        referrals: {
-          totalRewardMinor: '0',
-          currency: 'NGN',
-          referralCount: 0,
-          qualifiedCount: 0,
-          code: null,
-        },
-      })}
-    />,
-  );
-  expect(view.getByText(/referral code will appear here/i)).toBeTruthy();
+  await act(async () => fireEvent.press(view.getByText('Referrals')));
+  expect(onOpenReferrals).toHaveBeenCalledTimes(1);
 });
 
 it('marks a fully verified account', async () => {

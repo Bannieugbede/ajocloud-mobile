@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 
 import { listAkawoGoals } from '@/api/endpoints/akawo';
@@ -10,9 +9,6 @@ import { getCurrentUser } from '@/api/endpoints/users';
 import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
 import { totalAkawoSaved } from '@/features/home/home-data';
 import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
-import { referralLink, referralShareMessage } from '@/features/profile/referral-share';
-import { shareContent } from '@/services/share-links';
-import { toast } from '@/components/ui/app-toast';
 import { clearSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
@@ -59,18 +55,6 @@ export default function ProfileRoute() {
     },
   });
 
-  const copyCode = (code: string) => {
-    void Clipboard.setStringAsync(code).then(() => {
-      // Confirmed explicitly: a copy that says nothing leaves the user unsure
-      // whether it worked, and they cannot see the clipboard to check.
-      toast.success(`Your referral code ${code} is copied.`);
-    });
-  };
-
-  const shareCode = (code: string) => {
-    void shareContent({ message: referralShareMessage(code), url: referralLink(code) });
-  };
-
   return (
     <ProfileMenuScreen
       {...(user.data ? { user: user.data } : {})}
@@ -82,13 +66,12 @@ export default function ProfileRoute() {
       loading={user.isPending}
       signingOut={signOut.isPending}
       themePreference={themePreference}
-      onCopyReferralCode={copyCode}
-      onShareReferralCode={shareCode}
       onOpenSettings={() => router.push('/(tabs)/profile/settings')}
       // Bank accounts are linked during identity verification, which is the
       // only flow that can add one, so the row opens that rather than a
       // read-only list nobody could act on.
       onOpenBankAccounts={() => router.push('/(auth)/verify-identity')}
+      onOpenReferrals={() => router.push('/(tabs)/profile/referrals')}
       onOpenTransactions={() => router.push('/(tabs)/profile/transactions')}
       onOpenAppearance={() => router.push('/(tabs)/profile/appearance')}
       onOpenFees={() => router.push('/(tabs)/profile/fees')}

@@ -15,6 +15,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="edit" options={{ title: 'Edit Profile' }} />
       <Stack.Screen name="security" options={{ title: 'Security' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="referrals" options={{ title: 'Referrals' }} />
       <Stack.Screen name="support" options={{ title: 'Help & Support' }} />
       <Stack.Screen name="transactions" options={{ title: 'Transaction History' }} />
       <Stack.Screen name="wallets" options={{ title: 'My Wallet' }} />

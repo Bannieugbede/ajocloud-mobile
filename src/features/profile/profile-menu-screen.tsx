@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { KycStatus } from '@/api/endpoints/kyc';
@@ -14,7 +14,7 @@ import { AppListItem } from '@/components/ui/app-list-item';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, sizes, spacing, type ThemePreference } from '@/theme';
+import { fontSizes, radius, spacing, type ThemePreference } from '@/theme';
 
 import { outstandingKycSteps, tierLabel } from './kyc-summary';
 
@@ -28,6 +28,7 @@ function appearanceDescription(preference: ThemePreference): string {
 export type ProfileMenuScreenProps = {
   user?: CurrentUser;
   kyc?: KycStatus;
+  /** Kept for the Rewards tile; the code itself lives on the Referrals screen. */
   referrals?: ReferralSummary;
   /** Spendable balance in minor units, or undefined while unknown. */
   availableMinor?: string;
@@ -37,11 +38,10 @@ export type ProfileMenuScreenProps = {
   signingOut: boolean;
   /** Which appearance the member chose, not the mode currently resolved. */
   themePreference: ThemePreference;
-  onCopyReferralCode: (code: string) => void;
-  onShareReferralCode: (code: string) => void;
   /** The gear, which opens the settings the design keeps off this screen. */
   onOpenSettings: () => void;
   onOpenBankAccounts: () => void;
+  onOpenReferrals: () => void;
   onOpenTransactions: () => void;
   onOpenAppearance: () => void;
   onOpenFees: () => void;
@@ -110,10 +110,16 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         </View>
       </AppHero>
 
-      <ReferralCard
-        referrals={props.referrals}
-        onCopy={props.onCopyReferralCode}
-        onShare={props.onShareReferralCode}
+      <AppListItem
+        card
+        title="Referrals"
+        description={
+          props.referrals
+            ? `${props.referrals.referralCount} ${props.referrals.referralCount === 1 ? 'invite' : 'invites'} · Invite friends and earn`
+            : 'Invite friends and earn'
+        }
+        icon="gift-outline"
+        onPress={props.onOpenReferrals}
       />
 
       {props.kyc && outstanding.length > 0 ? (
@@ -247,69 +253,6 @@ function WalletTile({
   );
 }
 
-function ReferralCard({
-  referrals,
-  onCopy,
-  onShare,
-}: {
-  referrals?: ReferralSummary;
-  onCopy: (code: string) => void;
-  onShare: (code: string) => void;
-}) {
-  const { colors } = useTheme();
-  const code = referrals?.code ?? null;
-
-  return (
-    <AppCard style={styles.referralCard}>
-      <View style={styles.rowBetween}>
-        <AppText accessibilityRole="header" weight="semibold">
-          Referral Code
-        </AppText>
-        {referrals ? (
-          <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-            {referrals.referralCount} {referrals.referralCount === 1 ? 'invite' : 'invites'} ·{' '}
-            {/* The earned figure is the sum of released rewards, so it always
-                matches what the ledger holds. */}
-            <AppAmount
-              amountMinor={referrals.totalRewardMinor}
-              currency={referrals.currency}
-              size="caption"
-            />{' '}
-            earned
-          </AppText>
-        ) : null}
-      </View>
-
-      {code ? (
-        <>
-          <View style={[styles.codeRow, { backgroundColor: colors.primarySoft }]}>
-            <AppText weight="semibold" style={[styles.code, { color: colors.primary }]}>
-              {code}
-            </AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Copy referral code ${code}`}
-              hitSlop={8}
-              onPress={() => onCopy(code)}
-              style={styles.copy}
-            >
-              <Ionicons name="copy-outline" size={16} color={colors.primary} />
-              <AppText weight="semibold" style={{ color: colors.primary }}>
-                Copy
-              </AppText>
-            </Pressable>
-          </View>
-          <AppButton label="Invite friends and earn" onPress={() => onShare(code)} />
-        </>
-      ) : (
-        <AppText style={{ color: colors.textMuted }}>
-          Your referral code will appear here once your account is ready.
-        </AppText>
-      )}
-    </AppCard>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { gap: spacing.sm, padding: spacing.md, paddingBottom: spacing.xxl },
   header: {
@@ -343,20 +286,6 @@ const styles = StyleSheet.create({
   tileLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.label },
   tileUnavailable: { color: '#FFFFFF', fontSize: fontSizes.label },
 
-  referralCard: { gap: spacing.md, marginBottom: spacing.sm },
-  codeRow: {
-    alignItems: 'center',
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'space-between',
-    minHeight: sizes.touchTarget,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  code: { flex: 1, fontSize: fontSizes.body, letterSpacing: 1.5 },
-  copy: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, padding: spacing.xs },
-
   appearance: { gap: spacing.md, marginVertical: spacing.xs },
   appearanceHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   appearanceText: { flex: 1, gap: 2 },
@@ -380,10 +309,4 @@ const styles = StyleSheet.create({
   signOut: { marginTop: spacing.sm },
   pill: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   pillText: { fontSize: fontSizes.caption },
-  rowBetween: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'space-between',
-  },
 });
