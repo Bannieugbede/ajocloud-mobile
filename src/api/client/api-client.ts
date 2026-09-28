@@ -86,6 +86,13 @@ export class ApiClient {
 
       const response = await fetch(new URL(path, this.baseUrl), {
         ...options,
+        // The app authenticates with the Bearer token and the refresh token in
+        // the body, never with cookies. React Native keeps cookies in a
+        // platform jar the app cannot see, and one left there from an older
+        // build sent a spent refresh token alongside the current one; the
+        // server took it as reuse and revoked the session. Omitted, the jar is
+        // never consulted.
+        credentials: 'omit',
         headers,
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         signal: controller.signal,

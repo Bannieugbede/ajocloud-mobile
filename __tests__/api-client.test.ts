@@ -132,3 +132,27 @@ describe('recovering from a rejected access token', () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 });
+
+describe('cookies', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('never sends the platform cookie jar, even on the unauthenticated refresh', async () => {
+    // A refresh cookie left in the jar by an older build carried a spent token
+    // alongside the current one, and the server revoked the session for it.
+    const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
+    const client = new ApiClient(BASE, async () => 'access');
+
+    await client.request('/api/v1/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken: 'current' },
+      unauthenticated: true,
+    });
+    await client.request('/api/v1/users/me');
+
+    for (const [, init] of fetch.mock.calls) {
+      expect(init?.credentials).toBe('omit');
+    }
+  });
+});
