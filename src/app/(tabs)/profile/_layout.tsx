@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+import { backTo } from '@/components/ui/app-header-back';
 import { useThemedStackOptions } from '@/hooks/use-themed-stack-options';
 
 export default function ProfileLayout() {
@@ -21,7 +22,18 @@ export default function ProfileLayout() {
       <Stack.Screen name="wallets" options={{ title: 'My Wallet' }} />
       <Stack.Screen name="wallet/fund" options={{ title: 'Fund Wallet' }} />
       <Stack.Screen name="wallet/send" options={{ title: 'Send Money' }} />
-      <Stack.Screen name="wallet/withdraw" options={{ title: 'Withdraw' }} />
+      {/* Reached by replace after sending, so back returns to the wallet
+          rather than the form that has already been submitted. */}
+      <Stack.Screen
+        name="wallet/send-success"
+        options={{ title: 'Money Sent', headerBackVisible: false }}
+      />
+      {/* Also pushed from the Home tab, which leaves no stack history for a
+          native back button, so it carries its own that falls back here. */}
+      <Stack.Screen
+        name="wallet/withdraw"
+        options={{ title: 'Withdraw', ...backTo('/(tabs)/profile/wallets') }}
+      />
     </Stack>
   );
 }

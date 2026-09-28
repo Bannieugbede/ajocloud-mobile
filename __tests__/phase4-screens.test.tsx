@@ -6,6 +6,7 @@ import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
 import { SecurityScreen } from '@/features/profile/security-screen';
 import { SupportScreen } from '@/features/profile/support-screen';
 import { SendMoneyScreen } from '@/features/wallet/send-money-screen';
+import { SendSuccessScreen } from '@/features/wallet/send-success-screen';
 import { WithdrawScreen } from '@/features/wallet/withdraw-screen';
 
 describe('CreateGoalScreen', () => {
@@ -60,7 +61,7 @@ describe('SendMoneyScreen', () => {
     expect(view.getByText('₦100,000.00')).toBeTruthy();
   });
 
-  it('will not send without a PIN', async () => {
+  it('confirms the transfer before asking for the PIN', async () => {
     const onSubmit = jest.fn();
     const view = await setup({ onSubmit });
     await act(async () => {
@@ -70,7 +71,43 @@ describe('SendMoneyScreen', () => {
     await act(async () => {
       fireEvent.press(view.getByRole('button', { name: 'Send money' }));
     });
+
+    // Receiver, amount and balance are stated back; nothing has moved yet.
+    expect(view.getByText('Confirm transfer')).toBeTruthy();
+    expect(view.getByLabelText('To: them@example.test')).toBeTruthy();
+    expect(view.getByLabelText('Amount: ₦500.00')).toBeTruthy();
+    expect(view.getByLabelText('Your balance: ₦100,000.00')).toBeTruthy();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('asks for the PIN as the last step before sending', async () => {
+    const onSubmit = jest.fn();
+    const view = await setup({ onSubmit });
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText("Recipient's email"), 'them@example.test');
+      fireEvent.changeText(view.getByLabelText('Amount'), '500');
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: 'Send money' }));
+    });
+    await act(async () => {
+      fireEvent.press(view.getByText('Continue'));
+    });
+
+    expect(view.getByLabelText('Transaction PIN')).toBeTruthy();
+    await act(async () => {
+      fireEvent.changeText(view.getByTestId('send-pin-input'), '1357');
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: 'Send ₦500.00' }));
+    });
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientEmail: 'them@example.test',
+        amountMinor: '50000',
+        transactionPin: '1357',
+      }),
+    );
   });
 
   it('refuses more than the balance, and says the balance', async () => {
@@ -79,7 +116,6 @@ describe('SendMoneyScreen', () => {
     await act(async () => {
       fireEvent.changeText(view.getByLabelText("Recipient's email"), 'them@example.test');
       fireEvent.changeText(view.getByLabelText('Amount'), '5000');
-      fireEvent.changeText(view.getByLabelText('Transaction PIN'), '1357');
     });
     await act(async () => {
       fireEvent.press(view.getByRole('button', { name: 'Send money' }));
@@ -88,9 +124,66 @@ describe('SendMoneyScreen', () => {
     expect(view.getByText(/₦100\.00 available/)).toBeTruthy();
   });
 
+  it('will not take a PIN shorter than four digits', async () => {
+    const onSubmit = jest.fn();
+    const view = await setup({ onSubmit });
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText("Recipient's email"), 'them@example.test');
+      fireEvent.changeText(view.getByLabelText('Amount'), '500');
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: 'Send money' }));
+    });
+    await act(async () => {
+      fireEvent.press(view.getByText('Continue'));
+    });
+    await act(async () => {
+      fireEvent.changeText(view.getByTestId('send-pin-input'), '13');
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: 'Send ₦500.00' }));
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(view.getByText('Enter your 4-digit PIN.')).toBeTruthy();
+  });
+
   it('warns that a send cannot be undone', async () => {
     const view = await setup();
     expect(view.getByText(/cannot be undone/i)).toBeTruthy();
+  });
+});
+
+describe('SendSuccessScreen', () => {
+  it('states what moved, where, and under which reference', async () => {
+    const onDone = jest.fn();
+    const view = await render(
+      <SendSuccessScreen
+        recipientEmail="them@example.test"
+        amountMinor="50000"
+        currency="NGN"
+        reference="REF-123"
+        onDone={onDone}
+      />,
+    );
+    expect(view.getByText('Money sent')).toBeTruthy();
+    expect(view.getByText('₦500.00')).toBeTruthy();
+    expect(view.getByText('To them@example.test')).toBeTruthy();
+    expect(view.getByText(/Reference: REF-123/)).toBeTruthy();
+    await act(async () => fireEvent.press(view.getByRole('button', { name: 'Done' })));
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads fine without a reference', async () => {
+    const view = await render(
+      <SendSuccessScreen
+        recipientEmail="them@example.test"
+        amountMinor="50000"
+        currency="NGN"
+        onDone={jest.fn()}
+      />,
+    );
+    expect(view.getByText('Money sent')).toBeTruthy();
+    expect(view.queryByText(/Reference:/)).toBeNull();
   });
 });
 
@@ -240,8 +333,6 @@ describe('ProfileMenuScreen', () => {
         kyc={kyc}
         loading={false}
         signingOut={false}
-        savingsMinor="0"
-        currency="NGN"
         themePreference="system"
         onOpenSettings={jest.fn()}
         onOpenBankAccounts={jest.fn()}
@@ -272,8 +363,6 @@ describe('ProfileMenuScreen', () => {
         }}
         loading={false}
         signingOut={false}
-        savingsMinor="0"
-        currency="NGN"
         themePreference="system"
         onOpenSettings={jest.fn()}
         onOpenBankAccounts={jest.fn()}

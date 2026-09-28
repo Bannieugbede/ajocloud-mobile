@@ -186,6 +186,14 @@ escrow, and refunded to the wallet if withdrawn while the programme is `OPEN`.
 Still open: releasing Food escrow to a vendor, and an Akawo organiser's
 collection, are not built. Neither affects the member's side of paying.
 
+**Biometric transfer authorisation is missing.** Wallet sends and payment
+confirms accept the transaction PIN only, so the send flow authorises with
+the PIN in a final sheet. Offering Face ID or fingerprint as an alternative
+needs a backend ceremony (challenge, device binding, or signed assertion —
+see the "Biometrics unlock a stored session and never replace the PIN"
+decision in `docs/DECISIONS.md`), not a client-only change: the client must
+not cache the PIN in SecureStore behind a biometric to fake it.
+
 ## Akawo group pools
 
 Implemented and in use — see `docs/akawo.md` in the backend repo. The mobile

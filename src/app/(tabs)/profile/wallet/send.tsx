@@ -34,12 +34,20 @@ export default function SendMoneyRoute() {
       if (!wallet) throw new Error('No wallet is available');
       return sendToWallet({ sourceWalletId: wallet.id, ...input }, idempotencyKey);
     },
-    onSuccess: () => {
+    onSuccess: (transfer, input) => {
       void queryClient.invalidateQueries({ queryKey: ['wallet-summary', wallet?.id] });
       void queryClient.invalidateQueries({ queryKey: ['wallet-movements'] });
-      // replace: the money has moved, so backing into the form would offer to
-      // send again with the details still filled in.
-      router.replace('/(tabs)/profile/wallets');
+      // replace: the money has moved, so backing into the form — or staying
+      // on it — would offer to send again with the details still filled in.
+      router.replace({
+        pathname: '/(tabs)/profile/wallet/send-success',
+        params: {
+          recipientEmail: input.recipientEmail,
+          amountMinor: input.amountMinor,
+          currency: wallet?.currency ?? 'NGN',
+          reference: transfer.internalReference,
+        },
+      });
     },
   });
 

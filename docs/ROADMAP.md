@@ -795,6 +795,7 @@ and the Home quick-pay derivation. Not yet run on a device or simulator.
 | Create a savings goal                 | `/(tabs)/akawo/create-goal`       |
 | Join / leave a food programme         | `/(tabs)/food/[programmeId]`      |
 | Send money                            | `/(tabs)/profile/wallet/send`     |
+| Send money success                  | `/(tabs)/profile/wallet/send-success` |
 | Withdraw                              | `/(tabs)/profile/wallet/withdraw` |
 | Profile menu, edit, security, support | `/(tabs)/profile/*`               |
 

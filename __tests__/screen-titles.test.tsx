@@ -98,6 +98,7 @@ const ROUTES: readonly [string, () => React.ReactElement, readonly string[]][] =
       'wallets',
       'wallet/fund',
       'wallet/send',
+      'wallet/send-success',
       'wallet/withdraw',
     ],
   ],
