@@ -73,6 +73,14 @@ it('shows the three wallet figures', async () => {
   expect(view.getAllByText('₦6,000.00')).toHaveLength(1);
 });
 
+it('names each wallet figure for what it is', async () => {
+  const view = await render(<ProfileMenuScreen {...props()} />);
+  expect(view.getByText('Wallet Summary')).toBeTruthy();
+  expect(view.getByText('Available to spend')).toBeTruthy();
+  expect(view.getByText('Across Akawo goals')).toBeTruthy();
+  expect(view.getByText('Referral earnings')).toBeTruthy();
+});
+
 it('says a balance is unavailable rather than showing zero', async () => {
   // A wallet that could not be read is not an empty wallet.
   const view = await render(<ProfileMenuScreen {...props({ availableMinor: undefined })} />);
@@ -174,11 +182,28 @@ it('opens bank accounts and transaction history', async () => {
   expect(onOpenTransactions).toHaveBeenCalledTimes(1);
 });
 
-it('signs out from the row at the bottom', async () => {
+it('confirms before signing out', async () => {
   const onSignOut = jest.fn();
   const view = await render(<ProfileMenuScreen {...props({ onSignOut })} />);
-  await act(async () => fireEvent.press(view.getByText('Sign Out')));
+
+  // The row only asks; nothing leaves until the dialog confirms.
+  await act(async () => fireEvent.press(view.getByTestId('sign-out-row')));
+  expect(onSignOut).not.toHaveBeenCalled();
+  expect(view.getByText('Sign out?')).toBeTruthy();
+
+  await act(async () => fireEvent.press(view.getByTestId('sign-out-confirm')));
   expect(onSignOut).toHaveBeenCalledTimes(1);
+  expect(view.queryByText('Sign out?')).toBeNull();
+});
+
+it('cancels signing out without leaving', async () => {
+  const onSignOut = jest.fn();
+  const view = await render(<ProfileMenuScreen {...props({ onSignOut })} />);
+
+  await act(async () => fireEvent.press(view.getByTestId('sign-out-row')));
+  await act(async () => fireEvent.press(view.getByText('Cancel')));
+  expect(onSignOut).not.toHaveBeenCalled();
+  expect(view.queryByText('Sign out?')).toBeNull();
 });
 
 it('says it is signing out rather than looking unresponsive', async () => {

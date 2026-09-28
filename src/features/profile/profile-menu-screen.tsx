@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { KycStatus } from '@/api/endpoints/kyc';
@@ -9,12 +10,11 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppHero } from '@/components/ui/app-hero';
 import { AppListItem } from '@/components/ui/app-list-item';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
-import { fontSizes, radius, spacing, type ThemePreference } from '@/theme';
+import { fontSizes, radius, sizes, spacing, type ThemePreference } from '@/theme';
 
 import { outstandingKycSteps, tierLabel } from './kyc-summary';
 
@@ -58,6 +58,7 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
     : '';
   const outstanding = outstandingKycSteps(props.kyc);
   const verified = Boolean(props.kyc) && outstanding.length === 0;
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
 
   return (
     <ScrollView
@@ -98,17 +99,12 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         </View>
       </View>
 
-      <AppHero label="WALLET SUMMARY" style={styles.wallet}>
-        <View style={styles.tiles}>
-          <WalletTile label="Main" amountMinor={props.availableMinor} currency={props.currency} />
-          <WalletTile label="Savings" amountMinor={props.savingsMinor} currency={props.currency} />
-          <WalletTile
-            label="Rewards"
-            amountMinor={props.referrals?.totalRewardMinor ?? '0'}
-            currency={props.currency}
-          />
-        </View>
-      </AppHero>
+      <WalletSummary
+        availableMinor={props.availableMinor}
+        savingsMinor={props.savingsMinor}
+        rewardsMinor={props.referrals?.totalRewardMinor ?? '0'}
+        currency={props.currency}
+      />
 
       <AppListItem
         card
@@ -188,15 +184,16 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         onPress={props.onOpenSupport}
       />
 
-      <AppListItem
-        card
-        centered
-        destructive
-        title={props.signingOut ? 'Signing out…' : 'Sign Out'}
-        icon="close"
-        onPress={props.onSignOut}
-        disabled={props.signingOut}
-        style={styles.signOut}
+      <SignOutButton signingOut={props.signingOut} onPress={() => setConfirmingSignOut(true)} />
+      <SignOutDialog
+        visible={confirmingSignOut}
+        onCancel={() => setConfirmingSignOut(false)}
+        onConfirm={() => {
+          // Closed before signing out, so the dialog is never left standing
+          // over the auth screens that replace this stack.
+          setConfirmingSignOut(false);
+          props.onSignOut();
+        }}
       />
     </ScrollView>
   );
@@ -221,35 +218,191 @@ function VerificationBadge({ verified, tier }: { verified: boolean; tier: string
   );
 }
 
-function WalletTile({
-  label,
-  amountMinor,
+/**
+ * What the member holds, as three labelled rows rather than three tiles.
+ *
+ * The figures are different kinds of money — spendable now, locked in goals,
+ * earned from referrals — so they read as a list with each kind named, not as
+ * three equal boxes inviting them to be added up.
+ */
+function WalletSummary({
+  availableMinor,
+  savingsMinor,
+  rewardsMinor,
   currency,
-  accent = false,
 }: {
-  label: string;
-  amountMinor?: string;
+  availableMinor?: string;
+  savingsMinor: string;
+  rewardsMinor: string;
   currency: string;
-  accent?: boolean;
 }) {
   const { colors } = useTheme();
   return (
-    <View style={styles.tile} accessible accessibilityLabel={`${label} balance`}>
-      <AppText style={styles.tileLabel}>{label}</AppText>
+    <AppCard style={styles.wallet}>
+      <AppText accessibilityRole="header" weight="semibold" style={styles.walletTitle}>
+        Wallet Summary
+      </AppText>
+      <BalanceRow
+        icon="wallet-outline"
+        label="Main"
+        caption="Available to spend"
+        amountMinor={availableMinor}
+        currency={currency}
+      />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      <BalanceRow
+        icon="trending-up-outline"
+        label="Savings"
+        caption="Across Akawo goals"
+        amountMinor={savingsMinor}
+        currency={currency}
+      />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      <BalanceRow
+        icon="gift-outline"
+        label="Rewards"
+        caption="Referral earnings"
+        amountMinor={rewardsMinor}
+        currency={currency}
+      />
+    </AppCard>
+  );
+}
+
+function BalanceRow({
+  icon,
+  label,
+  caption,
+  amountMinor,
+  currency,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  caption: string;
+  amountMinor?: string;
+  currency: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View
+      accessible
+      accessibilityLabel={
+        amountMinor === undefined ? `${label} balance unavailable` : `${label} balance`
+      }
+      style={styles.balanceRow}
+    >
+      <View style={[styles.balanceIcon, { backgroundColor: colors.primarySoft }]}>
+        <Ionicons name={icon} size={20} color={colors.primary} />
+      </View>
+      <View style={styles.balanceText}>
+        <AppText weight="semibold">{label}</AppText>
+        <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+          {caption}
+        </AppText>
+      </View>
       {amountMinor === undefined ? (
-        <AppText weight="semibold" style={styles.tileUnavailable}>
+        // A balance that could not be read is not a zero balance.
+        <AppText weight="semibold" style={[styles.unavailable, { color: colors.textMuted }]}>
           Unavailable
         </AppText>
       ) : (
-        <AppAmount
-          amountMinor={amountMinor}
-          currency={currency}
-          onInverse
-          size={'label'}
-          style={accent ? { color: colors.secondary } : undefined}
-        />
+        <AppAmount amountMinor={amountMinor} currency={currency} />
       )}
     </View>
+  );
+}
+
+/**
+ * Signing out, centred with its icon rather than as another settings row.
+ *
+ * Leaving an account is a deliberate act, so the control looks like one —
+ * and it confirms first, because a stray tap should never end a session.
+ */
+function SignOutButton({ signingOut, onPress }: { signingOut: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={signingOut ? 'Signing out' : 'Sign Out'}
+      accessibilityState={{ disabled: signingOut }}
+      disabled={signingOut}
+      onPress={onPress}
+      testID="sign-out-row"
+      style={(state) => [
+        styles.signOut,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: signingOut ? 0.6 : state.pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <View style={[styles.signOutIcon, { backgroundColor: colors.errorSoft }]}>
+        <Ionicons name="log-out-outline" size={20} color={colors.error} />
+      </View>
+      <AppText weight="semibold" style={{ color: colors.error }}>
+        {signingOut ? 'Signing out…' : 'Sign Out'}
+      </AppText>
+    </Pressable>
+  );
+}
+
+function SignOutDialog({
+  visible,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Modal
+      animationType="fade"
+      onRequestClose={onCancel}
+      transparent
+      visible={visible}
+      testID="sign-out-dialog"
+    >
+      <View style={styles.dialogScreen}>
+        {/* Tapping outside confirms nothing; it only closes. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Cancel sign out"
+          onPress={onCancel}
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
+        />
+        <View
+          style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <View style={[styles.dialogIcon, { backgroundColor: colors.errorSoft }]}>
+            <Ionicons name="log-out-outline" size={24} color={colors.error} />
+          </View>
+          <AppText accessibilityRole="header" weight="bold" style={styles.dialogTitle}>
+            Sign out?
+          </AppText>
+          <AppText style={[styles.dialogMessage, { color: colors.textMuted }]}>
+            You will need to sign in again to access your groups and wallet.
+          </AppText>
+          <View style={styles.dialogActions}>
+            <AppButton
+              label="Cancel"
+              variant="outline"
+              onPress={onCancel}
+              style={styles.dialogAction}
+            />
+            <AppButton
+              label="Sign Out"
+              variant="danger"
+              onPress={onConfirm}
+              testID="sign-out-confirm"
+              style={styles.dialogAction}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -274,17 +427,19 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: fontSizes.caption },
 
-  wallet: { marginVertical: spacing.sm },
-  tiles: { flexDirection: 'row', gap: spacing.sm },
-  tile: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: radius.md,
-    flex: 1,
-    gap: spacing.xs,
-    padding: spacing.sm,
+  wallet: { gap: spacing.md },
+  walletTitle: { fontSize: fontSizes.title - 4 },
+  balanceRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
+  balanceIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
-  tileLabel: { color: 'rgba(255,255,255,0.72)', fontSize: fontSizes.label },
-  tileUnavailable: { color: '#FFFFFF', fontSize: fontSizes.label },
+  balanceText: { flex: 1, gap: 2 },
+  unavailable: { fontSize: fontSizes.caption },
+  divider: { height: 1, width: '100%' },
 
   appearance: { gap: spacing.md, marginVertical: spacing.xs },
   appearanceHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
@@ -306,7 +461,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
 
-  signOut: { marginTop: spacing.sm },
+  signOut: {
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget + 8,
+    paddingHorizontal: spacing.md,
+  },
+  signOutIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  dialogScreen: { flex: 1, justifyContent: 'center', padding: spacing.lg },
+  dialog: {
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  dialogIcon: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: radius.pill,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
+  },
+  dialogTitle: { fontSize: fontSizes.title, textAlign: 'center' },
+  dialogMessage: { textAlign: 'center' },
+  dialogActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  dialogAction: { flex: 1 },
   pill: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   pillText: { fontSize: fontSizes.caption },
 });
