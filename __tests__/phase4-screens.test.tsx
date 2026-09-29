@@ -327,7 +327,7 @@ describe('ProfileMenuScreen', () => {
     },
   };
 
-  it('names what verification is still missing rather than showing a tier code', async () => {
+  it('shows one verification CTA whatever the level, naming what is still missing', async () => {
     const view = await render(
       <ProfileMenuScreen
         kyc={kyc}
@@ -345,8 +345,10 @@ describe('ProfileMenuScreen', () => {
         onSignOut={jest.fn()}
       />,
     );
-    expect(view.getByText('Basic account')).toBeTruthy();
-    expect(view.getByText(/your BVN or NIN, a bank account/)).toBeTruthy();
+    expect(view.getByTestId('kyc-cta-card')).toBeTruthy();
+    expect(view.getByText('Complete your KYC verification')).toBeTruthy();
+    expect(view.getByText(/Still needed:.*your NIN/)).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Continue verification' })).toBeTruthy();
   });
 
   it('says verification is done when nothing is outstanding', async () => {

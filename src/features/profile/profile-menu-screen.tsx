@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { KycStatus } from '@/api/endpoints/kyc';
 import type { ReferralSummary } from '@/api/endpoints/referrals';
 import type { CurrentUser } from '@/api/endpoints/users';
-import { AppAmount } from '@/components/ui/app-amount';
 import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppListItem } from '@/components/ui/app-list-item';
+import { AppProgress } from '@/components/ui/app-progress';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -28,12 +28,8 @@ function appearanceDescription(preference: ThemePreference): string {
 export type ProfileMenuScreenProps = {
   user?: CurrentUser;
   kyc?: KycStatus;
-  /** Kept for the Rewards tile; the code itself lives on the Referrals screen. */
+  /** Kept for the Referrals row; the code itself lives on the Referrals screen. */
   referrals?: ReferralSummary;
-  /** Spendable balance in minor units, or undefined while unknown. */
-  availableMinor?: string;
-  savingsMinor: string;
-  currency: string;
   loading: boolean;
   signingOut: boolean;
   /** Which appearance the member chose, not the mode currently resolved. */
@@ -99,13 +95,6 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         </View>
       </View>
 
-      <WalletSummary
-        availableMinor={props.availableMinor}
-        savingsMinor={props.savingsMinor}
-        rewardsMinor={props.referrals?.totalRewardMinor ?? '0'}
-        currency={props.currency}
-      />
-
       <AppListItem
         card
         title="Referrals"
@@ -118,17 +107,7 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
         onPress={props.onOpenReferrals}
       />
 
-      {props.kyc && outstanding.length > 0 ? (
-        <AppCard>
-          <AppText weight="semibold">{tierLabel(props.kyc.tier)} account</AppText>
-          <AppText style={{ color: colors.textMuted }}>
-            {/* Naming what is missing is more useful than a tier alone, which
-                does not tell anyone what to do next. */}
-            Still needed: {outstanding.join(', ')}.
-          </AppText>
-          <AppButton label="Finish verification" variant="outline" onPress={props.onCompleteKyc} />
-        </AppCard>
-      ) : null}
+      {verified ? null : <KycCtaCard kyc={props.kyc} onCompleteKyc={props.onCompleteKyc} />}
       <AppListItem
         card
         title="Bank Accounts"
@@ -199,6 +178,83 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
   );
 }
 
+/**
+ * The verification call to action. One card whatever the member's level, so
+ * the heading never changes with the tier: it always says what to do.
+ *
+ * The tier and the stage sit underneath as context, the outstanding steps say
+ * what is actually missing, and the progress bar shows how far along the
+ * three stages they are. The button is primary — completing verification is
+ * the obvious next thing to do from this card.
+ */
+function KycCtaCard({ kyc, onCompleteKyc }: { kyc?: KycStatus; onCompleteKyc: () => void }) {
+  const { colors } = useTheme();
+  const outstanding = outstandingKycSteps(kyc);
+  const level = kyc?.level ?? legacyLevel(kyc);
+  const progressBps = Math.round((Math.max(0, Math.min(3, level)) / 3) * 10_000);
+  const context =
+    kyc?.currentStage != null
+      ? `Stage ${kyc.currentStage} of 3`
+      : kyc
+        ? `${tierLabel(kyc.tier)} · Level ${level} of 3`
+        : 'Unlock Ajo, Akawo and withdrawals';
+
+  return (
+    <AppCard testID="kyc-cta-card" style={styles.kycCard}>
+      <View style={styles.kycHeader}>
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+          style={[styles.kycIcon, { backgroundColor: colors.primarySoft }]}
+        >
+          <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} />
+        </View>
+        <View style={styles.kycCopy}>
+          <AppText accessibilityRole="header" weight="bold" style={styles.kycTitle}>
+            Complete your KYC verification
+          </AppText>
+          <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
+            {context}
+          </AppText>
+        </View>
+      </View>
+
+      <AppText style={{ color: colors.textMuted }}>
+        {/* Naming what is missing is more useful than a tier alone, which
+            does not tell anyone what to do next. */}
+        {outstanding.length
+          ? `Still needed: ${outstanding.join(', ')}.`
+          : 'Verify your identity to unlock higher limits and every product.'}
+      </AppText>
+
+      <AppProgress
+        progressBps={progressBps}
+        label="KYC verification progress"
+        showValue={false}
+        tone="success"
+      />
+
+      <AppButton
+        label={kyc ? 'Continue verification' : 'Start verification'}
+        onPress={onCompleteKyc}
+        testID="kyc-cta-action"
+      />
+    </AppCard>
+  );
+}
+
+/** Steps complete out of three, for a status from before staged verification. */
+function legacyLevel(kyc: KycStatus | undefined): number {
+  if (!kyc) return 0;
+  if (kyc.level !== undefined) return kyc.level;
+  const done = [
+    kyc.steps.personalDetails.complete,
+    kyc.steps.identity.complete,
+    kyc.steps.bankAccount.complete,
+  ].filter(Boolean).length;
+  return done;
+}
+
 function VerificationBadge({ verified, tier }: { verified: boolean; tier: string }) {
   const { colors } = useTheme();
   const background = verified ? colors.successSoft : colors.warningSoft;
@@ -214,100 +270,6 @@ function VerificationBadge({ verified, tier }: { verified: boolean; tier: string
       style={[styles.badge, { backgroundColor: background }]}
     >
       <Ionicons name="shield-checkmark-outline" size={12} color={foreground} />
-    </View>
-  );
-}
-
-/**
- * What the member holds, as three labelled rows rather than three tiles.
- *
- * The figures are different kinds of money — spendable now, locked in goals,
- * earned from referrals — so they read as a list with each kind named, not as
- * three equal boxes inviting them to be added up.
- */
-function WalletSummary({
-  availableMinor,
-  savingsMinor,
-  rewardsMinor,
-  currency,
-}: {
-  availableMinor?: string;
-  savingsMinor: string;
-  rewardsMinor: string;
-  currency: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <AppCard style={styles.wallet}>
-      <AppText accessibilityRole="header" weight="semibold" style={styles.walletTitle}>
-        Wallet Summary
-      </AppText>
-      <BalanceRow
-        icon="wallet-outline"
-        label="Main"
-        caption="Available to spend"
-        amountMinor={availableMinor}
-        currency={currency}
-      />
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-      <BalanceRow
-        icon="trending-up-outline"
-        label="Savings"
-        caption="Across Akawo goals"
-        amountMinor={savingsMinor}
-        currency={currency}
-      />
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-      <BalanceRow
-        icon="gift-outline"
-        label="Rewards"
-        caption="Referral earnings"
-        amountMinor={rewardsMinor}
-        currency={currency}
-      />
-    </AppCard>
-  );
-}
-
-function BalanceRow({
-  icon,
-  label,
-  caption,
-  amountMinor,
-  currency,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  caption: string;
-  amountMinor?: string;
-  currency: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <View
-      accessible
-      accessibilityLabel={
-        amountMinor === undefined ? `${label} balance unavailable` : `${label} balance`
-      }
-      style={styles.balanceRow}
-    >
-      <View style={[styles.balanceIcon, { backgroundColor: colors.primarySoft }]}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
-      </View>
-      <View style={styles.balanceText}>
-        <AppText weight="semibold">{label}</AppText>
-        <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-          {caption}
-        </AppText>
-      </View>
-      {amountMinor === undefined ? (
-        // A balance that could not be read is not a zero balance.
-        <AppText weight="semibold" style={[styles.unavailable, { color: colors.textMuted }]}>
-          Unavailable
-        </AppText>
-      ) : (
-        <AppAmount amountMinor={amountMinor} currency={currency} />
-      )}
     </View>
   );
 }
@@ -427,20 +389,6 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: fontSizes.caption },
 
-  wallet: { gap: spacing.md },
-  walletTitle: { fontSize: fontSizes.title - 4 },
-  balanceRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
-  balanceIcon: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  balanceText: { flex: 1, gap: 2 },
-  unavailable: { fontSize: fontSizes.caption },
-  divider: { height: 1, width: '100%' },
-
   appearance: { gap: spacing.md, marginVertical: spacing.xs },
   appearanceHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   appearanceText: { flex: 1, gap: 2 },
@@ -500,4 +448,16 @@ const styles = StyleSheet.create({
   dialogAction: { flex: 1 },
   pill: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   pillText: { fontSize: fontSizes.caption },
+
+  kycCard: { gap: spacing.md },
+  kycHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
+  kycIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
+  kycCopy: { flex: 1, gap: 2 },
+  kycTitle: { fontSize: fontSizes.body },
 });

@@ -10,6 +10,7 @@ import { AppAmount } from '@/components/ui/app-amount';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
+import { AppEmptyState } from '@/components/ui/app-state';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, palette, radius, sizes, spacing } from '@/theme';
@@ -181,14 +182,24 @@ export function HomeScreen(props: HomeScreenProps) {
                 onPress={() => props.onOpenUpcoming(item)}
               />
             ))
+        ) : props.loading ? (
+          <AppEmptyState
+            icon="calendar-outline"
+            tone="neutral"
+            title="Loading your schedule…"
+            description="Fetching contributions and payouts."
+            compact
+            testID="home-upcoming-loading"
+          />
         ) : (
-          <AppCard>
-            <AppText style={{ color: colors.textMuted }}>
-              {props.loading
-                ? 'Loading your schedule…'
-                : 'Nothing is due. Contributions and payouts appear here once a group starts.'}
-            </AppText>
-          </AppCard>
+          <AppEmptyState
+            icon="calendar-outline"
+            tone="positive"
+            title="All caught up"
+            description="Nothing is due. Contributions and payouts appear here once a group starts."
+            compact
+            testID="home-upcoming-empty"
+          />
         )}
       </Section>
 
@@ -199,12 +210,25 @@ export function HomeScreen(props: HomeScreenProps) {
               <GroupCard key={group.id} group={group} onPress={() => props.onOpenGroup(group.id)} />
             ))}
           </View>
+        ) : props.loading ? (
+          <AppEmptyState
+            icon="people-outline"
+            tone="neutral"
+            title="Loading your groups…"
+            description="Fetching the circles you belong to."
+            compact
+            testID="home-groups-loading"
+          />
         ) : (
-          <AppCard>
-            <AppText style={{ color: colors.textMuted }}>
-              You have not joined an Ajo group yet.
-            </AppText>
-          </AppCard>
+          <AppEmptyState
+            icon="people-outline"
+            title="No Ajo groups yet"
+            description="Start a circle with people you trust, or join one with an invite code."
+            action="Explore Ajo groups"
+            onAction={props.onOpenAjo}
+            compact
+            testID="home-groups-empty"
+          />
         )}
       </Section>
     </ScrollView>

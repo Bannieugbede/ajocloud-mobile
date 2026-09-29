@@ -38,9 +38,6 @@ function props(overrides: Partial<ProfileMenuScreenProps> = {}): ProfileMenuScre
       qualifiedCount: 6,
       code: 'AJO-CH2SOM',
     },
-    availableMinor: '84732050',
-    savingsMinor: '23450000',
-    currency: 'NGN',
     loading: false,
     signingOut: false,
     themePreference: 'system',
@@ -64,27 +61,14 @@ it('shows who the member is, including their phone number', async () => {
   expect(view.getByText('+2348012345678')).toBeTruthy();
 });
 
-it('shows the three wallet figures', async () => {
+it('shows no wallet figures on the menu', async () => {
+  // Balances live on the Wallet screens; the menu keeps navigation rows, so
+  // figures here would duplicate them and go stale independently.
   const view = await render(<ProfileMenuScreen {...props()} />);
-  expect(view.getByText('₦847,320.50')).toBeTruthy();
-  expect(view.getByText('₦234,500.00')).toBeTruthy();
-  // The Rewards tile reads the released reward total; the code and its
-  // earnings live on the Referrals screen now.
-  expect(view.getAllByText('₦6,000.00')).toHaveLength(1);
-});
-
-it('names each wallet figure for what it is', async () => {
-  const view = await render(<ProfileMenuScreen {...props()} />);
-  expect(view.getByText('Wallet Summary')).toBeTruthy();
-  expect(view.getByText('Available to spend')).toBeTruthy();
-  expect(view.getByText('Across Akawo goals')).toBeTruthy();
-  expect(view.getByText('Referral earnings')).toBeTruthy();
-});
-
-it('says a balance is unavailable rather than showing zero', async () => {
-  // A wallet that could not be read is not an empty wallet.
-  const view = await render(<ProfileMenuScreen {...props({ availableMinor: undefined })} />);
-  expect(view.getByText('Unavailable')).toBeTruthy();
+  expect(view.queryByText('Wallet Summary')).toBeNull();
+  expect(view.queryByText('Available to spend')).toBeNull();
+  expect(view.queryByText('Across Akawo goals')).toBeNull();
+  expect(view.queryByText('Referral earnings')).toBeNull();
 });
 
 it('opens referrals from the menu row', async () => {
@@ -101,7 +85,7 @@ it('marks a fully verified account', async () => {
   expect(view.getByText('Verified')).toBeTruthy();
 });
 
-it('names what verification still needs rather than showing a badge', async () => {
+it('shows one verification CTA whatever the level, naming what is still needed', async () => {
   const view = await render(
     <ProfileMenuScreen
       {...props({
@@ -117,8 +101,81 @@ it('names what verification still needs rather than showing a badge', async () =
       })}
     />,
   );
-  expect(view.getByText(/your BVN or NIN, a bank account/)).toBeTruthy();
+  expect(view.getByTestId('kyc-cta-card')).toBeTruthy();
+  expect(view.getByText('Complete your KYC verification')).toBeTruthy();
+  expect(view.getByText(/Still needed:.*your NIN/)).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Continue verification' })).toBeTruthy();
   expect(view.queryByLabelText('KYC Verified')).toBeNull();
+});
+
+it('keeps the same CTA heading at a higher stage', async () => {
+  const view = await render(
+    <ProfileMenuScreen
+      {...props({
+        kyc: {
+          tier: 'TIER_1',
+          status: 'PENDING',
+          level: 1,
+          currentStage: 2,
+          stages: [
+            {
+              stage: 2,
+              title: 'Identity',
+              status: 'in_progress',
+              requirements: [{ key: 'nin', label: 'Verify NIN', state: 'missing' }],
+              unlocks: ['Withdrawals'],
+            },
+          ],
+          steps: {
+            personalDetails: { complete: true },
+            identity: { complete: false, maskedIdentifier: null, kind: null },
+            bankAccount: { complete: false },
+          },
+        },
+      })}
+    />,
+  );
+  // Same heading no matter the level; the stage sits underneath as context.
+  expect(view.getByText('Complete your KYC verification')).toBeTruthy();
+  expect(view.getByText('Stage 2 of 3')).toBeTruthy();
+  expect(view.getByText(/Still needed:.*verify NIN/)).toBeTruthy();
+});
+
+it('offers to start verification when no KYC status has loaded', async () => {
+  const { kyc: _dropped, ...withoutKyc } = props();
+  const view = await render(<ProfileMenuScreen {...withoutKyc} />);
+  expect(view.getByTestId('kyc-cta-card')).toBeTruthy();
+  expect(view.getByText('Complete your KYC verification')).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Start verification' })).toBeTruthy();
+});
+
+it('hides the CTA once fully verified', async () => {
+  const view = await render(<ProfileMenuScreen {...props()} />);
+  expect(view.queryByTestId('kyc-cta-card')).toBeNull();
+});
+
+it('opens verification from the CTA button', async () => {
+  const onCompleteKyc = jest.fn();
+  const view = await render(
+    <ProfileMenuScreen
+      {...props({
+        onCompleteKyc,
+        kyc: {
+          tier: 'TIER_1',
+          status: 'NOT_STARTED',
+          steps: {
+            personalDetails: { complete: true },
+            identity: { complete: false, maskedIdentifier: null, kind: null },
+            bankAccount: { complete: false },
+          },
+        },
+      })}
+    />,
+  );
+  await act(async () =>
+    fireEvent.press(view.getByRole('button', { name: 'Continue verification' })),
+  );
+  expect(onCompleteKyc).toHaveBeenCalledTimes(1);
 });
 
 describe('the Dark Mode row', () => {
