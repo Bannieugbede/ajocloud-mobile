@@ -1,5 +1,15 @@
 # Backend Requirements
 
+## Admin applications for group creation
+
+- Status: missing. Group creation (Ajo, Akawo pool, food programme) is
+  admin-only, and the gate now says so with an "Apply to become an admin"
+  button that goes to verification, where approval is handled.
+- Required when a separate application flow is built: request endpoint (who
+  may apply, required verification level, fields, idempotency), status
+  endpoint (draft/submitted/approved/rejected plus reviewer notes), and
+  notification on decision.
+
 ## Public entry and initialization gaps
 
 - Existing and used: authenticated `GET /api/v1/users/me` with status and profile.

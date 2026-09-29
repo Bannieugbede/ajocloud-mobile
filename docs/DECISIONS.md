@@ -1,5 +1,21 @@
 # Architectural Decision Log
 
+## 2026-09-29 — Group creation is admin-only; the gate leads to verification
+
+- **Context:** Only admins can create groups (Ajo groups, Akawo pools, food
+  programmes). The locked state on those create screens previously said
+  "Continue verification", which never named the role.
+- **Chosen approach:**
+  - `ADMIN_CREATE_ACTIONS` (`ajo.create`, `akawo-pool.create`,
+    `food-programme.create`, `food-coordinator.apply`) renders "Only admins
+    can create groups" with "Apply to become an admin" in `KycGate` and
+    `useKycCheck`. The button goes directly to the verification screen, where
+    approval is handled — no intermediate application screen.
+- **Consequences:**
+  - Non-create gates (join, send, withdraw, goals) keep the verification CTA.
+  - A dedicated admin-application request/status contract still needs a
+    backend decision before any separate apply screen can submit anything.
+
 ## 2026-09-28 — Staged verification gates screens as well as the server
 
 - **Context:** The backend now gates every capability behind a verification stage

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { backTo } from '@/components/ui/app-header-back';
 import { useTheme } from '@/hooks/use-theme';
 import { fontFamilies, sizes } from '@/theme';
+import { createTabRootListener } from '@/utils/tab-root-listener';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -34,6 +35,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="home"
+        listeners={createTabRootListener('/(tabs)/home')}
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
@@ -43,6 +45,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="ajo"
+        listeners={createTabRootListener('/(tabs)/ajo')}
         options={{
           title: 'Ajo',
           tabBarIcon: ({ color, size }) => (
@@ -52,6 +55,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="food"
+        listeners={createTabRootListener('/(tabs)/food')}
         options={{
           title: 'Food',
           tabBarIcon: ({ color, size }) => (
@@ -61,6 +65,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="akawo"
+        listeners={createTabRootListener('/(tabs)/akawo')}
         options={{
           title: 'Akawo',
           tabBarIcon: ({ color, size }) => (
@@ -95,6 +100,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="profile"
+        listeners={createTabRootListener('/(tabs)/profile')}
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (

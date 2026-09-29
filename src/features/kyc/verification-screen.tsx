@@ -5,7 +5,6 @@ import type { KycRequirement, KycRequirementKey, KycStage, KycStatus } from '@/a
 import { AppBadge, type BadgeTone } from '@/components/ui/app-badge';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
-import { AppProgress } from '@/components/ui/app-progress';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, spacing } from '@/theme';
@@ -80,12 +79,7 @@ export function VerificationScreen({
   onOpen: (requirement: KycRequirementKey) => void;
 }) {
   const { colors } = useTheme();
-  const level = status.level ?? 0;
   const stages = status.stages ?? [];
-  const headline =
-    status.currentStage === null
-      ? 'You are fully verified'
-      : `You are on stage ${status.currentStage} of 3`;
 
   return (
     <ScrollView
@@ -95,25 +89,13 @@ export function VerificationScreen({
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       testID="verification-screen"
     >
-      <AppCard>
-        <View style={styles.summary}>
-          <AppText weight="bold" style={styles.headline} accessibilityRole="header">
-            {headline}
-          </AppText>
-          <AppText style={{ color: colors.textMuted }}>{level} of 3 stages complete</AppText>
-          <AppProgress
-            progressBps={Math.round((level / 3) * 10_000)}
-            label="Verification progress"
-            showValue={false}
-            tone="success"
-          />
-          {status.restricted ? (
-            <AppText style={{ color: colors.error }}>
-              Your verification was not approved. Contact support to continue.
-            </AppText>
-          ) : null}
-        </View>
-      </AppCard>
+      {/* Kept out of a card on purpose: the page is the stages, and a rejection
+          notice must read as an alert, not as another stage to complete. */}
+      {status.restricted ? (
+        <AppText style={{ color: colors.error }}>
+          Your verification was not approved. Contact support to continue.
+        </AppText>
+      ) : null}
 
       {stages.map((stage) => {
         const next = status.restricted ? null : nextRequirement(stage);
@@ -188,8 +170,6 @@ export function VerificationScreen({
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md, padding: spacing.md, paddingBottom: spacing.xl },
-  summary: { gap: spacing.sm },
-  headline: { fontSize: fontSizes.title },
   stage: { gap: spacing.md },
   stageHeader: {
     alignItems: 'center',

@@ -7,7 +7,7 @@ import { Text } from 'react-native';
 import { getKycStatus, type KycStatus } from '@/api/endpoints/kyc';
 
 import { KycGate } from './kyc-gate';
-import { canPerform, lockedMessage, requiredStage } from './kyc-stages';
+import { canPerform, isAdminCreateAction, lockedMessage, requiredStage } from './kyc-stages';
 import { VerificationScreen, nextRequirement } from './verification-screen';
 
 jest.mock('@/api/endpoints/kyc', () => ({ getKycStatus: jest.fn() }));
@@ -87,6 +87,15 @@ describe('stage rules', () => {
       'Complete stage 2 (Identity) verification to withdraw.',
     );
   });
+
+  it('treats group creation as admin-only', () => {
+    expect(isAdminCreateAction('ajo.create')).toBe(true);
+    expect(isAdminCreateAction('akawo-pool.create')).toBe(true);
+    expect(isAdminCreateAction('food-programme.create')).toBe(true);
+    expect(isAdminCreateAction('food-coordinator.apply')).toBe(true);
+    expect(isAdminCreateAction('withdrawal')).toBe(false);
+    expect(lockedMessage('ajo.create', status(1))).toMatch(/Only admins can create groups/);
+  });
 });
 
 describe('KycGate', () => {
@@ -102,7 +111,7 @@ describe('KycGate', () => {
     await view.unmount();
   });
 
-  it('explains the missing stage and leads to verification instead', async () => {
+  it('sends group creation to verification with the admin copy', async () => {
     jest.mocked(getKycStatus).mockResolvedValue(status(1));
     const view = await render(
       <KycGate action="ajo.create">
@@ -110,8 +119,23 @@ describe('KycGate', () => {
       </KycGate>,
       { wrapper: Wrapper },
     );
-    await waitFor(() => expect(view.getByText('Stage 3 (Address) required')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Only admins can create groups')).toBeTruthy());
     expect(view.queryByText('Create form')).toBeNull();
+    await fireEvent.press(view.getByRole('button', { name: 'Apply to become an admin' }));
+    expect(router.push).toHaveBeenCalledWith('/(tabs)/profile/verification');
+    await view.unmount();
+  });
+
+  it('still leads other actions to verification instead', async () => {
+    jest.mocked(getKycStatus).mockResolvedValue(status(1));
+    const view = await render(
+      <KycGate action="withdrawal">
+        <Text>Withdraw form</Text>
+      </KycGate>,
+      { wrapper: Wrapper },
+    );
+    await waitFor(() => expect(view.getByText('Stage 2 (Identity) required')).toBeTruthy());
+    expect(view.queryByText('Withdraw form')).toBeNull();
     await fireEvent.press(view.getByRole('button', { name: 'Continue verification' }));
     expect(router.push).toHaveBeenCalledWith('/(tabs)/profile/verification');
     await view.unmount();
@@ -119,7 +143,7 @@ describe('KycGate', () => {
 });
 
 describe('VerificationScreen', () => {
-  it('says which stage the member is on and offers the next step', async () => {
+  it('leads with the stage cards and offers the next step from the current one', async () => {
     const onOpen = jest.fn();
     const view = await render(
       <VerificationScreen
@@ -129,10 +153,25 @@ describe('VerificationScreen', () => {
         onOpen={onOpen}
       />,
     );
-    expect(view.getByText('You are on stage 2 of 3')).toBeTruthy();
-    expect(view.getByText('1 of 3 stages complete')).toBeTruthy();
+    // No summary hero: the stages themselves say where the member stands.
+    expect(view.queryByText(/You are on stage/)).toBeNull();
+    expect(view.queryByText(/stages complete/)).toBeNull();
+    expect(view.getByText('Stage 2 · Identity')).toBeTruthy();
     await fireEvent.press(view.getByRole('button', { name: 'Verify NIN' }));
     expect(onOpen).toHaveBeenCalledWith('nin');
+    await view.unmount();
+  });
+
+  it('still surfaces a rejection without the hero card', async () => {
+    const view = await render(
+      <VerificationScreen
+        status={status(3, { restricted: true })}
+        refreshing={false}
+        onRefresh={jest.fn()}
+        onOpen={jest.fn()}
+      />,
+    );
+    expect(view.getByText(/not approved/)).toBeTruthy();
     await view.unmount();
   });
 

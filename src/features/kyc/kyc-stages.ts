@@ -53,6 +53,22 @@ export const KYC_STAGE_REQUIRED = 'KYC_STAGE_REQUIRED';
 
 export const VERIFICATION_ROUTE = '/(tabs)/profile/verification' as const;
 
+/**
+ * Group creation is an admin-only capability: Ajo groups, Akawo pools, and
+ * food programmes can only be started by an admin. The gate names the role
+ * and sends the member to verification, where approval is handled.
+ */
+export const ADMIN_CREATE_ACTIONS: ReadonlySet<KycAction> = new Set([
+  'ajo.create',
+  'akawo-pool.create',
+  'food-programme.create',
+  'food-coordinator.apply',
+]);
+
+export function isAdminCreateAction(action: KycAction): boolean {
+  return ADMIN_CREATE_ACTIONS.has(action);
+}
+
 export function requiredStage(action: KycAction, status?: KycStatus): KycStageNumber {
   return status?.actions?.[action] ?? KYC_ACTION_STAGES[action];
 }
@@ -66,6 +82,9 @@ export function canPerform(action: KycAction, status: KycStatus): boolean {
 export function lockedMessage(action: KycAction, status?: KycStatus): string {
   if (status?.restricted) {
     return 'Your verification was not approved. Contact support to continue.';
+  }
+  if (isAdminCreateAction(action)) {
+    return 'Only admins can create groups. Apply to become an admin to start an Ajo group, an Akawo pool, or a food programme.';
   }
   const stage = requiredStage(action, status);
   return `Complete stage ${stage} (${STAGE_TITLES[stage]}) verification to ${ACTION_PHRASES[action]}.`;

@@ -10,7 +10,6 @@ import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppListItem } from '@/components/ui/app-list-item';
-import { AppProgress } from '@/components/ui/app-progress';
 import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
@@ -182,14 +181,12 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
  * The verification call to action. One card whatever the member's level, so
  * the heading never changes with the tier: it always says what to do.
  *
- * The tier and the stage sit underneath as context and the progress bar shows
- * how far along the three stages they are. The button is primary — completing
- * verification is the obvious next thing to do from this card.
+ * The tier and the stage sit underneath as context. The button is primary —
+ * completing verification is the obvious next thing to do from this card.
  */
 function KycCtaCard({ kyc, onCompleteKyc }: { kyc?: KycStatus; onCompleteKyc: () => void }) {
   const { colors } = useTheme();
   const level = kyc?.level ?? legacyLevel(kyc);
-  const progressBps = Math.round((Math.max(0, Math.min(3, level)) / 3) * 10_000);
   const context =
     kyc?.currentStage != null
       ? `Stage ${kyc.currentStage} of 3`
@@ -216,13 +213,6 @@ function KycCtaCard({ kyc, onCompleteKyc }: { kyc?: KycStatus; onCompleteKyc: ()
           </AppText>
         </View>
       </View>
-
-      <AppProgress
-        progressBps={progressBps}
-        label="KYC verification progress"
-        showValue={false}
-        tone="success"
-      />
 
       <AppButton
         label={kyc ? 'Continue verification' : 'Start verification'}

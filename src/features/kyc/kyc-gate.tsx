@@ -12,6 +12,7 @@ import {
   STAGE_TITLES,
   VERIFICATION_ROUTE,
   canPerform,
+  isAdminCreateAction,
   lockedMessage,
   requiredStage,
 } from './kyc-stages';
@@ -47,6 +48,7 @@ export function KycGate({ action, children }: { action: KycAction; children: Rea
   if (canPerform(action, status.data)) return <>{children}</>;
 
   const stage = requiredStage(action, status.data);
+  const adminOnly = isAdminCreateAction(action);
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -58,16 +60,23 @@ export function KycGate({ action, children }: { action: KycAction; children: Rea
         title={
           status.data.restricted
             ? 'Verification not approved'
-            : `Stage ${stage} (${STAGE_TITLES[stage]}) required`
+            : adminOnly
+              ? 'Only admins can create groups'
+              : `Stage ${stage} (${STAGE_TITLES[stage]}) required`
         }
         description={lockedMessage(action, status.data)}
         testID="kyc-gate-locked"
         {...(status.data.restricted
           ? {}
-          : {
-              action: 'Continue verification',
-              onAction: () => router.push(VERIFICATION_ROUTE),
-            })}
+          : adminOnly
+            ? {
+                action: 'Apply to become an admin',
+                onAction: () => router.push(VERIFICATION_ROUTE),
+              }
+            : {
+                action: 'Continue verification',
+                onAction: () => router.push(VERIFICATION_ROUTE),
+              })}
       />
     </ScrollView>
   );
@@ -86,6 +95,13 @@ export function useKycCheck() {
   const ensure = useCallback(
     (action: KycAction): boolean => {
       if (!data || canPerform(action, data)) return true;
+      if (isAdminCreateAction(action) && !data.restricted) {
+        Alert.alert('Only admins can create groups', lockedMessage(action, data), [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Apply', onPress: () => router.push(VERIFICATION_ROUTE) },
+        ]);
+        return false;
+      }
       Alert.alert(
         'Verification needed',
         lockedMessage(action, data),
