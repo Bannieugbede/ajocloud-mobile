@@ -1,13 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 
-import { listAkawoGoals } from '@/api/endpoints/akawo';
 import { logout } from '@/api/endpoints/auth';
 import { getKycStatus } from '@/api/endpoints/kyc';
 import { getReferralSummary } from '@/api/endpoints/referrals';
 import { getCurrentUser } from '@/api/endpoints/users';
-import { getWalletSummary, listWallets } from '@/api/endpoints/wallets';
-import { totalAkawoSaved } from '@/features/home/home-data';
 import { ProfileMenuScreen } from '@/features/profile/profile-menu-screen';
 import { clearSession } from '@/services/session-storage';
 import { useOnboardingStore } from '@/store/onboarding-store';
@@ -24,16 +21,6 @@ export default function ProfileRoute() {
     queryFn: getReferralSummary,
     retry: 1,
   });
-  const goals = useQuery({ queryKey: ['akawo-goals'], queryFn: listAkawoGoals, retry: 1 });
-  const wallets = useQuery({ queryKey: ['wallets'], queryFn: listWallets, retry: 1 });
-
-  const walletId = wallets.data?.[0]?.id;
-  const summary = useQuery({
-    queryKey: ['wallet-summary', walletId],
-    queryFn: () => getWalletSummary(walletId as string),
-    enabled: Boolean(walletId),
-  });
-
   // Read only to describe the Dark Mode row; changing it happens on the
   // Appearance screen the row opens.
   const themePreference = useThemeStore((state) => state.preference);
@@ -60,9 +47,6 @@ export default function ProfileRoute() {
       {...(user.data ? { user: user.data } : {})}
       {...(kyc.data ? { kyc: kyc.data } : {})}
       {...(referrals.data ? { referrals: referrals.data } : {})}
-      {...(summary.data ? { availableMinor: summary.data.availableMinor } : {})}
-      savingsMinor={totalAkawoSaved(goals.data)}
-      currency={summary.data?.currency ?? 'NGN'}
       loading={user.isPending}
       signingOut={signOut.isPending}
       themePreference={themePreference}

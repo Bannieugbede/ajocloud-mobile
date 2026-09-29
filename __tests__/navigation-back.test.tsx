@@ -2,6 +2,7 @@ import { render } from '@testing-library/react-native';
 
 import BillsLayout from '@/app/(tabs)/bills/_layout';
 import PayLayout from '@/app/(tabs)/pay/_layout';
+import ProfileLayout from '@/app/(tabs)/profile/_layout';
 
 /**
  * Stack and Stack.Screen are replaced with markers that record their props, so
@@ -52,6 +53,7 @@ describe('screens reached from another tab', () => {
   it.each([
     ['the bills list', BillsLayout, 'index'],
     ['the payment flow', PayLayout, 'index'],
+    ['the withdraw screen', ProfileLayout, 'wallet/withdraw'],
   ])('%s supplies its own back control', async (_name, Layout, screen) => {
     const options = await optionsFor(Layout as () => React.ReactElement, screen);
 

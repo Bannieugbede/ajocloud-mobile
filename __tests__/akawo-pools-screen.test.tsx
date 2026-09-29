@@ -83,14 +83,84 @@ it('counts multiple outstanding payments', async () => {
   expect(view.getByText('2 Payments Due')).toBeTruthy();
 });
 
-it('invites a join code only once there is something to see', async () => {
-  const empty = await render(<PoolsListScreen {...props()} />);
-  expect(empty.queryByText('Have a pool code?')).toBeNull();
+it('offers Join from the Start button instead of a card in the list', async () => {
+  const onJoin = jest.fn();
+  const view = await render(<PoolsListScreen {...props({ onJoin })} />);
 
-  const withPools = await render(
-    <PoolsListScreen {...props({ joined: [joined('p1', 'Dept Dues', 'PAID')] })} />,
+  // The sheet is closed until asked for.
+  expect(view.queryByText('Start an Akawo pool')).toBeNull();
+
+  await act(async () => fireEvent.press(view.getByLabelText('Start')));
+  expect(view.getByText('Start an Akawo pool')).toBeTruthy();
+  expect(view.getByLabelText(/^Join\./)).toBeTruthy();
+
+  await act(async () => fireEvent.press(view.getByLabelText(/^Join\./)));
+  expect(onJoin).toHaveBeenCalledTimes(1);
+  // Closed before navigating, so the sheet is not left over the next screen.
+  expect(view.queryByText('Start an Akawo pool')).toBeNull();
+});
+
+it('offers Create from the Start button', async () => {
+  const onCreate = jest.fn();
+  const view = await render(<PoolsListScreen {...props({ onCreate })} />);
+
+  await act(async () => fireEvent.press(view.getByLabelText('Start')));
+  await act(async () => fireEvent.press(view.getByLabelText(/^Create\./)));
+  expect(onCreate).toHaveBeenCalledTimes(1);
+  expect(view.queryByText('Start an Akawo pool')).toBeNull();
+});
+
+it('opens on Joined and swaps the list for Organised', async () => {
+  const view = await render(
+    <PoolsListScreen
+      {...props({
+        joined: [joined('p1', 'Faculty Week', 'PAID')],
+        organised: [
+          {
+            id: 'o1',
+            name: 'Organisers Circle',
+            purpose: 'Shared collection',
+            amountMinor: '300000',
+            currency: 'NGN',
+            status: 'OPEN',
+            referenceLabel: 'Matric number',
+            dueAt: null,
+            closedAt: null,
+            createdAt: '2026-08-01T00:00:00Z',
+            memberCount: 2,
+            paidCount: 1,
+            collectedMinor: '300000',
+            expectedMinor: '600000',
+            progressBps: 5000,
+          },
+        ],
+      })}
+    />,
   );
-  expect(withPools.getByText('Have a pool code?')).toBeTruthy();
+
+  expect(view.getByText('Faculty Week')).toBeTruthy();
+  expect(view.queryByText('Organisers Circle')).toBeNull();
+
+  await act(async () => fireEvent.press(view.getByLabelText('Organised')));
+
+  expect(view.getByText('Organisers Circle')).toBeTruthy();
+  expect(view.queryByText('Faculty Week')).toBeNull();
+});
+
+it('says which list is empty rather than showing nothing', async () => {
+  const view = await render(
+    <PoolsListScreen {...props({ joined: [joined('p1', 'Faculty Week', 'PAID')] })} />,
+  );
+  await act(async () => fireEvent.press(view.getByLabelText('Organised')));
+  expect(view.getByText('No organised pools')).toBeTruthy();
+});
+
+it('reports a failed load on either tab', async () => {
+  const view = await render(<PoolsListScreen {...props({ error: true })} />);
+  expect(view.getByRole('button', { name: /Could not load your pools/ })).toBeTruthy();
+
+  await act(async () => fireEvent.press(view.getByLabelText('Organised')));
+  expect(view.getByRole('button', { name: /Could not load your pools/ })).toBeTruthy();
 });
 
 it('shows a joined pool as the group is doing, not only what is owed', async () => {

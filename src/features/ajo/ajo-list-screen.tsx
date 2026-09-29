@@ -1,11 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AjoGroupSummary } from '@/api/endpoints/ajo-groups';
+import { AppActionSheet } from '@/components/ui/app-action-sheet';
 import { AppBadge, type BadgeTone } from '@/components/ui/app-badge';
-import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppFab } from '@/components/ui/app-fab';
 import { AppMetricRow } from '@/components/ui/app-metric-row';
@@ -63,23 +61,8 @@ function tabForStatus(status: string): AjoTab {
 
 export function AjoListScreen(props: AjoListScreenProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<AjoTab>('active');
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [choice, setChoice] = useState<'create' | 'join' | null>(null);
-
-  const closeSheet = () => {
-    setSheetOpen(false);
-    setChoice(null);
-  };
-
-  const continueFromSheet = () => {
-    // Closed first so the sheet is never left mounted over the screen it moves to.
-    const selected = choice;
-    closeSheet();
-    if (selected === 'create') props.onCreate();
-    else if (selected === 'join') props.onJoin();
-  };
 
   const visibleGroups = (props.groups ?? []).filter((group) => tabForStatus(group.status) === tab);
 
@@ -171,118 +154,27 @@ export function AjoListScreen(props: AjoListScreenProps) {
         testID="ajo-start-fab"
       />
 
-      <Modal
-        animationType="slide"
-        onRequestClose={closeSheet}
-        transparent
+      <AppActionSheet
         visible={sheetOpen}
-        testID="ajo-start-sheet"
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close pick an option"
-          onPress={closeSheet}
-          style={[styles.scrim, { backgroundColor: colors.scrim }]}
-        />
-
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              paddingBottom: insets.bottom + spacing.lg,
-            },
-          ]}
-        >
-          <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />
-
-          <AppText accessibilityRole="header" weight="bold" style={styles.sheetTitle}>
-            Pick an option
-          </AppText>
-          <AppText style={[styles.sheetSubtitle, { color: colors.textMuted }]}>
-            What would you like to do?
-          </AppText>
-
-          <OptionRow
-            icon="rocket-outline"
-            title="Start an Ajo Group"
-            description="Create your own ajo group and add your tribe."
-            selected={choice === 'create'}
-            onSelect={() => setChoice('create')}
-            testID="ajo-option-create"
-          />
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <OptionRow
-            icon="person-outline"
-            title="Join an Ajo"
-            description="Join an existing ajo group and start saving."
-            selected={choice === 'join'}
-            onSelect={() => setChoice('join')}
-            testID="ajo-option-join"
-          />
-
-          <AppButton
-            label="Continue"
-            disabled={!choice}
-            onPress={continueFromSheet}
-            testID="ajo-sheet-continue"
-          />
-        </View>
-      </Modal>
-    </View>
-  );
-}
-
-function OptionRow({
-  icon,
-  title,
-  description,
-  selected,
-  onSelect,
-  testID,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  title: string;
-  description: string;
-  selected: boolean;
-  onSelect: () => void;
-  testID?: string;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
-      accessibilityLabel={`${title}. ${description}`}
-      onPress={onSelect}
-      testID={testID}
-      style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
-    >
-      <View style={[styles.optionIcon, { backgroundColor: colors.primarySoft }]}>
-        <Ionicons name={icon} size={22} color={colors.primary} />
-      </View>
-      <View style={styles.optionText}>
-        <AppText weight="semibold">{title}</AppText>
-        <AppText style={{ color: colors.textMuted, fontSize: fontSizes.caption }}>
-          {description}
-        </AppText>
-      </View>
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-        style={[
-          styles.radio,
+        title="Start an Ajo"
+        onClose={() => setSheetOpen(false)}
+        actions={[
           {
-            borderColor: selected ? colors.primary : colors.borderStrong,
+            label: 'Create',
+            description: 'Create your own Ajo group and add your tribe',
+            icon: 'add-circle-outline',
+            onPress: props.onCreate,
+          },
+          {
+            label: 'Join',
+            description: 'Join an existing Ajo group and start saving',
+            icon: 'enter-outline',
+            onPress: props.onJoin,
           },
         ]}
-      >
-        {selected ? <View style={[styles.radioDot, { backgroundColor: colors.primary }]} /> : null}
-      </View>
-    </Pressable>
+        testID="ajo-start-sheet"
+      />
+    </View>
   );
 }
 
@@ -405,48 +297,4 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.md,
   },
-
-  scrim: { flex: 1 },
-  sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderTopWidth: 1,
-    gap: spacing.md,
-    overflow: 'hidden',
-    padding: spacing.lg,
-  },
-  handle: {
-    alignSelf: 'center',
-    borderRadius: radius.pill,
-    height: 4,
-    marginBottom: spacing.xs,
-    width: 40,
-  },
-  sheetTitle: { fontSize: fontSizes.title, textAlign: 'center' },
-  sheetSubtitle: { fontSize: fontSizes.body, textAlign: 'center' },
-  option: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-    minHeight: sizes.touchTarget,
-    paddingVertical: spacing.sm,
-  },
-  optionIcon: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  optionText: { flex: 1, gap: 2 },
-  radio: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    height: 24,
-    justifyContent: 'center',
-    width: 24,
-  },
-  radioDot: { borderRadius: radius.pill, height: 12, width: 12 },
-  divider: { height: 1, width: '100%' },
 });
