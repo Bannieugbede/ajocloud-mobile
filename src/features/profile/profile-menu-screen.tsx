@@ -182,14 +182,12 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
  * The verification call to action. One card whatever the member's level, so
  * the heading never changes with the tier: it always says what to do.
  *
- * The tier and the stage sit underneath as context, the outstanding steps say
- * what is actually missing, and the progress bar shows how far along the
- * three stages they are. The button is primary — completing verification is
- * the obvious next thing to do from this card.
+ * The tier and the stage sit underneath as context and the progress bar shows
+ * how far along the three stages they are. The button is primary — completing
+ * verification is the obvious next thing to do from this card.
  */
 function KycCtaCard({ kyc, onCompleteKyc }: { kyc?: KycStatus; onCompleteKyc: () => void }) {
   const { colors } = useTheme();
-  const outstanding = outstandingKycSteps(kyc);
   const level = kyc?.level ?? legacyLevel(kyc);
   const progressBps = Math.round((Math.max(0, Math.min(3, level)) / 3) * 10_000);
   const context =
@@ -218,14 +216,6 @@ function KycCtaCard({ kyc, onCompleteKyc }: { kyc?: KycStatus; onCompleteKyc: ()
           </AppText>
         </View>
       </View>
-
-      <AppText style={{ color: colors.textMuted }}>
-        {/* Naming what is missing is more useful than a tier alone, which
-            does not tell anyone what to do next. */}
-        {outstanding.length
-          ? `Still needed: ${outstanding.join(', ')}.`
-          : 'Verify your identity to unlock higher limits and every product.'}
-      </AppText>
 
       <AppProgress
         progressBps={progressBps}

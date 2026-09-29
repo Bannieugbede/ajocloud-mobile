@@ -85,7 +85,7 @@ it('marks a fully verified account', async () => {
   expect(view.getByText('Verified')).toBeTruthy();
 });
 
-it('shows one verification CTA whatever the level, naming what is still needed', async () => {
+it('shows one verification CTA whatever the level, with no description', async () => {
   const view = await render(
     <ProfileMenuScreen
       {...props({
@@ -103,7 +103,8 @@ it('shows one verification CTA whatever the level, naming what is still needed',
   );
   expect(view.getByTestId('kyc-cta-card')).toBeTruthy();
   expect(view.getByText('Complete your KYC verification')).toBeTruthy();
-  expect(view.getByText(/Still needed:.*your NIN/)).toBeTruthy();
+  expect(view.getByText('Basic · Level 1 of 3')).toBeTruthy();
+  expect(view.queryByText(/Still needed/)).toBeNull();
   expect(view.getByRole('button', { name: 'Continue verification' })).toBeTruthy();
   expect(view.queryByLabelText('KYC Verified')).toBeNull();
 });
@@ -138,7 +139,7 @@ it('keeps the same CTA heading at a higher stage', async () => {
   // Same heading no matter the level; the stage sits underneath as context.
   expect(view.getByText('Complete your KYC verification')).toBeTruthy();
   expect(view.getByText('Stage 2 of 3')).toBeTruthy();
-  expect(view.getByText(/Still needed:.*verify NIN/)).toBeTruthy();
+  expect(view.queryByText(/Still needed/)).toBeNull();
 });
 
 it('offers to start verification when no KYC status has loaded', async () => {

@@ -327,7 +327,7 @@ describe('ProfileMenuScreen', () => {
     },
   };
 
-  it('shows one verification CTA whatever the level, naming what is still missing', async () => {
+  it('shows one verification CTA whatever the level, with no description', async () => {
     const view = await render(
       <ProfileMenuScreen
         kyc={kyc}
@@ -347,7 +347,7 @@ describe('ProfileMenuScreen', () => {
     );
     expect(view.getByTestId('kyc-cta-card')).toBeTruthy();
     expect(view.getByText('Complete your KYC verification')).toBeTruthy();
-    expect(view.getByText(/Still needed:.*your NIN/)).toBeTruthy();
+    expect(view.queryByText(/Still needed/)).toBeNull();
     expect(view.getByRole('button', { name: 'Continue verification' })).toBeTruthy();
   });
 
