@@ -1,5 +1,19 @@
 # Architectural Decision Log
 
+## 2026-10-01 — Profile group administration uses owned server projections
+
+- **Context:** The Profile tab needed a central place to manage Ajo groups and Food programmes
+  without issuing a detail request for every group membership or exposing unrelated programmes.
+- **Chosen approach:** Ajo list responses include the authenticated caller's membership role. Food
+  programme listing accepts an owner-scoped `COORDINATED` scope with cursor pagination. Existing
+  schedule and coordinator APIs supply analytics and actions; the mobile client does not infer
+  authority from a local role claim.
+- **Consequences:** Administrators can create, inspect and operate groups through existing backend
+  rules. Ajo contribution terms remain immutable; name/description edits are allowed only before
+  the rotation locks, and package price changes stop when Food enrolment opens. Member removal,
+  role transfer, and dues waivers remain unavailable until rules and audited
+  backend contracts exist.
+
 ## 2026-09-29 — Group creation is admin-only; the gate leads to verification
 
 - **Context:** Only admins can create groups (Ajo groups, Akawo pools, food

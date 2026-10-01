@@ -1,4 +1,6 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable } from 'react-native';
 
 import { backTo } from '@/components/ui/app-header-back';
 import { useThemedStackOptions } from '@/hooks/use-themed-stack-options';
@@ -8,8 +10,24 @@ export default function ProfileLayout() {
 
   return (
     <Stack screenOptions={stackOptions}>
-      {/* Draws its own header; see the note in the Ajo layout. */}
-      <Stack.Screen name="index" options={{ title: 'Profile', headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          title: 'Profile',
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              onPress={() => router.push('/(tabs)/profile/settings')}
+              hitSlop={8}
+              style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Ionicons name="settings-outline" size={22} color={stackOptions.headerTintColor} />
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen name="admin" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="appearance" options={{ title: 'Appearance' }} />
       <Stack.Screen name="fees" options={{ title: 'Platform Fees' }} />

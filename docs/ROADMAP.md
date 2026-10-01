@@ -27,7 +27,7 @@ backend work, dependencies, status, and definition of done recorded here and in
 | 7 Food plans                |                3/3 | IN REVIEW   | List/detail/plans live  | Ready            | 14 tests added      |
 | 8 Akawo                     |              13/13 | IN REVIEW   | Pools redesigned        | Ready            | 72 tests added      |
 | 9 Wallet/payments/activity  |              5/TBD | IN PROGRESS | Payment APIs missing    | Screens ready    | 8 tests added       |
-| 10 Profile/settings/support |              0/TBD | BLOCKED     | Not supplied            | Partial          | Not started         |
+| 10 Profile/settings/support |              1/TBD | IN PROGRESS | Profile/group APIs live | Admin screens    | In review           |
 | 11 Hardening/release        |               0/14 | NOT STARTED | Depends on all          | Depends on all   | Not started         |
 
 The pre-auth Introduction is retired. Launch, Welcome/public legal, and four dynamic authentication
@@ -291,6 +291,11 @@ invites, approval, missed payments, payout state, fees, disputes, audit, notific
 idempotency. Seed active/full/completed/pending groups; member/non-member/admin; paid/due/overdue;
 current/upcoming/received rotations; expired invite; permission denial. Reference screens: 0/3 done.
 
+Session 2026-10-01: Profile group administration lists Ajo groups by server-projected `callerRole`,
+opens schedule-derived admin analytics, and exposes invitation, public listing, lock, and swap
+actions. Ajo financial terms have no edit operation because financial rules and locked schedules are
+immutable.
+
 ## Phase 7 — Food savings packages (IN PROGRESS, P1)
 
 Session 2026-07-16: implemented authenticated Food programme list and native detail routes using the
@@ -314,6 +319,11 @@ replaced by Packages/Active tabs, which split the two stacked sections into two 
 `AppActionSheet` and `AppFab`. Create routes to the coordinator application and Join to the Packages
 list, both placeholders recorded in `docs/BACKEND_REQUIREMENTS.md` — Food has no create-programme form
 and no join-by-code. Tests: 960 pass, 5 added.
+
+Session 2026-10-01: Profile group administration loads Food programmes through a coordinator-scoped
+cursor query, creates a draft programme with its first package, reports real enrolment/procurement/
+distribution data, permits draft package edits, applies server-approved status transitions, and
+plans distributions. Package prices lock when a programme opens.
 
 Order: package list → detail → enrollment/payment confirmation → progress/contribution/distribution
 history. Confirm whether this is savings, commerce fulfillment, or both; item substitution, capacity,
@@ -790,14 +800,14 @@ and the Home quick-pay derivation. Not yet run on a device or simulator.
 
 ## Food, Akawo goals, wallet and profile (2026-09-02)
 
-| Screen                                | Route                             |
-| ------------------------------------- | --------------------------------- |
-| Create a savings goal                 | `/(tabs)/akawo/create-goal`       |
-| Join / leave a food programme         | `/(tabs)/food/[programmeId]`      |
-| Send money                            | `/(tabs)/profile/wallet/send`     |
-| Send money success                  | `/(tabs)/profile/wallet/send-success` |
-| Withdraw                              | `/(tabs)/profile/wallet/withdraw` |
-| Profile menu, edit, security, support | `/(tabs)/profile/*`               |
+| Screen                                | Route                                 |
+| ------------------------------------- | ------------------------------------- |
+| Create a savings goal                 | `/(tabs)/akawo/create-goal`           |
+| Join / leave a food programme         | `/(tabs)/food/[programmeId]`          |
+| Send money                            | `/(tabs)/profile/wallet/send`         |
+| Send money success                    | `/(tabs)/profile/wallet/send-success` |
+| Withdraw                              | `/(tabs)/profile/wallet/withdraw`     |
+| Profile menu, edit, security, support | `/(tabs)/profile/*`                   |
 
 Three of these needed backend routes that did not exist — food enrolment and
 wallet send/withdraw — which are described in the backend repo's commit. Wallet
@@ -1003,3 +1013,20 @@ backend and are unchanged.
 
 Follow-ups: device test of each product's payment, including a short wallet and
 a part payment; Food instalments if the product wants them.
+
+## Profile group administration (IN REVIEW, 2026-10-01)
+
+Added the Group management entry to Profile with Ajo and Food sections. Admin Ajo groups are
+identified by the server-projected `callerRole`; Food groups are loaded through the new
+coordinator-scoped, cursor-paginated programme query. The Ajo manager shows schedule-derived paid,
+due, collected, and expected totals, and opens the existing invitation, listing, lock, and swap
+operations. The Food manager shows enrolment, portion, collection, and distribution data, edits
+packages while still draft, changes only server-allowed lifecycle states, and plans distributions.
+The Food create form sends a real coordinator-gated create request. All screens use native stack
+headers and sheets/modals for action forms.
+
+Files: Profile routes and profile menu; `src/features/food/admin-create-screen.tsx`;
+`src/api/endpoints/{ajo-groups,food-ajo}.ts`; backend Ajo and Food list contracts.
+
+Backend contract details and unavailable member-removal/Ajo financial-edit operations are recorded in
+`BACKEND_REQUIREMENTS.md`. Status: **IN REVIEW** pending repository validation and device review.

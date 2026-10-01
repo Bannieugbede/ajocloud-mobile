@@ -51,6 +51,7 @@ export default function ProfileRoute() {
       signingOut={signOut.isPending}
       themePreference={themePreference}
       onOpenSettings={() => router.push('/(tabs)/profile/settings')}
+      onOpenGroupAdmin={() => router.push('/(tabs)/profile/admin' as import('expo-router').Href)}
       // Bank accounts are linked during identity verification, which is the
       // only flow that can add one, so the row opens that rather than a
       // read-only list nobody could act on.

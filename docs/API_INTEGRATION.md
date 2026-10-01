@@ -75,6 +75,19 @@ rate-limit, server, maintenance, or unknown application errors. Preserve safe me
 backend code, field errors, retry-after, and trace ID. UI copy must not reveal internals. Validation
 errors map to form fields, while unknown/global errors use an alert region and retry when safe.
 
+## Group administration
+
+| Purpose                        | Method and path                                                                     | Authorization                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Admin Ajo list role            | `GET /api/v1/ajo-groups` (`callerRole`)                                             | Active group membership                                   |
+| Ajo schedule analytics         | `GET /api/v1/ajo-groups/:id/schedule`                                               | Membership; full schedule is admin-scoped                 |
+| Ajo group profile              | `PATCH /api/v1/ajo-groups/:id/profile`                                              | Active group admin; name/description in `DRAFT` or `OPEN` |
+| Share / list / lock Ajo        | `POST .../:id/invitations`, `PATCH .../:id/listing`, `POST .../:id/lock`            | Group-admin checks and KYC/permission guards              |
+| Coordinated Food programmes    | `GET /api/v1/food-ajo/programmes?scope=COORDINATED&limit=25&cursor=`                | Caller-owned rows only                                    |
+| Create Food programme          | `POST /api/v1/food-ajo/programmes`                                                  | Active coordinator approval plus KYC stage                |
+| Food lifecycle/package changes | `PATCH /api/v1/food-ajo/programmes/:id/status`, `PATCH .../:id/packages/:packageId` | Owning coordinator                                        |
+| Food analytics/distributions   | `GET .../:id/procurement-plan`, `GET                                                | POST .../:id/distributions`                               | Owning coordinator |
+
 ## Query conventions
 
 Keys are stable arrays such as `['ajo-groups', organizationId, filters]`. List responses require

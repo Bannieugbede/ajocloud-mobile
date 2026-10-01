@@ -21,6 +21,8 @@ export type AjoGroupSummary = {
   adminName?: string | null;
   /** The round in progress, for the rotation position and next due date. */
   currentCycle?: { sequence: number; contributionDueAt: string; status: string } | null;
+  /** Current member's server-authorized role in the group. */
+  callerRole?: string | null;
 };
 
 export type AjoMember = {
@@ -118,6 +120,16 @@ export function listAjoGroups(): Promise<AjoGroupSummary[]> {
 
 export function getAjoGroup(groupId: string): Promise<AjoGroupDetail> {
   return client().request(`/api/v1/ajo-groups/${encodeURIComponent(groupId)}`);
+}
+
+export function updateAjoGroupProfile(
+  groupId: string,
+  input: { name?: string; description?: string },
+): Promise<Pick<AjoGroupDetail, 'id' | 'name' | 'description' | 'status'>> {
+  return client().request(`/api/v1/ajo-groups/${encodeURIComponent(groupId)}/profile`, {
+    method: 'PATCH',
+    body: input,
+  });
 }
 
 export function getAjoSchedule(groupId: string): Promise<AjoCycle[]> {

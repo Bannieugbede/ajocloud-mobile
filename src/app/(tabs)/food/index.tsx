@@ -5,7 +5,10 @@ import { listFoodProgrammes, listMySubscriptions } from '@/api/endpoints/food-aj
 import { FoodListScreen } from '@/features/food/food-list-screen';
 
 export default function FoodRoute() {
-  const programmes = useQuery({ queryKey: ['food-programmes'], queryFn: listFoodProgrammes });
+  const programmes = useQuery({
+    queryKey: ['food-programmes'],
+    queryFn: () => listFoodProgrammes(),
+  });
   const subscriptions = useQuery({
     queryKey: ['food-subscriptions'],
     queryFn: listMySubscriptions,

@@ -42,8 +42,115 @@ function client() {
   return apiClient;
 }
 
+function listFoodProgrammesInScope(
+  scope: 'ALL' | 'COORDINATED',
+  cursor?: string,
+): Promise<FoodProgrammePage> {
+  const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
+  return client().request(`/api/v1/food-ajo/programmes?limit=25&scope=${scope}${cursorParam}`);
+}
+
 export function listFoodProgrammes(): Promise<FoodProgrammePage> {
-  return client().request('/api/v1/food-ajo/programmes?limit=25');
+  return listFoodProgrammesInScope('ALL');
+}
+
+export function listCoordinatedFoodProgrammes(cursor?: string): Promise<FoodProgrammePage> {
+  return listFoodProgrammesInScope('COORDINATED', cursor);
+}
+
+export type CreateFoodProgrammeInput = {
+  name: string;
+  contributionMinor: string;
+  contributionFrequency: string;
+  enrolmentCapacity: number;
+  fulfilmentMethod: string;
+  startsAt: string;
+  endsAt: string;
+  plannedProcurementAt?: string;
+  distributionAt?: string;
+  packages: {
+    name: string;
+    priceMinor: string;
+    items: { name: string; quantity: string; unit: string }[];
+  }[];
+};
+
+export function createFoodProgramme(input: CreateFoodProgrammeInput): Promise<FoodProgramme> {
+  return client().request('/api/v1/food-ajo/programmes', { method: 'POST', body: input });
+}
+
+export function transitionFoodProgramme(programmeId: string, status: string): Promise<unknown> {
+  return client().request(`/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/status`, {
+    method: 'PATCH',
+    body: { status },
+  });
+}
+
+export function updateFoodPackage(
+  programmeId: string,
+  packageId: string,
+  input: { name?: string; priceMinor?: string },
+): Promise<unknown> {
+  return client().request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/packages/${encodeURIComponent(packageId)}`,
+    { method: 'PATCH', body: input },
+  );
+}
+
+export type FoodProcurementPlan = {
+  programme: {
+    id: string;
+    name: string;
+    status: string;
+    currency: string;
+    enrolmentCapacity: number;
+  };
+  totalPortions: number;
+  expectedMinor: string;
+  collectedMinor: string;
+  packages: {
+    packageId: string;
+    name: string;
+    priceMinor: string;
+    subscribers: number;
+    portions: number;
+    expectedMinor: string;
+    collectedMinor: string;
+    items: { name: string; unit: string; unitQuantity: string; totalQuantity: string }[];
+  }[];
+};
+
+export function getFoodProcurementPlan(programmeId: string): Promise<FoodProcurementPlan> {
+  return client().request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/procurement-plan`,
+  );
+}
+
+export type FoodDistribution = {
+  id: string;
+  status: string;
+  scheduledAt: string;
+  completedAt: string | null;
+  items: { id: string; quantity: number; confirmation?: { confirmedAt: string | null } | null }[];
+};
+
+export function listFoodDistributions(programmeId: string): Promise<FoodDistribution[]> {
+  return client().request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/distributions`,
+  );
+}
+
+export function createFoodDistribution(
+  programmeId: string,
+  scheduledAt: string,
+): Promise<FoodDistribution> {
+  return client().request(
+    `/api/v1/food-ajo/programmes/${encodeURIComponent(programmeId)}/distributions`,
+    {
+      method: 'POST',
+      body: { scheduledAt },
+    },
+  );
 }
 
 /**

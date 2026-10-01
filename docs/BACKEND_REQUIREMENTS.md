@@ -10,6 +10,26 @@
   endpoint (draft/submitted/approved/rejected plus reviewer notes), and
   notification on decision.
 
+## Group administration on mobile (2026-10-01)
+
+- `GET /api/v1/ajo-groups` now includes `callerRole` (`GROUP_ADMIN` or `MEMBER`) so the Profile
+  admin hub can filter groups without requesting a detail record for every membership. Admin-only
+  schedules already return all contribution rows and power group collection analytics.
+- `PATCH /api/v1/ajo-groups/:groupId/profile` edits only a group's name and description while it is
+  `DRAFT` or `OPEN`; requests are restricted to the active group administrator and audited.
+- `GET /api/v1/food-ajo/programmes?scope=COORDINATED&limit=&cursor=` returns only programmes owned
+  by the caller. The default `scope=ALL` keeps the existing discovery/member behavior. Both scopes
+  use the same stable cursor response.
+- Existing coordinator routes power package edits while a programme is a draft, lifecycle changes,
+  procurement summaries and distribution planning. Opening locks prices; edits are refused after
+  that point.
+- Ajo financial terms are immutable after creation and rotation lock remains irreversible.
+  `PATCH /api/v1/ajo-groups/:id/profile` edits only name/description while status is `DRAFT` or
+  `OPEN`; locked financial terms remain immutable under ADR-001/002.
+- Group member removal, role transfer, dues waivers, and Ajo group-wide pause/close actions do not
+  have contracts. The mobile UI does not offer them. Add those only with explicit product rules,
+  scoped authorization, audit events, and concurrency/replay decisions.
+
 ## Public entry and initialization gaps
 
 - Existing and used: authenticated `GET /api/v1/users/me` with status and profile.

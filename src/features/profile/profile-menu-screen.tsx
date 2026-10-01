@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { KycStatus } from '@/api/endpoints/kyc';
 import type { ReferralSummary } from '@/api/endpoints/referrals';
@@ -10,7 +9,6 @@ import { AppAvatar } from '@/components/ui/app-avatar';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppListItem } from '@/components/ui/app-list-item';
-import { AppScreenHeader } from '@/components/ui/app-screen-header';
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
 import { fontSizes, radius, sizes, spacing, type ThemePreference } from '@/theme';
@@ -33,8 +31,8 @@ export type ProfileMenuScreenProps = {
   signingOut: boolean;
   /** Which appearance the member chose, not the mode currently resolved. */
   themePreference: ThemePreference;
-  /** The gear, which opens the settings the design keeps off this screen. */
   onOpenSettings: () => void;
+  onOpenGroupAdmin?: () => void;
   onOpenBankAccounts: () => void;
   onOpenReferrals: () => void;
   onOpenTransactions: () => void;
@@ -47,7 +45,6 @@ export type ProfileMenuScreenProps = {
 
 export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const name = props.user
     ? `${props.user.profile.firstName} ${props.user.profile.lastName}`.trim()
     : '';
@@ -59,21 +56,10 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
     <ScrollView
       contentContainerStyle={[
         styles.container,
-        { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
+        { backgroundColor: colors.background, paddingTop: spacing.sm },
       ]}
       contentInsetAdjustmentBehavior="never"
     >
-      <AppScreenHeader
-        title="Profile"
-        actions={[
-          {
-            icon: 'settings-outline',
-            label: 'Settings',
-            onPress: props.onOpenSettings,
-          },
-        ]}
-      />
-
       <View style={styles.header}>
         <AppAvatar name={name || 'Member'} size={72} shape="rounded" tone="solid" />
         <View style={styles.identity}>
@@ -93,6 +79,16 @@ export function ProfileMenuScreen(props: ProfileMenuScreenProps) {
           ) : null}
         </View>
       </View>
+
+      {props.onOpenGroupAdmin ? (
+        <AppListItem
+          card
+          title="Group management"
+          description="Manage Ajo and Food groups"
+          icon="people-outline"
+          onPress={props.onOpenGroupAdmin}
+        />
+      ) : null}
 
       <AppListItem
         card
