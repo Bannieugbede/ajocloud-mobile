@@ -1028,5 +1028,8 @@ headers and sheets/modals for action forms.
 Files: Profile routes and profile menu; `src/features/food/admin-create-screen.tsx`;
 `src/api/endpoints/{ajo-groups,food-ajo}.ts`; backend Ajo and Food list contracts.
 
-Backend contract details and unavailable member-removal/Ajo financial-edit operations are recorded in
-`BACKEND_REQUIREMENTS.md`. Status: **IN REVIEW** pending repository validation and device review.
+Backend contract details and unavailable member-removal, role-transfer, waiver, and Ajo financial
+term operations are recorded in `BACKEND_REQUIREMENTS.md`. Validation on 2026-10-01: mobile strict
+typecheck, lint, and terminology validation passed; lint retains one unrelated existing unused
+variable warning in `src/features/food/food-list-screen.tsx`. Tests were not run. Status: **IN REVIEW**
+pending behavioral tests and device review.
